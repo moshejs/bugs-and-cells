@@ -247,6 +247,15 @@ tbody th{font-weight:700}
 .scen .ans{font-size:14.5px}
 .scen .ans b{color:var(--eosin)}
 
+/* good vs bad */
+.gb-lanes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:900px){ .gb-lanes{grid-template-columns:minmax(0,1fr)} }
+.gb-lane{border-top:4px solid var(--good)}
+.gb-lane.bad{border-top-color:var(--bad)}
+.gb-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.gb-head b{font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:-.01em}
+.gb-lane .stage-cap{font:400 14.5px/1.45 var(--body);color:var(--ink);letter-spacing:0;min-height:3.9em}
+
 /* injury */
 .featlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:14.5px}
 .featlist li{display:flex;gap:9px;align-items:flex-start;opacity:.38;transition:opacity .3s}
@@ -626,9 +635,42 @@ tbody th{font-weight:700}
     </div>
     <aside class="note" id="adNote" aria-live="polite"></aside>
   </div>
+  <div class="callout prose"><p><b>When is an adaptation harmful?</b> The same change can be healthy or a step toward disease. <button class="btn" style="margin-top:8px" data-go="goodbad">Watch good vs bad, side by side →</button></p></div>
   <h3 class="sub">Name that adaptation</h3>
   <p class="lede" style="font-size:16px">Read the scenario, decide, then reveal.</p>
   <div class="scen" id="scen"></div>
+</section>
+
+<!-- ================= 2.3 GOOD VS BAD ================= -->
+<section class="mod u2c" id="m-goodbad" data-mod="goodbad" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 2 · Cellular adaptation &amp; injury</p>
+    <h2>Good adaptation, bad adaptation</h2>
+    <p class="lede">Cells step up when the body needs more from them. Milk glands multiply when a mother breastfeeds. The same change becomes harmful when the signal driving it is abnormal and never switches off. Pick a tissue and press play: both lanes start the same and part ways at the fork.</p>
+  </div>
+  <div class="modebar" id="gbMode"></div>
+  <div class="gb-lanes">
+    <div class="stage gb-lane good">
+      <div class="gb-head"><b id="gbTitleA"></b><span class="tag good" id="gbTagA"></span></div>
+      <svg id="gbA" viewBox="0 0 520 220" role="img" aria-label="Healthy adaptation lane"></svg>
+      <p class="stage-cap" id="gbCapA"></p>
+    </div>
+    <div class="stage gb-lane bad">
+      <div class="gb-head"><b id="gbTitleB"></b><span class="tag bad" id="gbTagB"></span></div>
+      <svg id="gbB" viewBox="0 0 520 220" role="img" aria-label="Harmful adaptation lane"></svg>
+      <p class="stage-cap" id="gbCapB"></p>
+    </div>
+  </div>
+  <div class="ctrls"><button class="btn primary" id="gbPlay">Play</button>
+    <label for="gbT" class="stage-cap" style="flex:1;min-width:200px;display:flex;gap:10px;align-items:center">Timeline <input type="range" id="gbT" min="0" max="1" step="0.004" value="0.4"></label></div>
+  <div class="stepper" id="gbPhases" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+  <div class="lab even">
+    <aside class="note" id="gbNote" aria-live="polite"></aside>
+    <div class="note"><div class="kicker">The rule</div><h4>Ask two questions</h4>
+      <dl class="kv"><div><dt>1 · Is the signal normal?</dt><dd>Prolactin during nursing, exercise, pregnancy hormones: normal demands. Unopposed estrogen, high blood pressure, cigarette smoke: abnormal ones.</dd></div>
+      <div><dt>2 · Does it switch off?</dt><dd>A physiologic adaptation reverses when the need ends; extra cells are even removed by <button class="btn ghost" style="padding:2px 8px" data-go="death">apoptosis</button>. A stimulus that never stops keeps the tissue adapted, and over years adapted tissue can become disordered (dysplasia), turn cancerous, or simply wear out.</dd></div></dl>
+      <div class="hook"><b>Exam hook</b>Physiologic hyperplasia (breast in lactation) does not lead to cancer. Pathologic hyperplasia (endometrium under unopposed estrogen) can. Same mechanism, different control.</div></div>
+  </div>
 </section>
 
 <!-- ================= 2.3 INJURY ================= -->
@@ -783,9 +825,10 @@ const MODS=[
  {id:'gallery',t:"Rogues' gallery",g:1,n:'1.7',d:'16 pathogens and their signature weapons.'},
  {id:'spectrum',t:'The big picture',g:2,n:'2.1',d:'Normal → adapted → injured → dead.'},
  {id:'adapt',t:'Adaptation lab',g:2,n:'2.2',d:'Morph tissue through hypertrophy, hyperplasia, atrophy, metaplasia.'},
- {id:'injury',t:'Cell injury slider',g:2,n:'2.3',d:'Drag a cell past the point of no return.'},
- {id:'death',t:'Necrosis vs apoptosis',g:2,n:'2.4',d:'Two ways to die, animated side by side.'},
- {id:'patterns',t:'Patterns of necrosis',g:2,n:'2.5',d:'Coagulative, liquefactive, caseous and more.'},
+ {id:'goodbad',t:'Good vs bad adaptation',g:2,n:'2.3',d:'Breastfeeding vs too much estrogen: the same change, healthy or harmful.'},
+ {id:'injury',t:'Cell injury slider',g:2,n:'2.4',d:'Drag a cell past the point of no return.'},
+ {id:'death',t:'Necrosis vs apoptosis',g:2,n:'2.5',d:'Two ways to die, animated side by side.'},
+ {id:'patterns',t:'Patterns of necrosis',g:2,n:'2.6',d:'Coagulative, liquefactive, caseous and more.'},
  {id:'bridge',t:'Where bacteria meet cells',g:3,n:'↔'},
  {id:'review',t:'Flashcards & mnemonics',g:4,n:'R1'},
  {id:'quiz',t:'Quiz',g:4,n:'R2'},
@@ -1248,7 +1291,112 @@ inits.adapt=()=>{
   $('#scen').addEventListener('click',e=>{const b=e.target.closest('[data-sa]');if(!b)return;const a=$('#sa'+b.dataset.sa);a.hidden=!a.hidden;b.textContent=a.hidden?'Reveal':'Hide';b.setAttribute('aria-expanded',!a.hidden)});
 };
 
-/* =============== 2.3 injury =============== */
+/* =============== 2.3 good vs bad =============== */
+const GB={
+ milk:{l:'Milk glands',
+  A:{title:'Breast lobule · breastfeeding',tag:['good','Physiologic'],stim:'baby feeds · prolactin',draw:'breast',
+     status:['Resting','Hyperplasia','Weaning','Back to resting'],
+     caps:['A resting lobule: a few small alveoli (milk sacs) around a duct.','Pregnancy and nursing hormones tell the cells to divide. More alveoli, each filling with milk. Hyperplasia, for a normal reason.','The baby weans. The hormonal signal fades.','The extra cells remove themselves by apoptosis (involution). The lobule is back to resting, with nothing left behind.']},
+  B:{title:'Uterine lining · unopposed estrogen',tag:['bad','Pathologic'],stim:'estrogen, no progesterone',draw:'endo',
+     status:['Normal','Hyperplasia','Signal continues','Atypia → cancer'],
+     caps:['Normal endometrium: evenly spaced glands in supporting tissue.','Estrogen with no progesterone to balance it (obesity, estrogen-only therapy, PCOS, an estrogen-making tumor). Glands multiply and crowd. Hyperplasia.','Nothing switches the estrogen off.','Crowded glands become irregular with dark, enlarged nuclei (atypical hyperplasia), then invade the muscle: endometrial cancer.']},
+  note:{h:'Same change, different reason',rows:[['Physiologic','A normal signal asks for more milk. The cells answer, and when the need ends the extra cells die quietly by apoptosis.'],['Pathologic','An abnormal signal keeps pushing. Cells keep dividing, copying errors accumulate, and the tissue can turn cancerous.']],hook:'Hormone-driven hyperplasia is fertile ground for cancer only when it is pathologic: endometrial hyperplasia → endometrial carcinoma. Breastfeeding hyperplasia is not. The difference is control: a physiologic signal switches off.'}},
+ heart:{l:'Heart muscle',
+  A:{title:'Left ventricle · athlete',tag:['good','Physiologic'],stim:'training sessions',draw:'heartA',
+     status:['Normal','Hypertrophy','Off season','Back to normal'],
+     caps:['A resting left ventricle: a ring of muscle around a chamber of blood.','Training asks each beat to pump more. Myocytes can\'t divide, so each one grows. The wall thickens a little and the chamber enlarges with it.','The season ends. The extra demand goes away.','Over months the muscle slims back toward normal. Athlete\'s heart is reversible.']},
+  B:{title:'Left ventricle · high blood pressure',tag:['bad','Pathologic'],stim:'high blood pressure',draw:'heartB',
+     status:['Normal','Hypertrophy','Pressure persists','Heart failure'],
+     caps:['The same resting ventricle.','Every beat now pushes against high pressure. Myocytes grow and the wall thickens inward, squeezing the chamber (concentric hypertrophy).','The pressure never comes down.','The muscle outgrows its blood supply. Fibers die and scar, the chamber dilates and the wall thins: the pump fails.']},
+  note:{h:'Hypertrophy has a ceiling',rows:[['Physiologic','Exercise loads the heart in bursts with rest between. The muscle grows in proportion, keeps its blood supply, and shrinks back when training stops.'],['Pathologic','Hypertension or a narrowed aortic valve loads the heart every second of every day. The muscle thickens past what its vessels can feed, fibers die and scar, and the pump fails.']],hook:'Thick wall, small chamber = pressure overload (concentric). Dilated chamber = volume overload or a failing heart (eccentric). Beyond its limit, the adaptation becomes the disease.'}},
+ airway:{l:'Airway lining',
+  A:{title:'Bronchus · smoker who quits',tag:['good','Reversible'],stim:'cigarette smoke',draw:'airway',
+     status:['Normal','Metaplasia','Quit smoking','Back to normal'],
+     caps:['Healthy bronchus: tall ciliated cells sweep mucus up and out; goblet cells make the mucus.','Smoke irritates the lining. Stem cells switch to making tough, flat squamous cells. Metaplasia: protection, at the cost of cilia.','The irritant is gone.','The stem cells go back to making ciliated columnar cells. Cough and chest infections improve.']},
+  B:{title:'Bronchus · keeps smoking',tag:['bad','Progression'],stim:'cigarette smoke',draw:'airway',
+     status:['Normal','Metaplasia','Smoke continues','Dysplasia → cancer'],
+     caps:['The same healthy bronchus.','Squamous metaplasia: tougher, but no cilia, so mucus and germs collect (smoker\'s cough).','The smoking continues for years.','Cells become disordered with big dark nuclei (dysplasia), then break through the basement membrane: squamous cell carcinoma.']},
+  note:{h:'Metaplasia is a trade',rows:[['Reversible','Protection now, function lost. Remove the irritant and the stem cells return to the original cell type.'],['Progression','If the irritant persists, the reprogrammed cells can become dysplastic. Dysplasia through the full thickness of the lining is carcinoma in situ; invasion through the basement membrane is cancer.']],hook:'Metaplasia itself is not cancer, but it is where cancer often starts: smoker\'s bronchus → squamous cell carcinoma; Barrett esophagus → adenocarcinoma.'}}
+};
+const GBPH=[['Normal',0],['Demand arrives',.15],['The fork',.5],['Outcome',.62]];
+const gbPhase=t=>t<.15?0:t<.5?1:t<.62?2:3;
+function gbLamp(on,label){const w=label.length*6.8+34;return `<g><rect x="12" y="10" width="${f1(w)}" height="22" rx="11" style="fill:${on?'var(--warn-soft)':'var(--panel-2)'};stroke:${on?'var(--warn)':'var(--line)'}"/><circle cx="24" cy="21" r="4.5" style="fill:${on?'var(--warn)':'var(--unst-line)'}"/><text x="34" y="25" class="t-sm" style="fill:${on?'var(--warn)':'var(--muted)'}">${label}</text></g>`}
+const GBD={
+ breast(a,d){const cx=190,cy=122,hub=[cx+46,cy];
+  const pos=[[0,-44],[42,-14],[26,40],[-26,40],[-42,-14],[10,-86],[72,-56],[84,12],[52,76],[-18,88],[-76,52],[-84,-30],[-52,-74]];
+  const cnt=5+8*a,R=11+6*a,sc=.8+.3*a;
+  let s=`<path d="M508 ${cy} H${hub[0]}" style="stroke:var(--memb);stroke-width:9;fill:none;stroke-linecap:round"/><path d="M508 ${cy} H${hub[0]}" style="stroke:var(--field);stroke-width:4;fill:none;stroke-linecap:round"/><text x="420" y="${cy-12}" class="t-sm t-mid">duct</text>`;
+  pos.forEach((p,i)=>{const o=clamp(cnt-i);if(o<=0)return;const x=cx+p[0]*sc,y=cy+p[1]*sc;
+    s+=`<g opacity="${o.toFixed(2)}"><line x1="${hub[0]}" y1="${hub[1]}" x2="${f1(x)}" y2="${f1(y)}" style="stroke:var(--memb);stroke-width:2.5"/><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(R*o)}" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1.5"/><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(R*o*.55)}" style="fill:var(--fat);opacity:${a.toFixed(2)}"/>`;
+    for(let k=0;k<8;k++){const an=k/8*6.283+i;s+=`<circle cx="${f1(x+(R*o-3)*Math.cos(an))}" cy="${f1(y+(R*o-3)*Math.sin(an))}" r="1.9" style="fill:var(--nuc)"/>`}
+    s+='</g>'});
+  s+=`<text x="12" y="208" class="t-sm">${Math.round(cnt)} ALVEOLI · ${a>.3?'MILK':'NO MILK'}</text>`;return s},
+ endo(a,d){let s=`<rect x="0" y="190" width="520" height="30" style="fill:var(--eosin-soft)"/><text x="12" y="212" class="t-sm">MYOMETRIUM (MUSCLE)</text><line x1="0" y1="44" x2="520" y2="44" style="stroke:var(--memb);stroke-width:2"/>`;
+  const inv=ramp(d,.6,1);s+=`<line x1="0" y1="190" x2="520" y2="190" style="stroke:var(--memb);stroke-width:2;${inv>0?'stroke-dasharray:8 6':''}"/>`;
+  for(let i=0;i<11;i++){const x=50+i*42,even=i%2===0,o=even?a:1;if(o<=0)continue;
+    const w=16+6*a,h=66+44*a+((i===4||i===6)?inv*34:0),y0=64+(even?8:0),sk=d*(i%2?9:-9),tx=-120*Math.tan(sk*Math.PI/180),nr=2+1.6*d;
+    s+=`<g opacity="${o.toFixed(2)}" transform="translate(${f1(tx)} 0) skewX(${f1(sk)})"><rect x="${f1(x-w/2)}" y="${y0}" width="${f1(w)}" height="${f1(h)}" rx="${f1(w/2)}" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1.5"/><rect x="${f1(x-w/4)}" y="${y0+6}" width="${f1(w/2)}" height="${f1(h-12)}" rx="${f1(w/4)}" style="fill:var(--field)"/>`;
+    for(let k=0;k<Math.floor(h/11);k++){const cy=y0+9+k*11;s+=`<circle cx="${f1(x-w/2+3.5)}" cy="${cy}" r="${f1(nr)}" style="fill:${d>.3?'var(--nuc-deep)':'var(--nuc)'}"/><circle cx="${f1(x+w/2-3.5)}" cy="${cy}" r="${f1(nr)}" style="fill:${d>.3?'var(--nuc-deep)':'var(--nuc)'}"/>`}
+    s+='</g>'}
+  if(inv>0)s+=`<text x="300" y="214" class="t-lbl" style="fill:var(--bad);opacity:${inv.toFixed(2)}">invasion into muscle = cancer</text>`;
+  s+=`<text x="12" y="34" class="t-sm">${Math.round(5+6*a)} GLANDS · ${d>.5?'ATYPICAL':a>.5?'CROWDED':'EVENLY SPACED'}</text>`;return s},
+ heart(a,d,bad){const cx=250,cy=116;let outer,inner;if(!bad){outer=52+8*a;inner=34+3*a}else{outer=52+4*a+7*d;inner=34-12*a+27*d}
+  const wall=outer-inner,mm=wall/18*10;const r=rng(17);
+  let s=`<circle cx="${cx}" cy="${cy}" r="${f1(outer)}" style="fill:var(--eosin);opacity:.5"/><circle cx="${cx}" cy="${cy}" r="${f1(inner)}" style="fill:var(--bad-soft)"/>`;
+  for(let k=0;k<28;k++){const an=k/28*6.283;s+=`<line x1="${f1(cx+(inner+3)*Math.cos(an))}" y1="${f1(cy+(inner+3)*Math.sin(an))}" x2="${f1(cx+(outer-3)*Math.cos(an))}" y2="${f1(cy+(outer-3)*Math.sin(an))}" style="stroke:var(--memb);stroke-width:1;opacity:.35"/>`}
+  const sc=ramp(d,.3,1);if(sc>0){const n=Math.round(40*sc);for(let k=0;k<n;k++){const an=r()*6.283,rr=inner+4+r()*(wall-8);s+=`<circle cx="${f1(cx+rr*Math.cos(an))}" cy="${f1(cy+rr*Math.sin(an))}" r="${f1(1.5+r()*2)}" style="fill:var(--muted)"/>`}
+    s+=`<text x="${cx}" y="${f1(cy+outer+22)}" class="t-sm t-mid" style="fill:var(--bad)">fibrosis (scar) replacing muscle</text>`}
+  s+=`<circle cx="${cx}" cy="${cy}" r="${f1(outer)}" style="fill:none;stroke:var(--memb);stroke-width:1.5"/><circle cx="${cx}" cy="${cy}" r="${f1(inner)}" style="fill:none;stroke:var(--memb);stroke-width:1.5"/>`;
+  s+=`<line x1="${f1(cx+inner)}" y1="${cy}" x2="${f1(cx+outer)}" y2="${cy}" style="stroke:var(--ink);stroke-width:2"/><text x="${f1(cx+outer+10)}" y="${cy+4}" class="t-lbl">wall ≈ ${Math.round(mm)} mm</text><text x="${cx}" y="${cy+4}" class="t-sm t-mid">LV</text>`;
+  s+=`<text x="12" y="208" class="t-sm">CHAMBER ${inner<30?'SQUEEZED':inner>44?'DILATED':'NORMAL'} · WALL ${mm>15?'VERY THICK':mm>11?'THICKER':mm<9?'THINNED':'NORMAL'}</text>`;return s},
+ airway(a,d){const r=rng(23);const inv=ramp(d,.65,1);
+  let s=`<rect x="0" y="170" width="520" height="50" style="fill:var(--panel-2)"/><text x="12" y="210" class="t-sm">CONNECTIVE TISSUE</text><text x="12" y="48" class="t-sm">AIRWAY LUMEN</text>`;
+  s+=`<line x1="0" y1="170" x2="520" y2="170" style="stroke:var(--memb);stroke-width:2;${inv>0?'stroke-dasharray:10 6':''}"/>`;
+  const ca=1-a;
+  if(ca>0.02){for(let i=0;i<13;i++){const x=20+i*37,h=34+52*ca,gob=i%4===2;
+    s+=`<g opacity="${ca.toFixed(2)}"><rect x="${x}" y="${f1(170-h)}" width="34" height="${f1(h)}" rx="5" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1.2"/>`;
+    if(gob)s+=`<ellipse cx="${x+17}" cy="${f1(170-h*.6)}" rx="11" ry="${f1(h*.28)}" style="fill:var(--fat);stroke:var(--warn)"/>`;
+    else for(let k=0;k<5;k++)s+=`<line x1="${x+5+k*6}" y1="${f1(170-h)}" x2="${x+5+k*6+(k%2?2:-2)}" y2="${f1(170-h-9*ca)}" style="stroke:var(--memb);stroke-width:1.2"/>`;
+    s+=`<ellipse cx="${x+17}" cy="158" rx="7" ry="8" style="fill:var(--nuc)"/></g>`}}
+  if(a>0.02){for(let L=0;L<4;L++)for(let i=0;i<14;i++){const x=22+i*36+(L%2)*18,y=160-L*13+d*9*(r()-.5)*2,rx=16+d*7*(r()-.5),ry=6+d*4*r(),nr=(L<2?3:2.3)+2.6*d*r();
+    s+=`<g opacity="${a.toFixed(2)}"><ellipse cx="${f1(x)}" cy="${f1(y)}" rx="${f1(rx)}" ry="${f1(ry)}" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1"/><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(nr)}" style="fill:${d>.3?'var(--nuc-deep)':'var(--nuc)'}"/></g>`}}
+  if(inv>0){const tx=300;s+=`<g opacity="${inv.toFixed(2)}"><path d="M${tx-44} 170 Q${tx} ${f1(170+64*inv)} ${tx+44} 170Z" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1.5"/>`;
+    for(let k=0;k<7;k++)s+=`<circle cx="${f1(tx-24+k*8)}" cy="${f1(172+(k%2?14:6)*inv)}" r="3.4" style="fill:var(--nuc-deep)"/>`;
+    s+=`<text x="${tx+60}" y="${f1(176+30*inv)}" class="t-lbl" style="fill:var(--bad)">invasion = cancer</text></g>`}
+  s+=`<text x="300" y="48" class="t-sm">${a<.5?'CILIATED COLUMNAR':d>.5?'DYSPLASTIC SQUAMOUS':'STRATIFIED SQUAMOUS'}</text>`;return s}
+};
+inits.goodbad=()=>{
+  let sc='milk';
+  $('#gbMode').innerHTML=Object.keys(GB).map(k=>`<button class="btn" data-gb="${k}" aria-pressed="${k===sc}">${GB[k].l}</button>`).join('');
+  $('#gbPhases').innerHTML=GBPH.map((p,i)=>`<button data-gp="${i}" aria-pressed="false"><b>${i+1}</b><span>${p[0]}</span></button>`).join('');
+  const rg=$('#gbT'),pb=$('#gbPlay');
+  function lane(L,t,bad){const up=ease(ramp(t,.15,.5));let a,d=0;
+    if(!bad){a=t<.62?up:1-ease(ramp(t,.62,1))}else{a=up;d=ease(ramp(t,.62,1))}
+    const on=bad?t>=.15:(t>=.15&&t<.5);
+    const dr=L.draw==='breast'?GBD.breast(a,d):L.draw==='endo'?GBD.endo(a,d):L.draw==='airway'?GBD.airway(a,d):GBD.heart(a,d,bad);
+    return {svg:dr+gbLamp(on,L.stim),a,d}}
+  function draw(t){const S=GB[sc],p=gbPhase(t);
+    const A=lane(S.A,t,false),B=lane(S.B,t,true);
+    $('#gbA').innerHTML=A.svg;$('#gbB').innerHTML=B.svg;
+    $('#gbCapA').textContent=S.A.caps[p];$('#gbCapB').textContent=S.B.caps[p];
+    const ta=$('#gbTagA'),tb=$('#gbTagB');ta.textContent=S.A.status[p];tb.textContent=S.B.status[p];
+    ta.className='tag '+(p===0||p===3?'good':'warn');tb.className='tag '+(p===0?'good':p===3?'bad':'warn');
+    $$('[data-gp]').forEach((b,i)=>b.setAttribute('aria-pressed',i===p))}
+  function setSc(k){sc=k;const S=GB[k];$$('[data-gb]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.gb===k));
+    $('#gbTitleA').textContent=S.A.title;$('#gbTitleB').textContent=S.B.title;
+    $('#gbNote').innerHTML=`<div class="chips"><span class="tag good">${S.A.tag[1]}</span><span class="tag bad">${S.B.tag[1]}</span></div><h4>${S.note.h}</h4><dl class="kv">${S.note.rows.map(r=>`<div><dt>${r[0]}</dt><dd>${r[1]}</dd></div>`).join('')}</dl><div class="hook"><b>Exam hook</b>${S.note.hook}</div>`;
+    draw(+rg.value)}
+  let stopA=null;function stop(){if(stopA)stopA();stopA=null;pb.textContent='Play'}
+  rg.addEventListener('input',()=>{stop();draw(+rg.value)});
+  pb.addEventListener('click',()=>{if(stopA){stop();return}let t0=+rg.value;if(t0>=.99)t0=0;pb.textContent='Pause';
+    stopA=animate((1-t0)*14000,p=>{const t=t0+(1-t0)*p;rg.value=t;draw(t)},()=>{stopA=null;pb.textContent='Replay'})});
+  $('#gbMode').addEventListener('click',e=>{const b=e.target.closest('[data-gb]');if(b){stop();setSc(b.dataset.gb)}});
+  $('#gbPhases').addEventListener('click',e=>{const b=e.target.closest('[data-gp]');if(b){stop();rg.value=GBPH[+b.dataset.gp][1]+(b.dataset.gp==='3'?.3:0);draw(+rg.value)}});
+  onHide.goodbad=stop;
+  setSc('milk');
+};
+
+/* =============== 2.4 injury =============== */
 const FEAT=[
  ['rev',12,'Cell swelling (hydropic change): the Na⁺/K⁺ pump fails'],
  ['rev',20,'Mitochondria swell'],
@@ -1450,6 +1598,8 @@ const FC=[
  [1,'Why doesn\'t Mycobacterium Gram stain well?','Its waxy, mycolic-acid-rich wall. Use the acid-fast (Ziehl–Neelsen) stain instead.'],
  [2,'Hypertrophy vs hyperplasia','Hypertrophy = bigger cells. Hyperplasia = more cells. Both can enlarge an organ.'],
  [2,'Why does the heart respond to high blood pressure with hypertrophy, not hyperplasia?','Adult heart muscle cells can barely divide, so they can only grow larger.'],
+ [2,'Breast glands multiply during breastfeeding; the uterine lining thickens under unopposed estrogen. Both are hyperplasia. What\'s the difference?','Breastfeeding is physiologic: a normal signal that switches off, after which the extra cells are removed by apoptosis. Unopposed estrogen is pathologic: it never stops, and the hyperplasia can progress to atypia and endometrial cancer.'],
+ [2,'What makes an adaptation physiologic rather than pathologic?','A normal stimulus (exercise, pregnancy hormones, nursing) that switches off, after which the tissue returns to normal. Pathologic adaptations answer an abnormal stimulus that persists.'],
  [2,'Define metaplasia.','The reversible replacement of one adult cell type by another that better withstands the stress.'],
  [2,'Barrett esophagus','Squamous → intestinal-type columnar metaplasia from chronic acid reflux. Raises the risk of adenocarcinoma.'],
  [2,'Smoker\'s bronchus','Ciliated columnar → stratified squamous metaplasia. Tougher, but loses mucus and cilia clearance.'],
@@ -1512,6 +1662,8 @@ const QZ=[
  [1,'Antibiotic resistance genes often spread between bacteria on:',['Plasmids','Ribosomes','Capsules','Endospores'],0,'Plasmids are mobile DNA rings that can be passed from cell to cell, even between species.'],
  [1,'"Rice-water" diarrhea is caused by a toxin that:',['Inactivates EF-2','Raises cAMP in gut cells','Splits membrane lipids','Blocks acetylcholine'],1,'Cholera toxin keeps Gs switched on, cAMP rises, and gut cells pump out chloride and water.'],
  [2,'The heart wall thickens in long-standing hypertension mainly because of:',['Hyperplasia','Hypertrophy','Metaplasia','Atrophy'],1,'Adult cardiac myocytes can barely divide, so they adapt by getting bigger.'],
+ [2,'A breastfeeding mother\'s breast glands enlarge by making more milk-producing cells. This is best called:',['Pathologic hyperplasia','Physiologic hyperplasia','Metaplasia','Dysplasia'],1,'More cells, driven by a normal hormonal signal (prolactin). When she weans, the extra cells are removed by apoptosis and the gland returns to resting.'],
+ [2,'Which adaptation is most likely to progress to cancer if its cause continues?',['Athlete\'s heart (hypertrophy)','Disuse atrophy of a leg in a cast','Endometrial hyperplasia from unopposed estrogen','Breast hyperplasia in pregnancy'],2,'Pathologic, hormone-driven hyperplasia that never switches off: crowded glands become atypical and can invade. The other three are physiologic or reversible and do not lead to cancer.'],
  [2,'Replacement of one adult cell type by another is called:',['Dysplasia','Hyperplasia','Metaplasia','Neoplasia'],2,'Metaplasia: e.g., columnar → squamous in a smoker\'s bronchus.'],
  [2,'In Barrett esophagus, the lining changes from:',['Columnar to squamous','Squamous to intestinal-type columnar','Squamous to cuboidal','Columnar to transitional'],1,'Chronic acid reflux replaces the normal squamous lining with acid-resistant intestinal-type columnar cells.'],
  [2,'Which is NOT a feature of reversible injury?',['Cell swelling','Fatty change','Membrane blebs','Karyorrhexis'],3,'Karyorrhexis (nuclear fragmentation) only happens after the point of no return.'],
