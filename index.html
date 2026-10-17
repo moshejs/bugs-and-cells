@@ -735,11 +735,7 @@ tbody th{font-weight:700}
     <p class="lede">Dead tissue doesn't all look the same. The pattern tells you the cause, and pathologists name it by what they see. Sketches below are simplified microscope views.</p>
   </div>
   <div class="cards" id="patCards"></div>
-  <h3 class="sub">Afterward: pathologic calcification</h3>
-  <div class="split2">
-    <div class="note"><div class="kicker">Dystrophic</div><h4>Calcium lands on damaged tissue</h4><p>Blood calcium is <b>normal</b>. Calcium deposits in dead or dying tissue: old necrosis, atherosclerotic plaques, damaged heart valves, psammoma bodies in some tumors.</p></div>
-    <div class="note"><div class="kicker">Metastatic</div><h4>Calcium lands on normal tissue</h4><p>Blood calcium is <b>high</b> (hyperparathyroidism, kidney failure, bone-destroying tumors, vitamin D excess). Deposits form in healthy tissue such as lungs, kidneys and blood vessels.</p></div>
-  </div>
+  <div class="callout prose"><p><b>Afterward:</b> dead tissue that isn't cleared often calcifies (dystrophic calcification). <button class="btn" style="margin-top:8px" data-go="accum">Calcification and other deposits →</button></p></div>
 </section>
 
 <!-- ================= BRIDGE ================= -->
@@ -778,6 +774,294 @@ tbody th{font-weight:700}
   <div class="ctrls" id="qFilter"></div>
   <div class="bar"><i id="qBar"></i></div>
   <div class="qcard" id="qCard" aria-live="polite"></div>
+</section>
+
+<style>
+/* ---- expansion styles ---- */
+.hot{cursor:pointer}
+.hot circle.dot{fill:var(--hema);stroke:var(--panel);stroke-width:2.5;transition:r .2s}
+.hot:hover circle.dot{r:12}
+.hot.sterile circle.dot{fill:var(--good)}
+.hot.sel circle.dot{fill:var(--eosin);r:12}
+.hot text{font:700 12.5px var(--body);fill:var(--ink)}
+.hot.sel text{fill:var(--eosin)}
+.link{cursor:pointer}
+.link .box{fill:var(--panel-2);stroke:var(--line);stroke-width:1.5;transition:stroke .2s,fill .2s}
+.link:hover .box{stroke:var(--hema)}
+.link.sel .box{fill:var(--hema-soft);stroke:var(--hema);stroke-width:2.5}
+.link.broken .box{stroke-dasharray:6 5;opacity:.45}
+.link text{font:700 13px var(--body);fill:var(--ink)}
+.link text.s{font:500 10.5px var(--mono);fill:var(--muted)}
+.fn{cursor:pointer}
+.fn rect{fill:var(--panel-2);stroke:var(--line);stroke-width:1.5;transition:stroke .2s,fill .2s}
+.fn:hover rect{stroke:var(--eosin)}
+.fn.sel rect{fill:var(--eosin-soft);stroke:var(--eosin);stroke-width:2.5}
+.u1 .fn:hover rect{stroke:var(--hema)}
+.u1 .fn.sel rect{fill:var(--hema-soft);stroke:var(--hema)}
+.fn.src rect{fill:var(--warn-soft);stroke:var(--warn)}
+.fn.end rect{fill:var(--bad-soft);stroke:var(--bad)}
+.fn text{font:700 12px var(--body);fill:var(--ink)}
+.fn text.s{font:500 10.5px var(--mono);fill:var(--muted)}
+.crumbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:500 12.5px var(--mono);color:var(--muted)}
+.crumbs b{color:var(--ink);font-weight:700}
+.crumbs .sep{opacity:.5}
+.qbig{font-family:var(--display);font-weight:800;font-size:clamp(22px,3vw,30px);line-height:1.15;letter-spacing:-.015em}
+.choice{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.choice button{text-align:left;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;display:flex;flex-direction:column;gap:4px;min-width:0}
+.choice button:hover{border-color:var(--hema)}
+.choice button b{font-family:var(--display);font-weight:800;font-size:17px;line-height:1.15}
+.choice button small{color:var(--muted);font-size:13.5px;line-height:1.35}
+.orgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.search{font:inherit;font-size:14.5px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);min-width:220px;flex:1}
+.tel .cap{fill:var(--warn);transition:width .3s}
+.pill-row{display:flex;flex-wrap:wrap;gap:6px}
+.mi-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.8fr);gap:14px;align-items:start}
+@media (max-width:1040px){ .mi-grid{grid-template-columns:minmax(0,1fr)} }
+.timebar{display:flex;flex-wrap:wrap;gap:6px}
+.timebar button{font:700 12px var(--mono);padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);cursor:pointer}
+.timebar button[aria-pressed="true"]{background:var(--eosin-soft);border-color:var(--eosin);color:var(--eosin)}
+.u1 .timebar button[aria-pressed="true"]{background:var(--hema-soft);border-color:var(--hema);color:var(--hema)}
+</style>
+
+<!-- ================= 1.6 FLORA ================= -->
+<section class="mod u1" id="m-flora" data-mod="flora" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 1 · Pathogenic bacteria</p>
+    <h2>Where bacteria normally live</h2>
+    <p class="lede">Trillions of bacteria live on and in you without causing harm. Disease often starts when a normal resident reaches the wrong place or overgrows, or when a true pathogen arrives from outside. Tap a body site. Green dots are normally sterile.</p>
+  </div>
+  <div class="lab">
+    <div class="stage"><svg id="bodySvg" viewBox="0 0 560 520" role="group" aria-label="Body map of normal flora" style="max-width:640px;margin:0 auto"></svg></div>
+    <aside class="note" id="floraNote" aria-live="polite"></aside>
+  </div>
+  <h3 class="sub">Words you need</h3>
+  <div class="cards" id="vocabCards"></div>
+</section>
+
+<!-- ================= 1.7 CHAIN ================= -->
+<section class="mod u1" id="m-chain" data-mod="chain" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 1 · Pathogenic bacteria</p>
+    <h2>Chain of infection &amp; course of disease</h2>
+    <p class="lede">For an infection to spread, six links have to hold. Infection control is the art of breaking any one of them. Tap a link, then break it.</p>
+  </div>
+  <div class="lab">
+    <div class="stage"><div class="scroll"><svg class="wide" id="chainSvg" viewBox="0 0 640 380" role="group" aria-label="Chain of infection"></svg></div></div>
+    <aside class="note" id="chainNote" aria-live="polite"></aside>
+  </div>
+  <h3 class="sub">Isolation precautions</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Precaution</th><th>Spread by</th><th>Examples</th><th>What you wear / do</th></tr></thead>
+    <tbody>
+      <tr><th>Standard</th><td>Everything, every patient</td><td>All care</td><td>Hand hygiene before and after contact; gloves for body fluids; safe sharps</td></tr>
+      <tr><th>Contact</th><td>Touch, fomites</td><td>MRSA, VRE, <i>C. difficile</i>, ESBL/CRE, scabies</td><td>Gown + gloves; dedicated equipment. For <i>C. diff</i>: soap and water (alcohol gel does not kill spores) and bleach cleaning</td></tr>
+      <tr><th>Droplet</th><td>Large droplets (&gt;5 µm) within about 1–2 m</td><td><i>N. meningitidis</i>, pertussis, influenza, mumps, group A strep pneumonia</td><td>Surgical mask within 2 m; patient masked for transport</td></tr>
+      <tr><th>Airborne</th><td>Droplet nuclei (&lt;5 µm) that stay suspended</td><td>Tuberculosis, measles, varicella</td><td>N95 respirator; negative-pressure room with door closed</td></tr>
+    </tbody></table></div>
+  <h3 class="sub">Stages of an infectious disease</h3>
+  <div class="lab">
+    <div class="stage">
+      <div class="scroll"><svg class="wide" id="stageSvg" viewBox="0 0 640 300" role="img" aria-label="Pathogen numbers and symptoms over the course of an infection"></svg></div>
+      <div class="ctrls"><button class="btn primary" id="stPlay">Play</button>
+        <label for="stT" class="stage-cap" style="flex:1;min-width:180px;display:flex;gap:10px;align-items:center">Time <input type="range" id="stT" min="0" max="1" step="0.004" value="0.45"></label></div>
+    </div>
+    <aside class="note" id="stNote" aria-live="polite"></aside>
+  </div>
+</section>
+
+<!-- ================= 1.9 DEFENSE ================= -->
+<section class="mod u1" id="m-defense" data-mod="defense" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 1 · Pathogenic bacteria</p>
+    <h2>How the body fights back</h2>
+    <p class="lede">Most bacteria that land on you never cause disease, because barriers keep them out and phagocytes eat the ones that get in. Here is a neutrophil doing its job, and the tricks bacteria use at each step.</p>
+  </div>
+  <div class="stepper" id="phSteps" style="grid-template-columns:repeat(5,minmax(0,1fr))"></div>
+  <div class="lab">
+    <div class="stage">
+      <div class="scroll"><svg class="wide" id="phSvg" viewBox="0 0 640 280" role="img" aria-label="Phagocytosis animation"></svg></div>
+      <div class="ctrls"><button class="btn primary" id="phPlay">Play</button>
+        <label for="phT" class="stage-cap" style="flex:1;min-width:180px;display:flex;gap:10px;align-items:center">Timeline <input type="range" id="phT" min="0" max="1" step="0.004" value="0.1"></label></div>
+    </div>
+    <aside class="note" id="phNote" aria-live="polite"></aside>
+  </div>
+  <h3 class="sub">Three lines of defense</h3>
+  <div class="cards" id="defCards"></div>
+  <h3 class="sub">From endotoxin to septic shock</h3>
+  <div class="lab">
+    <div class="stage"><div class="scroll"><svg class="wide" id="sepSvg" viewBox="0 0 820 400" role="group" aria-label="Sepsis cascade"></svg></div><p class="stage-cap">Tap any box. Gram-positive bacteria trigger the same cascade through lipoteichoic acid and superantigens.</p></div>
+    <aside class="note" id="sepNote" aria-live="polite"></aside>
+  </div>
+</section>
+
+<!-- ================= 1.10 ANTIBIOTICS ================= -->
+<section class="mod u1" id="m-abx" data-mod="abx" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 1 · Pathogenic bacteria</p>
+    <h2>Antibiotics &amp; resistance</h2>
+    <p class="lede">Every antibiotic exploits a difference between bacterial cells and ours. Tap a target on the cell to see which drugs hit it, then watch how bacteria share the genes that defeat them.</p>
+  </div>
+  <div class="lab">
+    <div class="stage"><div class="scroll"><svg class="wide" id="abxSvg" viewBox="0 0 700 340" role="group" aria-label="Antibiotic targets on a bacterial cell"></svg></div></div>
+    <aside class="note" id="abxNote" aria-live="polite"></aside>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Class</th><th>Target</th><th>Kills or stops?</th><th>Examples</th><th>Remember</th></tr></thead>
+    <tbody id="abxRows"></tbody></table></div>
+  <h3 class="sub">How resistance genes move between bacteria</h3>
+  <div class="stepper" id="gtTabs" style="grid-template-columns:repeat(3,minmax(0,1fr))"></div>
+  <div class="lab">
+    <div class="stage">
+      <div class="scroll"><svg class="wide" id="gtSvg" viewBox="0 0 640 260" role="img" aria-label="Gene transfer animation"></svg></div>
+      <div class="ctrls"><button class="btn primary" id="gtPlay">Play</button>
+        <label for="gtT" class="stage-cap" style="flex:1;min-width:180px;display:flex;gap:10px;align-items:center">Timeline <input type="range" id="gtT" min="0" max="1" step="0.004" value="0.5"></label></div>
+    </div>
+    <aside class="note" id="gtNote" aria-live="polite"></aside>
+  </div>
+  <h3 class="sub">Five ways to defeat a drug</h3>
+  <div class="cards" id="resCards"></div>
+</section>
+
+<!-- ================= 1.11 LAB ID ================= -->
+<section class="mod u1" id="m-labid" data-mod="labid" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 1 · Pathogenic bacteria</p>
+    <h2>Identifying the bug in the lab</h2>
+    <p class="lede">The lab works like a decision tree: Gram stain and shape first, then a handful of quick bench tests. Walk the tree yourself. Each branch is a real test.</p>
+  </div>
+  <div class="note" id="tree" style="gap:16px"></div>
+  <h3 class="sub">Media &amp; bench tests</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Medium or test</th><th>What it does</th><th>Remember</th></tr></thead>
+    <tbody id="mediaRows"></tbody></table></div>
+  <h3 class="sub">Killing bacteria outside the body</h3>
+  <div class="callout prose"><p><b>Sterilization</b> kills everything, spores included. <b>Disinfection</b> kills most pathogens on objects. <b>Antisepsis</b> is disinfection on living skin. <b>-cidal</b> kills; <b>-static</b> only stops growth.</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Method</th><th>How</th><th>Kills spores?</th><th>Used for</th></tr></thead>
+    <tbody id="sterRows"></tbody></table></div>
+</section>
+
+<!-- ================= 2.4 MECHANISMS ================= -->
+<section class="mod u2c" id="m-mech" data-mod="mech" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 2 · Cellular adaptation &amp; injury</p>
+    <h2>Why cells break: the mechanisms</h2>
+    <p class="lede">Whatever the cause, injury runs through a handful of final pathways. ATP depletion is the one to know cold: follow it from a blocked artery to a swollen cell. Tap any box.</p>
+  </div>
+  <div class="lab">
+    <div class="stage"><div class="scroll"><svg class="wide" id="atpSvg" viewBox="0 0 840 360" role="group" aria-label="ATP depletion cascade"></svg></div></div>
+    <aside class="note" id="mechNote" aria-live="polite"></aside>
+  </div>
+  <h3 class="sub">The other pathways</h3>
+  <div class="cards" id="mechCards"></div>
+  <h3 class="sub">Free radicals</h3>
+  <div class="lab">
+    <div class="stage"><div class="scroll"><svg class="wide" id="rosSvg" viewBox="0 0 760 300" role="img" aria-label="Reactive oxygen species: generation and removal"></svg></div></div>
+    <div class="note">
+      <div class="kicker">What radicals do</div>
+      <dl class="kv">
+        <div><dt>Lipid peroxidation</dt><dd>Radicals attack the double bonds in membrane fats and start a chain reaction. Membranes leak.</dd></div>
+        <div><dt>Protein damage</dt><dd>Oxidized side chains and cross-links. Enzymes stop working; misfolded proteins pile up.</dd></div>
+        <div><dt>DNA breaks</dt><dd>Single-strand breaks and base damage. Drives aging and cancer.</dd></div>
+      </dl>
+      <div class="hook"><b>Exam hooks</b>Carbon tetrachloride → CCl₃• in liver → fatty change. Acetaminophen overdose → NAPQI uses up glutathione → liver necrosis (antidote: N-acetylcysteine). Reperfusion injury. Oxygen toxicity in premature babies (retinopathy). Chronic granulomatous disease: too few radicals, so catalase-positive bacteria survive.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2.6 INFARCT ================= -->
+<section class="mod u2c" id="m-infarct" data-mod="infarct" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 2 · Cellular adaptation &amp; injury</p>
+    <h2>A heart attack, hour by hour</h2>
+    <p class="lede">A coronary artery blocks at time zero. Scrub forward from minutes to months and watch the muscle die, get cleaned up and turn to scar. The microscope lags behind the biochemistry by hours; the blood tests sit in between.</p>
+  </div>
+  <div class="timebar" id="miTimes"></div>
+  <div class="mi-grid">
+    <div class="stage">
+      <div class="scroll"><svg class="wide" id="miMicro" viewBox="0 0 560 300" role="img" aria-label="Heart muscle under the microscope"></svg></div>
+      <div class="ctrls"><button class="btn primary" id="miPlay">Play</button>
+        <label for="miT" class="stage-cap" style="flex:1;min-width:200px;display:flex;gap:10px;align-items:center">Time (log scale) <input type="range" id="miT" min="0" max="1" step="0.002" value="0.55"></label></div>
+      <div class="readout" id="miRead"></div>
+    </div>
+    <div class="stage">
+      <svg id="miGross" viewBox="0 0 300 260" role="img" aria-label="Cross-section of the heart" style="max-width:300px;margin:0 auto"></svg>
+      <p class="stage-cap" id="miGrossCap"></p>
+    </div>
+  </div>
+  <div class="lab">
+    <aside class="note" id="miNote" aria-live="polite"></aside>
+    <div class="stage">
+      <svg id="miLab" viewBox="0 0 520 220" role="img" aria-label="Cardiac markers over time"></svg>
+      <p class="stage-cap">Schematic curves. Troponin is the test used today: sensitive, specific to heart muscle, and stays up for a week. CK-MB falls within 2–3 days, so it can catch a second infarct.</p>
+    </div>
+  </div>
+  <h3 class="sub">Infarcts elsewhere</h3>
+  <div class="cards" id="infCards"></div>
+</section>
+
+<!-- ================= 2.8 APOPTOSIS PATHWAYS ================= -->
+<section class="mod u2c" id="m-apop" data-mod="apop" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 2 · Cellular adaptation &amp; injury</p>
+    <h2>Apoptosis: the pathways</h2>
+    <p class="lede">Two routes switch on the caspases, the enzymes that take a cell apart from the inside. One starts at a receptor on the surface, the other inside the mitochondria. Tap any step.</p>
+  </div>
+  <div class="lab">
+    <div class="stage"><div class="scroll"><svg class="wide" id="apSvg" viewBox="0 0 860 520" role="group" aria-label="Apoptosis pathway map"></svg></div></div>
+    <aside class="note" id="apNote" aria-live="polite"></aside>
+  </div>
+  <h3 class="sub">When cells are meant to die</h3>
+  <div class="split2">
+    <div class="note"><div class="kicker">Physiologic</div><h4>Normal housekeeping</h4><dl class="kv">
+      <div><dt>Embryo</dt><dd>Webbing between fingers removed; extra neurons pruned.</dd></div>
+      <div><dt>Hormone withdrawal</dt><dd>Endometrium each cycle; the lactating breast after weaning; prostate after castration.</dd></div>
+      <div><dt>Turnover</dt><dd>Gut lining cells, neutrophils after a few days, lymphocytes once an infection is cleared.</dd></div>
+      <div><dt>Quality control</dt><dd>Self-reactive T and B cells are deleted; cells with unrepairable DNA damage are removed.</dd></div></dl></div>
+    <div class="note"><div class="kicker">Pathologic</div><h4>When the damage is too much</h4><dl class="kv">
+      <div><dt>DNA damage</dt><dd>Radiation, chemotherapy, hypoxia. p53 stops the cycle; if repair fails it orders apoptosis.</dd></div>
+      <div><dt>Misfolded proteins</dt><dd>ER stress. Alzheimer, Parkinson, Huntington.</dd></div>
+      <div><dt>Infection</dt><dd>Cytotoxic T cells kill virus-infected cells (viral hepatitis). HIV depletes CD4 cells.</dd></div>
+      <div><dt>Obstructed ducts</dt><dd>Pancreas, parotid, kidney: atrophy by apoptosis.</dd></div></dl>
+      <div class="hook"><b>Exam hooks</b>Too little apoptosis → cancer (BCL-2 over-expression in follicular lymphoma, t(14;18); p53 loss) and autoimmunity (Fas defects: ALPS). Too much → neurodegeneration, HIV T-cell loss, ischemic injury.</div></div>
+  </div>
+  <h3 class="sub">Other ways a cell can die</h3>
+  <div class="cards" id="odCards"></div>
+</section>
+
+<!-- ================= 2.10 ACCUMULATIONS ================= -->
+<section class="mod u2c" id="m-accum" data-mod="accum" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 2 · Cellular adaptation &amp; injury</p>
+    <h2>Things that pile up inside cells</h2>
+    <p class="lede">A stressed cell can fill with a normal substance it can't clear fast enough, an abnormal product it can't break down, or a pigment. Most of these are reversible; several are the first clue to a disease.</p>
+  </div>
+  <div class="cards" id="accCards"></div>
+  <h3 class="sub">Pathologic calcification</h3>
+  <div class="split2">
+    <div class="note"><div class="kicker">Dystrophic</div><h4>Calcium lands on damaged tissue</h4><p>Blood calcium is <b>normal</b>. Calcium deposits in dead or dying tissue: old necrosis (caseous, fat), atherosclerotic plaques, damaged or aging heart valves (aortic stenosis), dead parasites, and the laminated <b>psammoma bodies</b> of some tumors.</p><div class="hook"><b>PSaMMoma</b>Papillary thyroid carcinoma, Serous ovarian carcinoma, Meningioma, Mesothelioma.</div></div>
+    <div class="note"><div class="kicker">Metastatic</div><h4>Calcium lands on normal tissue</h4><p>Blood calcium is <b>high</b>: hyperparathyroidism, bone destruction (myeloma, metastases, Paget disease), vitamin D excess (sarcoidosis), kidney failure. Deposits form in healthy tissue that loses acid: lungs, kidneys (nephrocalcinosis), stomach lining, blood vessels.</p></div>
+  </div>
+</section>
+
+<!-- ================= 2.11 AGING ================= -->
+<section class="mod u2c" id="m-aging" data-mod="aging" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 2 · Cellular adaptation &amp; injury</p>
+    <h2>How cells age</h2>
+    <p class="lede">A normal body cell can only divide so many times. Every division trims the protective caps on its chromosomes until it stops for good. Drag the divisions slider; then see what stem cells and cancer cells do differently.</p>
+  </div>
+  <div class="modebar" id="telMode"></div>
+  <div class="lab">
+    <div class="stage">
+      <div class="scroll"><svg class="wide tel" id="telSvg" viewBox="0 0 560 250" role="img" aria-label="Telomere shortening with cell divisions"></svg></div>
+      <label for="telD" class="stage-cap" style="display:flex;gap:10px;align-items:center">Cell divisions <input type="range" id="telD" min="0" max="70" step="1" value="20"></label>
+      <div class="readout" id="telRead"></div>
+    </div>
+    <aside class="note" id="telNote" aria-live="polite"></aside>
+  </div>
+  <h3 class="sub">The hallmarks of aging</h3>
+  <div class="cards" id="ageCards"></div>
 </section>
 
 </main>
@@ -821,14 +1105,24 @@ const MODS=[
  {id:'shapes',t:'Shapes & arrangements',g:1,n:'1.3',d:'Clusters, chains, commas and corkscrews.'},
  {id:'growth',t:'Growth curve',g:1,n:'1.4',d:'Lag, log, stationary, death, played out hour by hour.'},
  {id:'oxygen',t:'Oxygen needs',g:1,n:'1.5',d:'Five test tubes, five ways to handle oxygen.'},
- {id:'virulence',t:'Virulence & toxins',g:1,n:'1.6',d:'Stick, invade, evade, damage. Plus a toxin field guide.'},
- {id:'gallery',t:"Rogues' gallery",g:1,n:'1.7',d:'16 pathogens and their signature weapons.'},
+ {id:'flora',t:'Normal flora & vocabulary',g:1,n:'1.6',d:'A body map of who lives where, and the words of infection.'},
+ {id:'chain',t:'Chain of infection',g:1,n:'1.7',d:'Six links to break, isolation precautions, and the stages of a disease.'},
+ {id:'virulence',t:'Virulence & toxins',g:1,n:'1.8',d:'Stick, invade, evade, damage. Plus a toxin field guide.'},
+ {id:'defense',t:'Host defenses & sepsis',g:1,n:'1.9',d:'Watch a neutrophil eat a bacterium, and follow endotoxin to septic shock.'},
+ {id:'abx',t:'Antibiotics & resistance',g:1,n:'1.10',d:'Drug targets on the cell, and how resistance genes travel.'},
+ {id:'labid',t:'Lab identification',g:1,n:'1.11',d:'Walk the decision tree from Gram stain to species.'},
+ {id:'gallery',t:"Rogues' gallery",g:1,n:'1.12',d:'46 pathogens, searchable, with their signature weapons.'},
  {id:'spectrum',t:'The big picture',g:2,n:'2.1',d:'Normal → adapted → injured → dead.'},
  {id:'adapt',t:'Adaptation lab',g:2,n:'2.2',d:'Morph tissue through hypertrophy, hyperplasia, atrophy, metaplasia.'},
  {id:'goodbad',t:'Good vs bad adaptation',g:2,n:'2.3',d:'Breastfeeding vs too much estrogen: the same change, healthy or harmful.'},
- {id:'injury',t:'Cell injury slider',g:2,n:'2.4',d:'Drag a cell past the point of no return.'},
- {id:'death',t:'Necrosis vs apoptosis',g:2,n:'2.5',d:'Two ways to die, animated side by side.'},
- {id:'patterns',t:'Patterns of necrosis',g:2,n:'2.6',d:'Coagulative, liquefactive, caseous and more.'},
+ {id:'mech',t:'Mechanisms of injury',g:2,n:'2.4',d:'The ATP-depletion cascade, calcium, membranes and free radicals.'},
+ {id:'injury',t:'Cell injury slider',g:2,n:'2.5',d:'Drag a cell past the point of no return.'},
+ {id:'infarct',t:'A heart attack, hour by hour',g:2,n:'2.6',d:'Microscope, gross specimen and blood tests from minutes to months.'},
+ {id:'death',t:'Necrosis vs apoptosis',g:2,n:'2.7',d:'Two ways to die, animated side by side.'},
+ {id:'apop',t:'Apoptosis pathways',g:2,n:'2.8',d:'Extrinsic, intrinsic, caspases, and the other ways a cell can die.'},
+ {id:'patterns',t:'Patterns of necrosis',g:2,n:'2.9',d:'Coagulative, liquefactive, caseous and more.'},
+ {id:'accum',t:'Accumulations & pigments',g:2,n:'2.10',d:'Fat, protein, glycogen, lipofuscin, hemosiderin, and calcification.'},
+ {id:'aging',t:'Cellular aging',g:2,n:'2.11',d:'Telomeres, senescence and the hallmarks of aging.'},
  {id:'bridge',t:'Where bacteria meet cells',g:3,n:'↔'},
  {id:'review',t:'Flashcards & mnemonics',g:4,n:'R1'},
  {id:'quiz',t:'Quiz',g:4,n:'R2'},
@@ -1165,11 +1459,45 @@ const BUGS=[
  {n:'Neisseria meningitidis',c:'neg',s:'bean',o:'Aerobe',dz:'Meningitis, meningococcemia with a petechial rash.',w:'Polysaccharide capsule, very potent endotoxin (LOS), IgA protease, pili.',h:'Outbreaks in dorms and barracks. Vaccine available. Waterhouse–Friderichsen syndrome = adrenal hemorrhage.',p:'DIC; hemorrhagic necrosis of the adrenals',go:'bridge'},
  {n:'Helicobacter pylori',c:'neg',s:'spiral',o:'Microaerophile',dz:'Chronic gastritis, peptic ulcers, gastric adenocarcinoma, MALT lymphoma.',w:'Urease (makes ammonia to neutralize acid), flagella, CagA.',h:'Urea breath test. Treated with antibiotics plus an acid blocker.',p:'Chronic gastritis → intestinal metaplasia → dysplasia',go:'adapt'},
  {n:'Vibrio cholerae',c:'neg',s:'comma',o:'Facultative',dz:'Cholera: massive watery "rice-water" diarrhea and dehydration.',w:'Cholera toxin raises cAMP in gut cells.',h:'Spread by contaminated water. Treatment is oral rehydration.',p:'Cells survive: function is hijacked, structure is spared',go:'bridge'},
- {n:'Treponema pallidum',c:'oth',s:'spirochete',o:'Microaerophile',dz:'Syphilis: painless chancre → rash on palms and soles → gummas, aortitis, neurosyphilis. Also congenital.',w:'Few surface proteins for antibodies to find; corkscrew motility.',h:'Too thin for Gram stain: darkfield microscopy. Screen with RPR/VDRL, confirm with FTA-ABS. Penicillin still works.',p:'Gummas (granulomas with necrosis); endarteritis',go:'patterns'}
+ {n:'Treponema pallidum',c:'oth',s:'spirochete',o:'Microaerophile',dz:'Syphilis: painless chancre → rash on palms and soles → gummas, aortitis, neurosyphilis. Also congenital.',w:'Few surface proteins for antibodies to find; corkscrew motility.',h:'Too thin for Gram stain: darkfield microscopy. Screen with RPR/VDRL, confirm with FTA-ABS. Penicillin still works.',p:'Gummas (granulomas with necrosis); endarteritis',go:'patterns'},
+ {n:'Staphylococcus epidermidis',c:'pos',s:'clusters',o:'Facultative',dz:'Infections of catheters, prosthetic joints, heart valves and shunts.',w:'Biofilm (slime) on plastic and metal.',h:'Coagulase −, novobiocin sensitive. The most common blood-culture contaminant: one bottle = skin; two bottles with a line = infection.',p:'Biofilm shields it; the device has to come out',go:'defense'},
+ {n:'Staphylococcus saprophyticus',c:'pos',s:'clusters',o:'Facultative',dz:'Cystitis in young, sexually active women.',w:'Adhesins for bladder lining.',h:'Coagulase −, novobiocin resistant. Second most common cause of uncomplicated UTI after <i>E. coli</i>.',p:'Bladder inflammation',go:'flora'},
+ {n:'Streptococcus agalactiae',sub:'Group B strep',c:'pos',s:'chains',o:'Facultative',dz:'Neonatal sepsis, pneumonia and meningitis; UTI and sepsis in pregnancy; infections in diabetics.',w:'Polysaccharide capsule.',h:'β-hemolytic, bacitracin resistant, CAMP test +, hippurate +. Screen at 36–37 weeks; penicillin during labor.',p:'Neonatal meningitis',go:'flora'},
+ {n:'Viridans streptococci',sub:'S. mutans, S. sanguinis, S. anginosus',c:'pos',s:'chains',o:'Facultative',dz:'Dental caries (<i>mutans</i>), subacute endocarditis on damaged valves (<i>sanguinis</i>), abscesses (<i>anginosus</i>).',w:'Dextrans that glue them to teeth and fibrin on valves.',h:'α-hemolytic, optochin resistant, bile insoluble. Normal mouth flora that enters blood after dental work.',p:'Vegetations on heart valves',go:'flora'},
+ {n:'Enterococcus faecalis / faecium',c:'pos',s:'chains',o:'Facultative',dz:'UTI, endocarditis, biliary and abdominal infections, hospital bacteremia.',w:'Intrinsic resistance to many drugs; VRE.',h:'γ-hemolytic, grows in bile and 6.5% NaCl, PYR +. <i>faecium</i> is the resistant one. Vancomycin resistance via vanA (D-Ala-D-Lac).',p:'Hospital-acquired, hard to treat',go:'abx'},
+ {n:'Streptococcus gallolyticus (bovis)',c:'pos',s:'chains',o:'Facultative',dz:'Bacteremia and endocarditis.',w:'Enters through a damaged colon wall.',h:'Group D, bile esculin +, no growth in 6.5% NaCl. <i>S. bovis</i> in the blood → colonoscopy for colon cancer.',p:'Marker of colon cancer',go:'flora'},
+ {n:'Corynebacterium diphtheriae',c:'pos',s:'shortrods',o:'Aerobe',dz:'Diphtheria: gray pseudomembrane in the throat, bull neck, myocarditis, nerve palsies.',w:'Diphtheria toxin (inactivates EF-2), carried by a bacteriophage.',h:'Club-shaped rods in "Chinese letters", metachromatic granules; tellurite agar; Elek test. Prevented by the toxoid in DTaP.',p:'Toxin kills throat lining and heart muscle',go:'virulence'},
+ {n:'Clostridium botulinum',c:'pos',s:'sporerod',o:'Obligate anaerobe',dz:'Botulism: descending flaccid paralysis, dilated pupils, dry mouth; "floppy baby".',w:'Botulinum toxin blocks acetylcholine release.',h:'Adults eat preformed toxin (home-canned food); infants eat spores (honey). Toxin is heat-labile.',p:'No tissue damage: a pure toxemia',go:'virulence'},
+ {n:'Nocardia',c:'pos',s:'acidfast',o:'Obligate aerobe',dz:'Pneumonia and brain abscess in the immunosuppressed; skin infection after soil injury.',w:'Survives inside phagocytes.',h:'Branching Gram-positive filaments, weakly acid-fast, aerobic. Treat with sulfonamides (TMP-SMX).',p:'Abscesses',go:'labid'},
+ {n:'Actinomyces israelii',c:'pos',s:'spiral',o:'Anaerobe',dz:'Slowly growing jaw abscess with draining sinus tracts after dental work; pelvic infection with IUDs.',w:'Normal mouth flora that gets into tissue.',h:'Branching filaments, anaerobic, not acid-fast, yellow "sulfur granules" in the pus. Penicillin for months.',p:'Chronic abscess with sinus tracts',go:'patterns'},
+ {n:'Mycobacterium leprae',c:'oth',s:'acidfast',o:'Obligate aerobe',dz:'Leprosy: skin patches with lost sensation, thickened nerves, deformities.',w:'Grows in cool places (skin, nose, nerves of hands and feet); hides in macrophages and Schwann cells.',h:'Cannot be cultured; armadillos carry it. Tuberculoid (strong T-cell response, few bacilli) vs lepromatous (weak response, many). Dapsone + rifampin.',p:'Granulomas in nerves',go:'patterns'},
+ {n:'Klebsiella pneumoniae',c:'neg',s:'rods',o:'Facultative',dz:'Aspiration pneumonia in alcoholics and diabetics ("currant-jelly" sputum), UTI, liver abscess, hospital sepsis.',w:'Thick mucoid capsule; ESBL and carbapenemase plasmids.',h:'Lactose +, very mucoid colonies, urease +, non-motile. The K in "lactose is KEE". A leading CRE.',p:'Lung abscess and cavitation',go:'abx'},
+ {n:'Proteus mirabilis',c:'neg',s:'rods',o:'Facultative',dz:'UTI, especially with catheters; kidney stones.',w:'Urease turns urea to ammonia → alkaline urine → struvite (staghorn) stones; swarming motility.',h:'Swarms across the agar plate, H₂S +, lactose −, fishy smell.',p:'Stones that harbor bacteria',go:'flora'},
+ {n:'Shigella',c:'neg',s:'rods',o:'Facultative',dz:'Bacillary dysentery: bloody mucoid diarrhea with fever and cramps, mostly in children and daycare.',w:'Invades M cells of the colon and spreads cell to cell; Shiga toxin.',h:'Tiny infectious dose (~10 cells), person-to-person. Non-motile, no H₂S, no lactose. <i>S. dysenteriae</i> can cause HUS.',p:'Colonic ulcers',go:'virulence'},
+ {n:'Yersinia',sub:'Y. pestis, Y. enterocolitica',c:'neg',s:'cocco',o:'Facultative',dz:'<i>pestis</i>: plague (bubonic, pneumonic). <i>enterocolitica</i>: diarrhea and mesenteric adenitis that mimics appendicitis.',w:'Injected Yop proteins paralyze phagocytes; antiphagocytic capsule.',h:'Bipolar "safety-pin" staining. Plague: fleas on rodents, prairie dogs in the US. <i>enterocolitica</i>: pork, puppy feces, grows in the cold.',p:'Hemorrhagic buboes, necrotizing pneumonia',go:'chain'},
+ {n:'Campylobacter jejuni',c:'neg',s:'spiral',o:'Microaerophile',dz:'The most common bacterial diarrhea: bloody, with fever and cramps.',w:'Invasion and a cholera-like toxin.',h:'Curved "seagull" rods, oxidase +, grows at 42 °C. Undercooked poultry, unpasteurized milk, puppies. Followed by Guillain–Barré or reactive arthritis.',p:'Colitis',go:'labid'},
+ {n:'Haemophilus influenzae',c:'neg',s:'cocco',o:'Facultative',dz:'Type b: epiglottitis, meningitis, sepsis (now rare with vaccine). Non-typeable strains: otitis media, sinusitis, COPD flares, pneumonia.',w:'Type b polysaccharide capsule (polyribitol phosphate), IgA protease.',h:'Needs factors X and V: chocolate agar, or satellites around <i>S. aureus</i> on blood agar. Hib vaccine. Rifampin for close contacts.',p:'Epiglottitis: cherry-red swollen epiglottis',go:'defense'},
+ {n:'Bordetella pertussis',c:'neg',s:'cocco',o:'Obligate aerobe',dz:'Whooping cough: catarrhal → paroxysmal (whoops, vomiting) → convalescent. Deadly in infants.',w:'Pertussis toxin (Gi off → cAMP ↑ → lymphocytosis), adenylate cyclase toxin, tracheal cytotoxin kills ciliated cells.',h:'Bordet–Gengou or Regan–Lowe agar; PCR. Marked lymphocytosis. Macrolides shorten spread. DTaP and Tdap in pregnancy.',p:'Ciliated cells destroyed',go:'virulence'},
+ {n:'Legionella pneumophila',c:'neg',s:'rods',o:'Obligate aerobe',dz:'Legionnaires\' disease: severe pneumonia with diarrhea, confusion and low sodium. Pontiac fever: mild flu.',w:'Lives inside amoebae in water, and inside alveolar macrophages.',h:'Stains poorly (silver stain), needs charcoal yeast agar with iron and cysteine; urine antigen. Cooling towers, hot tubs, hospital water. Macrolides or quinolones. Not spread person to person.',p:'Macrophages full of bacteria',go:'chain'},
+ {n:'Neisseria gonorrhoeae',c:'neg',s:'bean',o:'Aerobe',dz:'Urethritis, cervicitis, PID (infertility, ectopic pregnancy), septic arthritis, neonatal conjunctivitis.',w:'Pili that keep changing (antigenic variation), IgA protease, no capsule.',h:'Gram-negative diplococci inside neutrophils. Maltose −. No vaccine because of pilus variation. Ceftriaxone, plus treat for <i>Chlamydia</i>.',p:'Purulent urethritis; tubal scarring',go:'defense'},
+ {n:'Bacteroides fragilis',c:'neg',s:'rods',o:'Obligate anaerobe',dz:'Abdominal and pelvic abscesses after perforation or surgery; aspiration pneumonia (with others).',w:'Capsule that provokes abscess formation; β-lactamase.',h:'The dominant gut anaerobe. Foul-smelling pus. Metronidazole, piperacillin-tazobactam or carbapenems; resistant to aminoglycosides.',p:'Liquefactive necrosis → abscess',go:'patterns'},
+ {n:'Borrelia burgdorferi',c:'oth',s:'spirochete',o:'Microaerophile',dz:'Lyme disease: erythema migrans (bull\'s-eye rash) → facial palsy, heart block, meningitis → arthritis of large joints.',w:'Changes surface proteins; evades complement.',h:'<i>Ixodes</i> tick (also carries <i>Babesia</i> and <i>Anaplasma</i>), northeastern US, needs 36–48 h of attachment. Serology. Doxycycline.',p:'Chronic arthritis',go:'chain'},
+ {n:'Leptospira interrogans',c:'oth',s:'spirochete',o:'Obligate aerobe',dz:'Leptospirosis: fever, muscle pain, red eyes without pus; Weil disease: jaundice, kidney failure, bleeding.',w:'Motile spirochete that penetrates skin and mucosa.',h:'Animal urine in water: surfers, triathletes, sewer workers, floods in the tropics. Question-mark-shaped ends. Doxycycline or penicillin.',p:'Vasculitis, liver and kidney injury',go:'chain'},
+ {n:'Rickettsia rickettsii',c:'oth',s:'cocco',o:'Obligate intracellular',dz:'Rocky Mountain spotted fever: fever, headache, rash starting on wrists and ankles (palms and soles) then moving inward.',w:'Grows inside endothelial cells → vasculitis.',h:'<i>Dermacentor</i> tick, south-eastern US. Can\'t make its own ATP, so it needs a host cell. Serology; treat with doxycycline immediately, even in children.',p:'Endothelial injury → petechiae, DIC',go:'defense'},
+ {n:'Chlamydia trachomatis',c:'oth',s:'cocco',o:'Obligate intracellular',dz:'The most common bacterial STI: urethritis, cervicitis, PID; neonatal conjunctivitis and pneumonia; trachoma (blindness); lymphogranuloma venereum.',w:'Two-stage life cycle: infectious elementary body → replicating reticulate body inside a vacuole.',h:'No peptidoglycan, so β-lactams fail: azithromycin or doxycycline. NAAT on urine. Often silent in women. Reactive arthritis.',p:'Scarring of fallopian tubes or cornea',go:'flora'},
+ {n:'Mycoplasma pneumoniae',c:'oth',s:'cocco',o:'Facultative',dz:'"Walking" (atypical) pneumonia in teens and young adults, military recruits, dorms; dry cough, chest X-ray looks worse than the patient.',w:'Attaches to ciliated cells; makes H₂O₂.',h:'No cell wall: no Gram stain, no β-lactams. The only bacterium with cholesterol in its membrane. Cold agglutinins (IgM). Macrolides or doxycycline.',p:'Bronchial lining damage',go:'anatomy'},
+ {n:'Brucella',c:'neg',s:'cocco',o:'Obligate aerobe',dz:'Brucellosis: undulating fever, night sweats, joint pain, enlarged liver and spleen; can last months.',w:'Survives inside macrophages and travels to lymph nodes, liver, spleen, bone.',h:'Unpasteurized dairy, farmers and vets, slaughterhouses. Warn the lab (dangerous to culture). Doxycycline + rifampin.',p:'Granulomas',go:'chain'},
+ {n:'Francisella tularensis',c:'neg',s:'cocco',o:'Obligate aerobe',dz:'Tularemia: skin ulcer plus swollen lymph nodes; pneumonia if inhaled.',w:'Extremely infectious (≈10 organisms); survives in macrophages.',h:'Rabbits, ticks, deer flies; hunters, lawn-mowing over a carcass. Bioterrorism agent. Streptomycin.',p:'Granulomas with necrosis',go:'chain'},
+ {n:'Pasteurella multocida',c:'neg',s:'cocco',o:'Facultative',dz:'Rapidly spreading cellulitis within 24 h of a cat or dog bite; bone and joint infection.',w:'Capsule, endotoxin.',h:'Normal mouth flora of cats and dogs. Amoxicillin-clavulanate; clean the wound, don\'t close it.',p:'Cellulitis, osteomyelitis',go:'flora'},
+ {n:'Gardnerella vaginalis',c:'oth',s:'shortrods',o:'Facultative anaerobe',dz:'Bacterial vaginosis: thin gray discharge with a fishy smell, no inflammation.',w:'Overgrows when lactobacilli are lost; forms a biofilm on vaginal cells.',h:'Gram-variable rods. Clue cells (epithelial cells coated with bacteria), pH > 4.5, positive whiff test with KOH. Metronidazole. Not an STI, but linked to sexual activity.',p:'Dysbiosis, not invasion',go:'flora'}
 ];
 inits.gallery=()=>{
-  const F=[['all','All 16'],['pos','Gram-positive'],['neg','Gram-negative'],['oth','Acid-fast & spirochete']];
-  $('#galFilter').innerHTML=F.map(([k,l],i)=>`<button class="btn" data-gf="${k}" aria-pressed="${i===0}">${l}</button>`).join('');
+  const F=[['all','All '+BUGS.length],['pos','Gram-positive'],['neg','Gram-negative'],['oth','Other stains']];
+  $('#galFilter').innerHTML=F.map(([k,l],i)=>`<button class="btn" data-gf="${k}" aria-pressed="${i===0}">${l}</button>`).join('')+`<input class="search" id="galQ" type="search" placeholder="Search: bug, disease, test, toxin…" aria-label="Search the gallery">`;
+  function applyFilter(){const gf=$('[data-gf][aria-pressed="true"]').dataset.gf,q=$('#galQ').value.trim().toLowerCase();let n=0;
+    $$('#galCards .card').forEach(c=>{const ok=(gf==='all'||c.dataset.c===gf)&&(!q||c.textContent.toLowerCase().includes(q));c.hidden=!ok;if(ok)n++});
+    let e=$('#galEmpty');if(!e){e=document.createElement('p');e.id='galEmpty';e.className='lede';e.style.fontSize='16px';$('#galCards').after(e)}e.textContent=n?'':'No match. Try another word.'}
+  $('#galQ').addEventListener('input',applyFilter);
   $('#galCards').innerHTML=BUGS.map(b=>`<article class="card" data-c="${b.c}"><div class="mini">${morph(b.s,b.c)}</div>
     <div><h4><i>${b.n}</i></h4>${b.sub?`<p style="color:var(--muted)">${b.sub}</p>`:''}</div>
     <div class="chips"><span class="tag ${GL[b.c][1]}">${b.c==='oth'?(b.s==='acidfast'?'Acid-fast':'Spirochete'):GL[b.c][0]}</span><span class="tag">${b.o}</span></div>
@@ -1177,8 +1505,7 @@ inits.gallery=()=>{
     <div class="hook"><b>Exam hook</b>${b.h}</div>
     <p><span class="lbl">What it does to cells</span><button class="btn ghost" style="padding:6px 10px;margin-top:4px;text-align:left" data-go="${b.go}">${b.p} →</button></p></article>`).join('');
   $('#galFilter').addEventListener('click',e=>{const b=e.target.closest('[data-gf]');if(!b)return;
-    $$('[data-gf]').forEach(x=>x.setAttribute('aria-pressed',x===b));
-    $$('#galCards .card').forEach(c=>c.hidden=!(b.dataset.gf==='all'||c.dataset.c===b.dataset.gf))});
+    $$('[data-gf]').forEach(x=>x.setAttribute('aria-pressed',x===b));applyFilter()});
 };
 
 /* =============== 2.1 spectrum =============== */
@@ -1613,7 +1940,48 @@ const FC=[
  [2,'Caseous necrosis','Cheese-like necrosis inside granulomas. Classic for tuberculosis.'],
  [2,'Fat necrosis','Acute pancreatitis: lipases release fatty acids that bind calcium (saponification), leaving chalky white spots.'],
  [2,'Three key features of apoptosis','The cell shrinks, the membrane stays intact, and there is no inflammation. Run by caspases.'],
- [2,'Dystrophic vs metastatic calcification','Dystrophic: damaged tissue, normal blood calcium. Metastatic: normal tissue, high blood calcium.']
+ [2,'Dystrophic vs metastatic calcification','Dystrophic: damaged tissue, normal blood calcium. Metastatic: normal tissue, high blood calcium.'],
+ [1,'Colonization vs infection vs disease','Colonization: present without harm. Infection: multiplying and invading with a host response. Disease: signs and symptoms.'],
+ [1,'What is an opportunistic pathogen?','One that causes disease only when defenses are down or it reaches a sterile site: E. coli in the bladder, Pseudomonas in a burn, S. epidermidis on a catheter.'],
+ [1,'Where does most of the body\'s bacterial population live, and who dominates?','The colon. Anaerobes (Bacteroides) outnumber aerobes about 1000:1.'],
+ [1,'Six links in the chain of infection','Infectious agent → reservoir → portal of exit → mode of transmission → portal of entry → susceptible host.'],
+ [1,'Airborne vs droplet precautions','Droplet: large drops within ~2 m, surgical mask (meningococcus, pertussis, flu). Airborne: tiny droplet nuclei that drift, N95 + negative-pressure room (TB, measles, varicella).'],
+ [1,'Stages of an infectious disease, in order','Incubation → prodrome → illness (acme) → decline → convalescence.'],
+ [1,'The respiratory burst, step by step','NADPH oxidase → superoxide O₂•⁻ → (SOD) H₂O₂ → (myeloperoxidase + Cl⁻) HOCl, bleach.'],
+ [1,'Which infections does chronic granulomatous disease cause, and why?','Catalase-positive organisms (S. aureus, Serratia, Nocardia, Burkholderia, Aspergillus): no NADPH oxidase, so the phagocyte relies on the bacteria\'s own H₂O₂, which catalase destroys.'],
+ [1,'Name the two opsonins','IgG (via Fc receptors) and complement C3b (via CR1).'],
+ [1,'Endotoxin → shock: name the three key cytokines','TNF, IL-1, IL-6 from macrophages via TLR4. They cause fever, vasodilation, capillary leak and DIC.'],
+ [1,'Drugs that act on the 30S vs the 50S ribosome','30S: aminoglycosides, tetracyclines ("buy AT 30"). 50S: chloramphenicol, clindamycin, erythromycin/macrolides, linezolid ("CCEL at 50").'],
+ [1,'How does MRSA resist β-lactams?','The mecA gene encodes PBP2a, an altered penicillin-binding protein that β-lactams can\'t bind. Not a β-lactamase.'],
+ [1,'How does VRE resist vancomycin?','vanA changes the cell-wall precursor from D-Ala-D-Ala to D-Ala-D-Lac, so vancomycin has nothing to bind.'],
+ [1,'Transformation, transduction, conjugation','Transformation: naked DNA from a dead cell. Transduction: a bacteriophage carries it. Conjugation: a plasmid crosses a sex pilus. Conjugation spreads most resistance.'],
+ [1,'Toxins encoded by bacteriophages ("ABCD\'S")','Shiga-like toxin (EHEC), Botulinum, Cholera, Diphtheria, erythrogenic toxin of Strep pyogenes (Scarlet fever).'],
+ [1,'Catalase + and coagulase +','Staphylococcus aureus.'],
+ [1,'α-hemolytic, optochin sensitive, bile soluble','Streptococcus pneumoniae. (Optochin resistant = viridans.)'],
+ [1,'β-hemolytic, bacitracin sensitive','Streptococcus pyogenes (group A). Bacitracin resistant = group B (S. agalactiae, CAMP +).'],
+ [1,'Pink on MacConkey agar','Lactose fermenters: Klebsiella, E. coli, Enterobacter ("KEE"); Citrobacter and Serratia slowly.'],
+ [1,'Oxidase-positive Gram-negative rod with blue-green pigment','Pseudomonas aeruginosa.'],
+ [1,'Which sterilization methods kill spores?','Autoclave, dry heat, ethylene oxide, gamma radiation, hydrogen peroxide plasma, bleach at high concentration, glutaraldehyde with long exposure. Not alcohol, pasteurization, boiling, chlorhexidine.'],
+ [1,'Why is 70% alcohol better than 100%?','Proteins need water to denature; pure alcohol dehydrates the outside of the cell and stops penetrating.'],
+ [2,'The four consequences of ATP depletion','Na⁺/K⁺ pump fails (swelling); anaerobic glycolysis (lactate, low pH, clumped chromatin); Ca²⁺ pump fails (enzymes activated); ribosomes detach (less protein, fatty change).'],
+ [2,'What does rising cytosolic calcium activate?','Phospholipases, proteases, endonucleases and ATPases, plus the mitochondrial permeability transition pore and caspases.'],
+ [2,'Three enzymes that remove free radicals','Superoxide dismutase (O₂•⁻ → H₂O₂), catalase (H₂O₂ → H₂O, in peroxisomes), glutathione peroxidase (H₂O₂ → H₂O).'],
+ [2,'Four types of hypoxia','Hypoxic (low PO₂), anemic (low Hb or CO), ischemic (low blood flow, the worst), histotoxic (cyanide blocks cytochrome oxidase).'],
+ [2,'What is ischemia–reperfusion injury?','Restoring blood flow adds damage: a burst of free radicals, calcium overload, complement and neutrophils. Seen after reperfused MI, stroke and transplants.'],
+ [2,'MI: when do neutrophils, macrophages and granulation tissue appear?','Neutrophils 1–3 days; macrophages 3–7 days; granulation tissue 7–14 days; scar from 2 weeks, complete by about 2 months.'],
+ [2,'MI: when is rupture most likely, and why?','Days 3–7: macrophages have digested the dead muscle and the wall is softest. Free wall → tamponade, septum → VSD, papillary muscle → mitral regurgitation.'],
+ [2,'Troponin vs CK-MB timing','Troponin rises at 3–4 h, peaks ~24 h, stays up 7–10 days. CK-MB rises 4–6 h, peaks 24 h, normal by 48–72 h, so it can detect reinfarction.'],
+ [2,'Red vs white infarcts','White: solid organs with one arterial supply (heart, kidney, spleen). Red: venous occlusion, loose tissue (lung), dual supply (lung, liver, bowel), or reperfusion.'],
+ [2,'Extrinsic vs intrinsic apoptosis: the initiator caspases','Extrinsic: Fas/TNFR → FADD → caspase-8. Intrinsic: cytochrome c + APAF-1 → caspase-9. Both → caspase-3.'],
+ [2,'What do BCL-2 and BAX do?','BCL-2 (with BCL-XL) guards the mitochondrial membrane and prevents apoptosis. BAX and BAK form the pores that release cytochrome c. BH3-only proteins tip the balance.'],
+ [2,'Which lymphoma over-expresses BCL-2, and by what mechanism?','Follicular lymphoma: t(14;18) puts BCL-2 next to the immunoglobulin heavy-chain promoter. Cells refuse to die.'],
+ [2,'Necroptosis vs pyroptosis','Necroptosis: RIPK1/RIPK3 → MLKL pores, caspase-independent programmed necrosis. Pyroptosis: inflammasome → caspase-1 → IL-1β, gasdermin pores; death of infected cells with fever.'],
+ [2,'Mallory–Denk bodies, Russell bodies, reabsorption droplets','All protein accumulations: keratin filaments in alcoholic hepatitis; immunoglobulin in plasma cells; filtered protein in kidney tubules with proteinuria.'],
+ [2,'Lipofuscin vs hemosiderin vs melanin','Lipofuscin: yellow-brown wear-and-tear pigment from lipid peroxidation. Hemosiderin: golden-brown iron, Prussian blue +. Melanin: brown-black, from tyrosine.'],
+ [2,'Hemosiderosis vs hemochromatosis','Hemosiderosis: iron deposited without organ damage (transfusions, hemolysis). Hemochromatosis: iron with damage (HFE gene): bronze skin, diabetes, cirrhosis, cardiomyopathy.'],
+ [2,'The Hayflick limit','About 50 divisions for a normal body cell. Telomeres shorten with each division; when critically short, p53 and p16 trigger replicative senescence.'],
+ [2,'Which cells have active telomerase?','Stem cells, germ cells, and about 90% of cancers (reactivated). Most adult somatic cells have it switched off.'],
+ [2,'Progeria syndromes','Werner syndrome: defective DNA helicase. Hutchinson–Gilford: abnormal lamin A. Both look like accelerated aging.']
 ];
 const MN=[
  ['Purple = Positive','Gram-positive stays purple. Both start with P.'],
@@ -1625,7 +1993,18 @@ const MN=[
  ['Shrink, shatter, fade','Pyknosis → karyorrhexis → karyolysis.'],
  ['The brain goes liquid','Ischemia causes coagulative necrosis everywhere except the brain, which liquefies.'],
  ['Caseous = cheese = TB','From the Latin <i>caseus</i>, cheese.'],
- ['Explosion vs implosion','Necrosis bursts and inflames. Apoptosis shrinks quietly and gets eaten.']
+ ['Explosion vs implosion','Necrosis bursts and inflames. Apoptosis shrinks quietly and gets eaten.'],
+ ['Buy AT 30, CCEL at 50','30S: Aminoglycosides, Tetracyclines. 50S: Chloramphenicol, Clindamycin, Erythromycin (macrolides), Linezolid.'],
+ ['ABCD\'S','Toxins carried by bacteriophages: shig<b>A</b>-like, <b>B</b>otulinum, <b>C</b>holera, <b>D</b>iphtheria, <b>S</b>carlet fever (erythrogenic) toxin.'],
+ ['Lactose is KEE','Fast lactose fermenters on MacConkey: <i>Klebsiella, E. coli, Enterobacter</i>. (Citrobacter and Serratia are slow.)'],
+ ['Cats Need PLACESS','Catalase-positive organisms that cause trouble in chronic granulomatous disease: <i>Nocardia, Pseudomonas, Listeria, Aspergillus, Candida, E. coli, Staph aureus, Serratia</i>.'],
+ ['RIPE','First-line TB drugs: <b>R</b>ifampin, <b>I</b>soniazid, <b>P</b>yrazinamide, <b>E</b>thambutol. Two months of four, then four months of two.'],
+ ['Hot T-Bone stEAK','Interleukins: IL-1 = <b>hot</b> (fever), IL-2 = <b>T</b> cells, IL-3 = <b>bone</b> marrow, IL-4 = Ig<b>E</b>, IL-5 = Ig<b>A</b>, IL-6 = a<b>K</b>ute-phase proteins.'],
+ ['BCL-2 = Be Cool, Live 2','BCL-2 keeps the cell alive by holding BAX and BAK off the mitochondria. Too much BCL-2 → follicular lymphoma.'],
+ ['Red = loose, dual, venous, reperfused','Red (hemorrhagic) infarcts happen in loose tissue (lung), organs with dual supply (lung, liver, bowel), venous occlusion (torsion), and after reperfusion.'],
+ ['3-to-7 is when hearts break','Myocardial rupture peaks at days 3–7, when macrophages have softened the wall and the scar hasn\'t formed.'],
+ ['PSaMMoma','Tumors with psammoma bodies: <b>P</b>apillary thyroid, <b>S</b>erous ovarian, <b>M</b>eningioma, <b>M</b>esothelioma.'],
+ ['Hypoxia: HAIH','Types of hypoxia: <b>H</b>ypoxic, <b>A</b>nemic, <b>I</b>schemic, <b>H</b>istotoxic.']
 ];
 inits.review=()=>{
   let filt='all',deck=[],i=0;
@@ -1676,14 +2055,51 @@ const QZ=[
  [2,'A nucleus that shrinks and turns dark is showing:',['Karyolysis','Karyorrhexis','Pyknosis','Mitosis'],2,'Pyknosis comes first, then karyorrhexis (fragmenting), then karyolysis (fading).'],
  [2,'Unopposed estrogen thickens the endometrium with crowded glands. This is:',['Physiologic hypertrophy','Pathologic hyperplasia','Metaplasia','Atrophy'],1,'Too much hormone stimulation → more cells. Endometrial hyperplasia raises cancer risk.'],
  [2,'Disordered growth with large, dark nuclei that can precede cancer is:',['Metaplasia','Dysplasia','Hypertrophy','Apoptosis'],1,'Dysplasia is not an adaptation. Full-thickness dysplasia = carcinoma in situ.'],
- [2,'Atrophy happens mainly through:',['Cell swelling','More protein breakdown (ubiquitin–proteasome) and autophagy','Stem cell reprogramming','Increased mitosis'],1,'The cell makes less protein and breaks down more, shrinking in size.']
+ [2,'Atrophy happens mainly through:',['Cell swelling','More protein breakdown (ubiquitin–proteasome) and autophagy','Stem cell reprogramming','Increased mitosis'],1,'The cell makes less protein and breaks down more, shrinking in size.'],
+ [1,'A healthy nurse\'s throat swab grows Neisseria meningitidis. She has no symptoms. This is:',['Meningitis','Colonization','Sepsis','A laboratory error'],1,'Present without harm = colonization. Many people carry meningococcus in the nasopharynx; disease needs invasion into blood and meninges.'],
+ [1,'Which body site is normally sterile?',['Colon','Vagina','Bladder','Mouth'],2,'The bladder, kidneys, lower airways, blood, CSF, bone and joints are sterile. Growth from any of them is significant.'],
+ [1,'Hospital patients on broad-spectrum antibiotics develop C. difficile colitis because:',['The antibiotic is toxic to the colon','Normal colonic flora that kept C. difficile in check are wiped out','C. difficile is resistant to all antibiotics','The antibiotic activates C. difficile toxin'],1,'Loss of colonization resistance. The spores survive, germinate and the toxin-making bacteria overgrow.'],
+ [1,'Which precaution requires an N95 respirator and a negative-pressure room?',['Contact','Droplet','Airborne','Standard'],2,'Airborne pathogens (TB, measles, varicella) travel as tiny droplet nuclei that stay suspended; a surgical mask does not stop them.'],
+ [1,'The single most effective way to break the chain of infection in a hospital is:',['Prophylactic antibiotics','Hand hygiene','Closing the windows','Screening visitors'],1,'Healthcare workers\' hands are the main vehicle of hospital transmission. Hand hygiene breaks the mode-of-transmission link.'],
+ [1,'The stage of infection between exposure and the first symptom is the:',['Prodrome','Acme','Incubation period','Convalescence'],2,'Incubation: the organism multiplies silently. People can already be contagious.'],
+ [1,'During the respiratory burst, myeloperoxidase makes which final killing product?',['Superoxide','Hydrogen peroxide','Hypochlorite (bleach)','Nitric oxide'],2,'NADPH oxidase → superoxide → H₂O₂ → myeloperoxidase + chloride → HOCl.'],
+ [1,'A child has recurrent abscesses with S. aureus, Serratia and Aspergillus. Nitroblue tetrazolium test is negative. The defect is in:',['Complement C5–C9','NADPH oxidase','Antibody production','T cells'],1,'Chronic granulomatous disease: phagocytes can\'t make superoxide. Catalase-positive organisms destroy the H₂O₂ the phagocyte would otherwise borrow from them.'],
+ [1,'Which of these is an opsonin?',['IL-8','C3b','C5a','Lysozyme'],1,'C3b and IgG coat bacteria so phagocytes can grip them. C5a and IL-8 are chemoattractants; lysozyme cuts peptidoglycan.'],
+ [1,'In Gram-negative septic shock, blood pressure falls mainly because:',['Endotoxin blocks the heart\'s conduction','Cytokines trigger nitric oxide release and capillary leak','Bacteria consume oxygen','Fever dilates the skin vessels'],1,'TNF and IL-1 induce nitric oxide synthase (vasodilation) and make endothelium leaky (volume loss). Add DIC and the organs are starved.'],
+ [1,'Which antibiotic class blocks the 30S ribosomal subunit?',['Macrolides','Fluoroquinolones','Aminoglycosides','Penicillins'],2,'"Buy AT 30": aminoglycosides and tetracyclines. Macrolides are 50S; quinolones hit DNA gyrase; penicillins hit the wall.'],
+ [1,'Vancomycin does not work on Gram-negative bacteria because:',['They lack peptidoglycan','The molecule is too large to cross the outer membrane','They all carry vanA','It is destroyed by endotoxin'],1,'Vancomycin is a large glycopeptide. The Gram-negative outer membrane and its porins keep it away from the peptidoglycan.'],
+ [1,'Which process spreads antibiotic-resistance plasmids between different species of gut bacteria?',['Transformation','Transduction','Conjugation','Binary fission'],2,'Conjugation through a sex pilus transfers R plasmids, even across species. ESBL and carbapenemase genes travel this way.'],
+ [1,'A strain of Corynebacterium diphtheriae causes disease only if it:',['Has a capsule','Carries the β-prophage encoding the toxin','Grows anaerobically','Is acid-fast'],1,'Diphtheria toxin is a phage gene (lysogenic conversion). The Elek test checks for toxin production.'],
+ [1,'Gram-positive cocci in clusters, catalase +, coagulase −, novobiocin resistant:',['S. aureus','S. epidermidis','S. saprophyticus','Enterococcus'],2,'Novobiocin resistance separates S. saprophyticus (UTI in young women) from S. epidermidis (sensitive).'],
+ [1,'An α-hemolytic streptococcus that is optochin resistant and bile insoluble is most likely:',['S. pneumoniae','Viridans streptococcus','S. pyogenes','Enterococcus'],1,'Viridans strep: dental caries, subacute endocarditis. Pneumococcus is optochin sensitive and bile soluble.'],
+ [1,'Colorless colonies on MacConkey, oxidase +, blue-green pigment, grape-like odor:',['E. coli','Klebsiella','Pseudomonas aeruginosa','Proteus'],2,'Non-lactose fermenter, oxidase positive, pyocyanin: Pseudomonas. Burns, cystic fibrosis, ventilators.'],
+ [1,'Which organism requires factors X (hemin) and V (NAD), supplied by chocolate agar?',['Neisseria gonorrhoeae','Haemophilus influenzae','Bordetella pertussis','Legionella'],1,'Haemophilus ("blood-loving") needs both factors; it also satellites around S. aureus colonies on blood agar.'],
+ [1,'Which method reliably kills bacterial spores?',['70% alcohol','Pasteurization','Autoclaving at 121 °C under pressure','Chlorhexidine'],2,'Steam under pressure for 15–20 minutes. Alcohol, pasteurization and chlorhexidine kill vegetative cells only.'],
+ [1,'A patient with cellulitis 12 hours after a cat bite most likely has:',['Pasteurella multocida','Bartonella henselae','Staphylococcus aureus','Clostridium tetani'],0,'Pasteurella is normal cat and dog mouth flora and causes rapid cellulitis. Bartonella (cat-scratch) causes lymphadenopathy over weeks.'],
+ [1,'Which organism cannot be treated with penicillin because it has no cell wall?',['Mycoplasma pneumoniae','Mycobacterium tuberculosis','Treponema pallidum','Listeria'],0,'No peptidoglycan, nothing for β-lactams to block. Use macrolides or doxycycline.'],
+ [2,'The earliest consequence of ATP depletion in an ischemic cell is:',['Karyorrhexis','Failure of the Na⁺/K⁺ pump with cell swelling','Rupture of lysosomes','Calcification'],1,'The ATP-dependent pump stops, sodium and water enter: hydropic change, the first visible sign of reversible injury.'],
+ [2,'Which enzyme converts superoxide to hydrogen peroxide?',['Catalase','Glutathione peroxidase','Superoxide dismutase','Myeloperoxidase'],2,'SOD: O₂•⁻ → H₂O₂. Catalase and glutathione peroxidase then detoxify the H₂O₂.'],
+ [2,'Acetaminophen overdose injures the liver because:',['It is directly corrosive','Its metabolite NAPQI depletes glutathione and causes free-radical injury','It blocks the Na⁺/K⁺ pump','It causes fatty change'],1,'Indirect toxicity: P450 makes NAPQI, glutathione runs out, radicals damage centrilobular hepatocytes. N-acetylcysteine restores glutathione.'],
+ [2,'A patient died 5 days after a heart attack from cardiac tamponade. The most likely cause is:',['Arrhythmia','Rupture of the free ventricular wall','Dressler syndrome','Mural thrombus'],1,'Days 3–7: macrophages have digested the dead muscle; the softened wall ruptures into the pericardium.'],
+ [2,'At autopsy 4 hours after a heart attack the myocardium looks normal because:',['The patient did not have an infarct','Light-microscopic changes lag 4–12 hours behind cell death','Troponin had not yet risen','Necrosis had already healed'],1,'Biochemical death comes first; structural changes visible by microscope take hours (electron microscopy sees them earlier).'],
+ [2,'Which blood marker stays elevated longest after a myocardial infarction?',['Myoglobin','CK-MB','Troponin I','LDH'],2,'Troponin stays up 7–10 days. CK-MB normalizes in 2–3 days, which makes it useful for detecting a second infarct.'],
+ [2,'Infarction of which organ is typically a red (hemorrhagic) infarct?',['Kidney','Spleen','Lung','Heart'],2,'The lung has loose tissue and a dual blood supply (pulmonary and bronchial arteries), so blood pours into the dead area.'],
+ [2,'Cytochrome c released from mitochondria binds APAF-1 and activates:',['Caspase-8','Caspase-9','Caspase-1','RIPK3'],1,'That is the apoptosome, the initiator of the intrinsic (mitochondrial) pathway. Caspase-8 belongs to the extrinsic pathway.'],
+ [2,'Follicular lymphoma cells survive because of the t(14;18) translocation, which over-expresses:',['p53','BAX','BCL-2','Fas'],2,'BCL-2 blocks mitochondrial release of cytochrome c; the B cells cannot undergo apoptosis.'],
+ [2,'A macrophage infected with Salmonella swells and bursts, releasing IL-1β. This is:',['Apoptosis','Pyroptosis','Ferroptosis','Autophagy'],1,'Pyroptosis: inflammasome → caspase-1 → IL-1β and gasdermin pores. Inflammatory death of infected cells.'],
+ [2,'Clear vacuoles in hepatocytes of a heavy drinker that stain with oil red O are:',['Glycogen','Steatosis (fat)','Hydropic change','Lipofuscin'],1,'Fatty change: alcohol increases fatty acid synthesis and blocks their oxidation and export.'],
+ [2,'Golden-brown granules in lung macrophages that turn blue with Prussian blue stain are:',['Lipofuscin','Melanin','Hemosiderin','Carbon'],2,'"Heart failure cells": iron from red cells that leaked into congested alveoli.'],
+ [2,'Yellow-brown perinuclear granules in the heart of an 85-year-old represent:',['Hemosiderin','Lipofuscin','Bilirubin','Amyloid'],1,'Wear-and-tear pigment from lipid peroxidation. Harmless; seen in brown atrophy.'],
+ [2,'Calcium deposits in normal lung and kidney tissue of a patient with hyperparathyroidism are:',['Dystrophic calcification','Metastatic calcification','Psammoma bodies','Saponification'],1,'Metastatic: high blood calcium lands on normal tissue. Dystrophic: normal calcium on damaged tissue.'],
+ [2,'A normal fibroblast stops dividing after about 50 divisions because:',['It runs out of ATP','Its telomeres become critically short','It accumulates lipofuscin','Telomerase is activated'],1,'The Hayflick limit: short telomeres are read as DNA damage, p53 and p16 enforce senescence.'],
+ [2,'Caloric restriction extends lifespan in experimental animals partly through:',['Increased IGF-1 signaling','Activation of sirtuins and reduced mTOR','Telomere shortening','Increased free radical production'],1,'Less nutrient signaling (insulin/IGF-1, mTOR) and more sirtuin activity shift cells toward maintenance and repair.']
 ];
 inits.quiz=()=>{
-  const F=[['mix','Mixed (15)'],['1','Unit 1'],['2','Unit 2']];
+  const F=[['mix','Mixed (20)'],['1','Unit 1'],['2','Unit 2']];
   $('#qFilter').innerHTML=F.map(([k,l])=>`<button class="btn" data-qf="${k}" aria-pressed="${k==='mix'}">${l}</button>`).join('');
   let list=[],i=0,score=0,missed=[],answered=false;
   function start(k){const r=rng(Date.now()%1e6);let L=QZ.filter(q=>k==='mix'||String(q[0])===k).slice();for(let a=L.length-1;a>0;a--){const j=Math.floor(r()*(a+1));[L[a],L[j]]=[L[j],L[a]]}
-    list=k==='mix'?L.slice(0,15):L;i=0;score=0;missed=[];q()}
+    list=k==='mix'?L.slice(0,20):L;i=0;score=0;missed=[];q()}
   function q(){answered=false;$('#qBar').style.width=(i/list.length*100)+'%';
     if(i>=list.length){const pct=Math.round(score/list.length*100);
       $('#qCard').innerHTML=`<div class="kicker">Finished</div><div class="q">You scored ${score} / ${list.length} (${pct}%)</div><p>${pct>=85?'Excellent. You\'re ready.':pct>=65?'Solid. Review the ones you missed below.':'Worth another pass through the modules, then try again.'}</p>`+
@@ -1698,6 +2114,661 @@ inits.quiz=()=>{
       $('#qNext').onclick=()=>{i++;q()};$('#qNext').focus({preventScroll:true})}});
   $('#qFilter').addEventListener('click',e=>{const b=e.target.closest('[data-qf]');if(!b)return;$$('[data-qf]').forEach(x=>x.setAttribute('aria-pressed',x===b));start(b.dataset.qf)});
   start('mix');
+};
+
+/* =============== shared helpers for the expansion =============== */
+function fnode(id,x,y,w,h,lines,cls=''){const lh=14,y0=y+h/2-((lines.length-1)*lh)/2+4.5;
+  return `<g class="fn ${cls}" data-fn="${id}" role="button" tabindex="0"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="9"/>${lines.map((l,i)=>`<text x="${x+w/2}" y="${f1(y0+i*lh)}" text-anchor="middle" class="${i?'s':''}">${l}</text>`).join('')}</g>`}
+function fmark(id,color='var(--muted)'){return `<defs><marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:${color}"/></marker></defs>`}
+function farr(d,m){return `<path class="arrow" d="${d}" marker-end="url(#${m})"/>`}
+function wireFlow(svg,noteEl,DATA,first,render){
+  function sel(k){$$('.fn',svg).forEach(n=>n.classList.toggle('sel',n.dataset.fn===k));noteEl.innerHTML=render(DATA[k],k)}
+  svg.addEventListener('click',e=>{const n=e.target.closest('.fn');if(n&&DATA[n.dataset.fn])sel(n.dataset.fn)});
+  svg.addEventListener('keydown',e=>{const n=e.target.closest('.fn');if(n&&(e.key==='Enter'||e.key===' ')){e.preventDefault();sel(n.dataset.fn)}});
+  sel(first);return sel;
+}
+function playWire(rg,pb,draw,dur,doneLabel='Replay',hideKey){
+  let stopA=null;function stop(){if(stopA)stopA();stopA=null;pb.textContent='Play'}
+  rg.addEventListener('input',()=>{stop();draw(+rg.value)});
+  pb.addEventListener('click',()=>{if(stopA){stop();return}let t0=+rg.value;if(t0>=.99)t0=0;pb.textContent='Pause';
+    stopA=animate((1-t0)*dur,p=>{const t=t0+(1-t0)*p;rg.value=t;draw(t)},()=>{stopA=null;pb.textContent=doneLabel})});
+  if(hideKey)onHide[hideKey]=stop;return stop;
+}
+
+/* =============== 1.6 flora =============== */
+const SITES=[
+ {k:'nose',x:300,y:72,lx:400,ly:40,n:'Nose',res:'<i>Staphylococcus aureus</i> in the front of the nostrils (about 30% of people carry it), <i>S. epidermidis</i>, diphtheroids.',wrong:'Carriers seed their own wounds and skin: most <i>S. aureus</i> infections come from the patient\'s own nose. Before major surgery, MRSA carriers are decolonized with nasal mupirocin.',hook:'The anterior nares are the body\'s main reservoir of <i>S. aureus</i>.'},
+ {k:'mouth',x:300,y:112,lx:400,ly:96,n:'Mouth & throat',res:'Viridans streptococci (<i>S. mutans, S. sanguinis</i>), <i>Actinomyces</i>, anaerobes (<i>Prevotella, Fusobacterium</i>), <i>Neisseria</i> species, <i>Haemophilus</i>, <i>Candida</i>. The throat can also quietly carry <i>S. pneumoniae</i>, <i>H. influenzae</i> and <i>N. meningitidis</i>.',wrong:'Dental work pushes viridans strep into the blood → endocarditis on a damaged valve. Aspiration of mouth anaerobes → foul-smelling lung abscess. <i>S. mutans</i> acid → caries. <i>Actinomyces</i> → jaw abscess with yellow "sulfur granules".',hook:'Carriage ≠ disease: a throat swab growing <i>N. meningitidis</i> in a healthy person is colonization, not meningitis.'},
+ {k:'skin',x:150,y:290,lx:40,ly:250,n:'Skin',res:'<i>S. epidermidis</i> (most of it), <i>Cutibacterium acnes</i> in oily follicles, <i>Corynebacterium</i> (diphtheroids), some <i>S. aureus</i>, <i>Malassezia</i> yeast. Transient visitors come and go on the hands.',wrong:'A catheter or artificial joint gives <i>S. epidermidis</i> a plastic surface to build biofilm on. <i>S. aureus</i> through a cut → abscess, cellulitis. <i>C. acnes</i> → acne.',hook:'<i>S. epidermidis</i> in one blood-culture bottle is usually skin contamination. In two bottles, with a line in place, suspect a line infection.'},
+ {k:'lung',x:265,y:190,lx:40,ly:150,n:'Lower airways',sterile:true,res:'Normally sterile below the vocal cords. Kept clean by the mucociliary escalator, cough, alveolar macrophages and secretory IgA.',wrong:'Smoke paralyzes cilia; viruses strip the lining; sedation blunts the cough. Then mouth flora or <i>S. pneumoniae</i> slide down → pneumonia. Ventilator tubes bypass every defense → <i>Pseudomonas</i>, <i>S. aureus</i>.',hook:'Pneumonia after influenza is classically <i>S. aureus</i> or <i>S. pneumoniae</i>.'},
+ {k:'blood',x:318,y:180,lx:440,ly:170,n:'Blood & CSF',sterile:true,res:'Sterile. Any bacterium cultured from blood or spinal fluid matters (unless it is a skin contaminant).',wrong:'Brushing teeth causes brief, harmless bacteremia. Sustained bacteremia means an infected valve, line, bone or abscess. Nasopharyngeal carriers of <i>N. meningitidis</i>, <i>S. pneumoniae</i> or <i>H. influenzae</i> can seed the blood, then the meninges.',hook:'Encapsulated bacteria are the ones that survive in blood, because the capsule blocks phagocytosis. No spleen = no defense against them.'},
+ {k:'stomach',x:318,y:255,lx:440,ly:240,n:'Stomach',res:'Almost sterile: pH 1–2 kills most bacteria. <i>Helicobacter pylori</i> is the exception; it burrows into the mucus and neutralizes acid with urease. About half the world carries it.',wrong:'Acid-blocking drugs and achlorhydria let swallowed pathogens through: more <i>Salmonella</i>, <i>C. difficile</i> and cholera.',hook:'<i>H. pylori</i>: chronic gastritis, ulcers, gastric cancer and MALT lymphoma. Urea breath test.'},
+ {k:'colon',x:282,y:320,lx:440,ly:320,n:'Colon',res:'The densest population anywhere: ~10¹¹ per gram. Anaerobes outnumber aerobes 1000:1: <i>Bacteroides</i>, <i>Clostridium</i>, <i>Bifidobacterium</i>. Also <i>E. coli</i>, <i>Enterococcus</i>, <i>Klebsiella</i>, <i>Lactobacillus</i>.',wrong:'A perforation spills them into the peritoneum → peritonitis and abscess (<i>Bacteroides</i> + <i>E. coli</i>). Broad antibiotics wipe out the normal flora and <i>C. difficile</i> takes over. <i>E. coli</i> that wanders to the urethra → UTI.',hook:'The gut flora makes vitamin K and some B vitamins, trains the immune system, and crowds out pathogens ("colonization resistance"). Newborns and antibiotic-treated patients lack it.'},
+ {k:'gu',x:300,y:388,lx:440,ly:395,n:'Vagina & urethra',res:'Vagina in the reproductive years: <i>Lactobacillus</i> keeps the pH around 4 with lactic acid and hydrogen peroxide. About a quarter of women carry group B strep. Some <i>Candida</i>. Distal urethra: skin flora.',wrong:'Lose the lactobacilli (antibiotics, douching) → bacterial vaginosis (<i>Gardnerella</i>, fishy odor, clue cells) or yeast overgrowth. Group B strep passes to the baby at birth → neonatal sepsis and meningitis (screen at 36 weeks, penicillin in labor).',hook:'Before puberty and after menopause, with little estrogen, lactobacilli are scarce and the pH is higher.'},
+ {k:'bladder',x:300,y:355,lx:40,ly:380,n:'Bladder & kidneys',sterile:true,res:'Sterile (or very nearly). Flushed by urine flow; protected by the urethral sphincter and the bladder lining.',wrong:'<i>E. coli</i> from the perineum climbs the short female urethra → cystitis; up the ureters → pyelonephritis. Catheters are a highway. <i>S. saprophyticus</i> in young sexually active women. <i>Proteus</i> raises the pH with urease → struvite stones.',hook:'UTI is the most common healthcare-associated infection; the catheter is the risk factor.'},
+ {k:'deep',x:190,y:460,lx:40,ly:470,n:'Bone, joints, deep tissue',sterile:true,res:'Sterile. Reached only through the blood or a wound.',wrong:'<i>S. aureus</i> is the usual cause of osteomyelitis and septic arthritis; <i>Salmonella</i> in sickle cell disease; <i>N. gonorrhoeae</i> in young sexually active adults; <i>Pasteurella</i> after a cat bite.',hook:'A hot, swollen single joint is septic arthritis until the fluid says otherwise.'}
+];
+const VOCAB=[
+ ['Normal flora (microbiota)','The bacteria that live on and in a healthy body. <b>Resident</b> flora is permanent; <b>transient</b> flora comes and goes (mostly on the hands).'],
+ ['Colonization → infection → disease','<b>Colonization</b>: present, not harming. <b>Infection</b>: multiplying and invading, with a host response. <b>Disease</b>: signs and symptoms. Many infections never become disease.'],
+ ['Pathogen vs opportunist','A <b>true pathogen</b> causes disease in healthy people (<i>M. tuberculosis</i>, <i>Salmonella</i> Typhi). An <b>opportunist</b> needs an opening: lowered defenses or access to a sterile site (<i>E. coli</i> in the bladder, <i>Pseudomonas</i> in a burn).'],
+ ['Virulence','How good a microbe is at causing disease. Measured as the <b>ID₅₀</b> (dose that infects half of hosts) or <b>LD₅₀</b>. <i>Shigella</i>: about 10 cells. <i>Vibrio cholerae</i>: about 10⁸.'],
+ ['Endogenous vs exogenous','Infection from your <b>own</b> flora (UTI from gut <i>E. coli</i>) vs from <b>outside</b> (TB from another person, tetanus from soil).'],
+ ['Carrier','Harbors and sheds a pathogen without symptoms. "Typhoid Mary" carried <i>Salmonella</i> Typhi in her gallbladder for decades. Nasal MRSA carriers. Convalescent carriers keep shedding after recovery.'],
+ ['Healthcare-associated (nosocomial)','Acquired in a healthcare setting, usually defined as starting 48 h or more after admission. Catheter UTIs, ventilator pneumonia, line infections, surgical-site infections, <i>C. difficile</i>. Hand hygiene prevents more of these than anything else.'],
+ ['Zoonosis','A disease caught from animals: brucellosis (dairy), Lyme (ticks), plague (fleas on rodents), leptospirosis (rat urine), <i>Salmonella</i> (reptiles, poultry), cat-scratch, psittacosis (birds), Q fever (sheep).'],
+ ['Bacteremia → sepsis → septic shock','<b>Bacteremia</b>: bacteria in the blood (can be brief and harmless). <b>Sepsis</b>: a dysregulated response to infection that damages organs. <b>Septic shock</b>: sepsis with blood pressure that needs drugs to hold up and a rising lactate.'],
+ ['Local, systemic, focal','<b>Local</b>: confined (a boil). <b>Systemic</b>: spread through the body (typhoid). <b>Focal</b>: a local infection that seeds distant sites (a tooth abscess → brain abscess). <b>Toxemia</b>: the toxin spreads, not the bacterium (tetanus, diphtheria).'],
+ ['Primary vs secondary','A <b>secondary</b> infection follows a first one that weakened defenses: bacterial pneumonia after influenza; yeast after antibiotics; cellulitis on top of athlete\'s foot.'],
+ ['Acute, chronic, latent','<b>Acute</b>: fast and short (strep throat). <b>Chronic</b>: lasts months (TB, <i>H. pylori</i>). <b>Latent</b>: hides silently and can reactivate (latent TB in a granuloma; syphilis between stages).'],
+ ['Endemic, epidemic, pandemic','<b>Endemic</b>: always present at a steady level in a region. <b>Epidemic</b>: a sudden rise above expected. <b>Pandemic</b>: an epidemic across continents. <b>Sporadic</b>: occasional, scattered cases.'],
+ ['Communicable vs contagious','<b>Communicable</b>: can pass from person to person (TB). <b>Contagious</b>: communicable <i>easily</i> (measles, pertussis). <b>Non-communicable</b>: from the environment or own flora (tetanus, UTI).'],
+ ['Incubation period','Time from exposure to first symptoms. Hours for staph food poisoning (preformed toxin), 2–5 days for strep throat, 1–3 weeks for typhoid, weeks to decades for TB. People may already be shedding.']
+];
+inits.flora=()=>{
+  const svg=$('#bodySvg');
+  let h=`<g style="fill:var(--panel-2);stroke:var(--line);stroke-width:1.5">
+   <circle cx="300" cy="66" r="44"/><rect x="284" y="106" width="32" height="24"/>
+   <path d="M240 128h120c22 0 34 12 36 34l8 90c1 10-5 17-13 19l-7 1 2 112c0 8-6 14-14 14h-144c-8 0-14-6-14-14l2-112-7-1c-8-2-14-9-13-19l8-90c2-22 14-34 36-34z"/>
+   <path d="M232 150l-34 118c-3 10 2 20 12 23s20-2 23-12l34-104"/><path d="M368 150l34 118c3 10-2 20-12 23s-20-2-23-12l-34-104"/>
+   <path d="M236 396l-14 150c-1 10 6 18 16 18s16-8 17-18l16-134"/><path d="M364 396l14 150c1 10-6 18-16 18s-16-8-17-18l-16-134"/>
+  </g>
+  <g style="fill:none;stroke:var(--line);stroke-width:1;opacity:.6"><path d="M300 150v60"/><ellipse cx="300" cy="300" rx="62" ry="44"/><path d="M248 190c-16 20-16 50 0 70M352 190c16 20 16 50 0 70"/></g>`;
+  SITES.forEach(s=>{const left=s.lx<s.x;
+    h+=`<g class="hot ${s.sterile?'sterile':''}" data-site="${s.k}" role="button" tabindex="0" aria-label="${s.n}"><path class="lead" d="M${s.x} ${s.y} L${s.lx+(left?92:0)} ${s.ly+4}"/><circle class="dot" cx="${s.x}" cy="${s.y}" r="9"/><text x="${s.lx}" y="${s.ly+8}">${s.n}</text></g>`});
+  h+=`<g><circle cx="470" cy="488" r="6" style="fill:var(--hema)"/><text x="482" y="492" class="t-sm">has normal flora</text><circle cx="470" cy="508" r="6" style="fill:var(--good)"/><text x="482" y="512" class="t-sm">normally sterile</text></g>`;
+  svg.innerHTML=h;
+  function sel(k){$$('.hot',svg).forEach(n=>n.classList.toggle('sel',n.dataset.site===k));const s=SITES.find(x=>x.k===k);
+    $('#floraNote').innerHTML=`<div class="chips"><span class="tag ${s.sterile?'good':'pos'}">${s.sterile?'Normally sterile':'Normal flora'}</span></div><h4>${s.n}</h4><dl class="kv"><div><dt>${s.sterile?'Why it stays clean':'Who lives here'}</dt><dd>${s.res}</dd></div><div><dt>When it goes wrong</dt><dd>${s.wrong}</dd></div></dl><div class="hook"><b>Exam hook</b>${s.hook}</div>`}
+  svg.addEventListener('click',e=>{const n=e.target.closest('.hot');if(n)sel(n.dataset.site)});
+  svg.addEventListener('keydown',e=>{const n=e.target.closest('.hot');if(n&&(e.key==='Enter'||e.key===' ')){e.preventDefault();sel(n.dataset.site)}});
+  sel('colon');
+  $('#vocabCards').innerHTML=VOCAB.map(v=>`<div class="card"><h4>${v[0]}</h4><p>${v[1]}</p></div>`).join('');
+};
+
+/* =============== 1.7 chain & stages =============== */
+const LINKS=[
+ {n:'Infectious agent',s:'the bacterium',def:'The pathogen itself, and how much of it it takes: its virulence, infectious dose, and ability to survive outside a host (spores, biofilm).',ex:'<i>Shigella</i> needs ~10 cells; <i>Salmonella</i> ~10⁵. <i>C. difficile</i> spores survive on surfaces for months.',brk:'Rapid diagnosis and treatment of the infected person; sterilizing and disinfecting equipment; antibiotic stewardship so the agent stays treatable.'},
+ {n:'Reservoir',s:'where it lives',def:'Where the organism normally lives and multiplies. Humans (sick or carriers), animals, soil, water, and the hospital itself.',ex:'Humans: TB, <i>N. meningitidis</i>, typhoid carriers. Animals: <i>Salmonella</i>, <i>Brucella</i>. Soil: <i>Clostridium</i>. Water: <i>Legionella</i>, <i>Vibrio</i>. Sinks and ventilators: <i>Pseudomonas</i>.',brk:'Treat carriers, sanitation and clean water, pest control, pasteurization, cleaning the environment, removing standing water from cooling towers.'},
+ {n:'Portal of exit',s:'how it leaves',def:'The route out of the reservoir, usually matching where the infection is.',ex:'Respiratory droplets (TB, pertussis), feces (cholera, <i>Salmonella</i>), blood (hepatitis, syphilis), skin lesions (impetigo), urine (leptospirosis), genital secretions (gonorrhea).',brk:'Cover coughs, surgical masks on patients, wound dressings, safe disposal of body fluids, hand hygiene after contact.'},
+ {n:'Mode of transmission',s:'how it travels',def:'<b>Contact</b>: direct (touch, sex), indirect (fomites, hands), droplet (large drops, within ~2 m). <b>Airborne</b>: tiny droplet nuclei that drift (TB). <b>Vehicle</b>: food, water, blood products. <b>Vector</b>: insect or tick, mechanical (flies) or biological (the microbe multiplies in it).',ex:'Hands of healthcare workers are the most important vehicle in hospitals. Ticks: Lyme, RMSF. Fleas: plague. Lice: epidemic typhus.',brk:'Hand hygiene (the single most effective measure), isolation precautions, N95 and negative pressure for airborne, safe food and water, vector control, screening blood.'},
+ {n:'Portal of entry',s:'how it gets in',def:'The route into the new host. Often the same tissue as the portal of exit.',ex:'Inhaled (respiratory), swallowed (fecal-oral), through broken skin or bites, mucous membranes (STIs, conjunctiva), needles and catheters (parenteral), across the placenta (<i>Listeria</i>, syphilis).',brk:'Barriers and PPE, aseptic technique, safe injections, prompt removal of catheters, skin and wound care, condoms.'},
+ {n:'Susceptible host',s:'who gets sick',def:'Not everyone exposed gets infected. Risk rises with extremes of age, immunosuppression, diabetes, no spleen, malnutrition, broken skin, devices, and missing vaccinations.',ex:'Asplenia → encapsulated bacteria. Neutropenia → <i>Pseudomonas</i>. Burns → <i>Pseudomonas</i>. Cystic fibrosis → <i>Pseudomonas</i>, <i>Burkholderia</i>. Complement deficiency → <i>Neisseria</i>.',brk:'Vaccination, nutrition, control of diabetes, early removal of lines and tubes, prophylactic antibiotics for the very high risk, treating the underlying disease.'}
+];
+const STG=[
+ {n:'Incubation',a:0,b:.28,txt:'Exposure to the first symptom. The pathogen is multiplying and spreading but hasn\'t yet caused enough damage to notice. Length depends on the organism, the dose and the host: hours for staph food poisoning, days for strep throat, weeks for typhoid, years for TB or leprosy.',hook:'People can already be contagious during incubation (pertussis, measles).'},
+ {n:'Prodrome',a:.28,b:.38,txt:'Short and vague: tiredness, aches, low fever, loss of appetite. The immune system is waking up (interferons, early cytokines) but the specific signs haven\'t appeared.',hook:'Not every disease has one. The prodrome of measles is cough, coryza, conjunctivitis.'},
+ {n:'Illness (acme)',a:.38,b:.68,txt:'The disease at full strength, with its characteristic signs and symptoms. Pathogen numbers peak, then the adaptive response (antibodies, T cells) begins to win.',hook:'This is when cultures are most likely positive and when the patient is usually most contagious.'},
+ {n:'Decline',a:.68,b:.86,txt:'Pathogen numbers fall and symptoms ease. The patient is weak and vulnerable to a secondary infection.',hook:'Antibiotics shorten this phase; stopping them early leaves survivors to regrow.'},
+ {n:'Convalescence',a:.86,b:1,txt:'Tissues repair and strength returns. Some people keep shedding the organism for weeks (convalescent carriers: <i>Salmonella</i>, hepatitis A).',hook:'Recovery can leave lasting immunity, or lasting damage (rheumatic heart disease after strep).'}
+];
+inits.chain=()=>{
+  const svg=$('#chainSvg'),cx=320,cy=190,R=135;
+  let h=fmark('chm');const P=LINKS.map((l,i)=>{const a=-Math.PI/2+i*Math.PI/3;return [cx+R*Math.cos(a),cy+R*Math.sin(a)]});
+  P.forEach((p,i)=>{const q=P[(i+1)%6];const mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2;const dx=mx-cx,dy=my-cy,dd=Math.hypot(dx,dy);const ox=cx+dx/dd*(R+14),oy=cy+dy/dd*(R+14);
+    const sx=p[0]+(ox-p[0])*.45,sy=p[1]+(oy-p[1])*.45,ex=q[0]+(ox-q[0])*.45,ey=q[1]+(oy-q[1])*.45;
+    h+=farr(`M${f1(sx)} ${f1(sy)} Q${f1(ox)} ${f1(oy)} ${f1(ex)} ${f1(ey)}`,'chm')});
+  P.forEach((p,i)=>{const l=LINKS[i];h+=`<g class="link" data-l="${i}" role="button" tabindex="0" aria-label="${l.n}"><rect class="box" x="${f1(p[0]-72)}" y="${f1(p[1]-26)}" width="144" height="52" rx="12"/><text x="${f1(p[0])}" y="${f1(p[1]-3)}" text-anchor="middle">${l.n}</text><text class="s" x="${f1(p[0])}" y="${f1(p[1]+14)}" text-anchor="middle">${l.s}</text></g>`});
+  h+=`<text x="${cx}" y="${cy-6}" class="t-lbl t-mid" style="font-size:15px">Chain of</text><text x="${cx}" y="${cy+14}" class="t-lbl t-mid" style="font-size:15px">infection</text>`;
+  svg.innerHTML=h;
+  let curL=0;
+  function sel(i){curL=i;$$('.link',svg).forEach(n=>n.classList.toggle('sel',+n.dataset.l===i));const l=LINKS[i],br=$(`.link[data-l="${i}"]`,svg).classList.contains('broken');
+    $('#chainNote').innerHTML=`<div class="kicker">Link ${i+1} of 6</div><h4>${l.n}</h4><p>${l.def}</p><dl class="kv"><div><dt>Examples</dt><dd>${l.ex}</dd></div><div><dt>How to break it</dt><dd>${l.brk}</dd></div></dl><div class="ctrls"><button class="btn ${br?'':'primary'}" id="brk">${br?'Repair the link':'Break this link'}</button>${br?'<span class="tag good">Chain broken: no spread</span>':''}</div>`;
+    $('#brk').onclick=()=>{$(`.link[data-l="${i}"]`,svg).classList.toggle('broken');sel(i)}}
+  svg.addEventListener('click',e=>{const n=e.target.closest('.link');if(n)sel(+n.dataset.l)});
+  svg.addEventListener('keydown',e=>{const n=e.target.closest('.link');if(n&&(e.key==='Enter'||e.key===' ')){e.preventDefault();sel(+n.dataset.l)}});
+  sel(3);
+  // stages
+  const s2=$('#stageSvg'),X=t=>50+t*570,Y=v=>260-v*210;
+  const sig=x=>1/(1+Math.exp(-x));
+  const pf=t=>(0.04+0.92*sig((t-.3)*22))*(t<.45?1:Math.exp(-(t-.45)*6.5));
+  const sf=t=>ramp(t,.28,.42)*(1-ramp(t,.6,.88))*(0.3+0.7*ramp(t,.38,.5));
+  let g='';STG.forEach((p,i)=>g+=`<rect class="gband" data-i="${i}" x="${X(p.a)}" y="40" width="${X(p.b)-X(p.a)}" height="220" style="fill:${i%2?'var(--panel-2)':'var(--hema-soft)'};opacity:.5"/><text x="${(X(p.a)+X(p.b))/2}" y="58" class="t-sm t-mid">${p.n.toUpperCase()}</text>`);
+  let d1='',d2='';for(let t=0;t<=1.0001;t+=.01){d1+=(t?'L':'M')+f1(X(t))+' '+f1(Y(pf(t)));d2+=(t?'L':'M')+f1(X(t))+' '+f1(Y(sf(t)))}
+  g+=`<path d="${d1}" style="fill:none;stroke:var(--cv);stroke-width:3"/><path d="${d2}" style="fill:none;stroke:var(--saf);stroke-width:3"/>`;
+  g+=`<line x1="50" x2="620" y1="260" y2="260" style="stroke:var(--ink);stroke-width:1.2"/><text x="335" y="288" class="t-sm t-mid">time → (exposure at left)</text><text x="50" y="30" class="t-sm"><tspan style="fill:var(--cv);font-weight:700">■</tspan> pathogen numbers   <tspan style="fill:var(--saf);font-weight:700">■</tspan> symptoms</text>`;
+  g+=`<line id="stV" y1="40" y2="260" style="stroke:var(--ink);stroke-width:1;stroke-dasharray:3 3"/><circle id="stD1" r="6" style="fill:var(--cv);stroke:var(--panel);stroke-width:2"/><circle id="stD2" r="6" style="fill:var(--saf);stroke:var(--panel);stroke-width:2"/>`;
+  s2.innerHTML=g;let last=-1;
+  function draw(t){$('#stV').setAttribute('x1',X(t));$('#stV').setAttribute('x2',X(t));$('#stD1').setAttribute('cx',X(t));$('#stD1').setAttribute('cy',Y(pf(t)));$('#stD2').setAttribute('cx',X(t));$('#stD2').setAttribute('cy',Y(sf(t)));
+    const i=STG.findIndex(p=>t<p.b)<0?4:STG.findIndex(p=>t<p.b);$$('.gband',s2).forEach(b=>b.style.opacity=+b.dataset.i===i?1:.35);
+    if(i!==last){last=i;const p=STG[i];$('#stNote').innerHTML=`<div class="kicker">Stage ${i+1} of 5</div><h4>${p.n}</h4><p>${p.txt}</p><div class="hook"><b>Exam hook</b>${p.hook}</div>`}}
+  playWire($('#stT'),$('#stPlay'),draw,10000,'Replay','chain');draw(+$('#stT').value);
+};
+
+/* =============== 1.9 defense =============== */
+const PHS=[
+ {t:'Chemotaxis',k:'Step 1 · Follow the trail',txt:'Bacteria and damaged tissue release chemical signals: complement fragment <b>C5a</b>, <b>IL-8</b>, leukotriene B₄, and bacterial peptides (formyl-methionine). Neutrophils in nearby vessels slow down (selectins), stick (integrins), squeeze out between endothelial cells (diapedesis) and crawl up the gradient.',bug:'<i>Streptococcus pyogenes</i> makes a C5a peptidase that chews up the signal. <i>Staph</i> CHIPS protein blocks the receptors.'},
+ {t:'Recognize & opsonize',k:'Step 2 · Grab it',txt:'The neutrophil binds the bacterium directly (mannose and Toll-like receptors) or, far better, through <b>opsonins</b> coating it: <b>IgG</b> (Fc receptor) and complement <b>C3b</b> (CR1). Opsonization makes phagocytosis up to a thousand times more efficient.',bug:'<b>Capsules</b> hide the surface from receptors and complement (<i>S. pneumoniae</i>, <i>H. influenzae</i>, <i>N. meningitidis</i>, <i>Klebsiella</i>). <b>Protein A</b> of <i>S. aureus</i> binds IgG by the wrong end. <b>M protein</b> of <i>S. pyogenes</i> blocks C3b. <b>IgA protease</b> clears mucosal antibody.'},
+ {t:'Engulf',k:'Step 3 · Swallow it',txt:'Pseudopods flow around the bacterium and fuse, sealing it inside a membrane bubble: the <b>phagosome</b>. Actin does the work; it costs ATP.',bug:'<b>Leukocidins</b> kill the phagocyte first: Panton–Valentine leukocidin (<i>S. aureus</i>), streptolysin O. <i>Yersinia</i> injects proteins (Yops) that paralyze the actin machinery.'},
+ {t:'Kill',k:'Step 4 · Destroy it',txt:'Lysosomes fuse with the phagosome (<b>phagolysosome</b>). Two weapons fire: (1) the <b>respiratory burst</b>: NADPH oxidase → superoxide O₂•⁻ → hydrogen peroxide H₂O₂ → with <b>myeloperoxidase</b> + Cl⁻ → bleach (HOCl); (2) oxygen-independent: lysozyme (cuts peptidoglycan), lactoferrin (steals iron), defensins, acid, proteases. Macrophages add nitric oxide.',bug:'<b>Catalase</b> destroys H₂O₂ (<i>S. aureus</i>). <i>M. tuberculosis</i> <b>blocks phagosome–lysosome fusion</b> and lives inside macrophages. <i>Listeria</i> punches out of the phagosome with listeriolysin O. <i>Coxiella</i> thrives in the acid.'},
+ {t:'Digest & clean up',k:'Step 5 · Finish',txt:'Enzymes break the bacterium down; debris is expelled. Neutrophils live only hours: dead neutrophils + dead tissue + fluid = <b>pus</b>. Macrophages arrive later, clear the mess, present antigen to T cells, and call for repair.',bug:'Biofilm bacteria are never reached. <i>Neisseria</i> and <i>Borrelia</i> change their surface antigens faster than antibodies can keep up.'}
+];
+const DEFC=[
+ {t:'First line · barriers',d:'Intact skin (dry, acidic, shedding, sweat lysozyme). Mucous membranes with mucus and cilia. Stomach acid. Tears and saliva (lysozyme, IgA). Normal flora crowding out newcomers. Urine flow.',h:'Burns, catheters, intubation and antibiotics each remove one of these. That is why hospital infections happen.'},
+ {t:'Second line · innate',d:'Phagocytes (neutrophils first, macrophages later), natural killer cells, <b>complement</b> (opsonization by C3b, chemotaxis by C5a, membrane attack complex C5b–9 that punches holes in Gram-negatives), interferons, acute-phase proteins, <b>inflammation</b> (redness, heat, swelling, pain) and <b>fever</b> (IL-1, IL-6, TNF raise the hypothalamic set point; many bacteria grow worse at 39 °C).',h:'Complement C5–C9 deficiency → recurrent <i>Neisseria</i> infections. Chronic granulomatous disease (no NADPH oxidase) → catalase-positive organisms: <i>S. aureus</i>, <i>Serratia</i>, <i>Nocardia</i>, <i>Burkholderia</i>, <i>Aspergillus</i>.'},
+ {t:'Third line · adaptive',d:'Specific and remembering. <b>Antibodies</b> (B cells, plasma cells) neutralize toxins, opsonize, activate complement, and block adhesion (secretory IgA). <b>T cells</b>: helper T cells coordinate; cytotoxic T cells and activated macrophages deal with bacteria that hide inside cells (TB, <i>Listeria</i>, <i>Salmonella</i>).',h:'Toxoid vaccines (tetanus, diphtheria) and capsule vaccines (pneumococcal, Hib, meningococcal) work by making antibodies in advance. Babies under 2 need the capsule conjugated to a protein to respond.'}
+];
+const SEP={
+ lps:{t:'Endotoxin (LPS) released',d:'Gram-negative bacteria shed lipopolysaccharide as they grow and dump it when they die (antibiotics can briefly make this worse). The toxic part is <b>lipid A</b>.',c:'Gram-positive equivalents: lipoteichoic acid, peptidoglycan fragments, and superantigens (TSST-1) that fire up T cells directly.'},
+ tlr:{t:'Macrophages sense it',d:'LPS binds LPS-binding protein → CD14 → <b>Toll-like receptor 4</b> on macrophages and endothelium. NF-κB switches on cytokine genes.',c:'This is the same pathway that gives a local infection its useful inflammation; sepsis is that response gone body-wide.'},
+ cyt:{t:'Cytokine storm',d:'<b>TNF</b>, <b>IL-1</b>, <b>IL-6</b> pour out, followed by IL-8, IL-12, interferon-γ, and complement and clotting cascades are activated.',c:'IL-6 drives the liver\'s acute-phase proteins (CRP, procalcitonin), which is why those blood tests rise.'},
+ fev:{t:'Fever',d:'IL-1 and TNF reach the hypothalamus → prostaglandin E₂ → set point goes up. Chills as the body shivers to reach it.',c:'Older and very sick patients can be hypothermic instead, a worse sign.'},
+ vas:{t:'Vasodilation',d:'Cytokines induce nitric oxide synthase in vessel walls. Arterioles relax everywhere at once: warm, flushed skin, bounding pulse, falling blood pressure ("warm shock").',c:'Vasopressors (norepinephrine) are needed when fluids alone can\'t restore pressure.'},
+ leak:{t:'Capillary leak',d:'Endothelium becomes sticky and porous. Fluid and protein escape into tissues: edema, and intravascular volume drops further.',c:'Why septic patients need liters of fluid and still swell up.'},
+ coag:{t:'Clotting cascade (DIC)',d:'Endothelium and monocytes express <b>tissue factor</b>; anticoagulants (protein C, antithrombin) fall. Microthrombi form everywhere, consuming platelets and clotting factors → <b>disseminated intravascular coagulation</b>: clotting and bleeding at the same time.',c:'Low platelets, long PT/PTT, high D-dimer, low fibrinogen. Purpura in meningococcemia; adrenal hemorrhage (Waterhouse–Friderichsen).'},
+ perf:{t:'Tissue hypoperfusion',d:'Low pressure + leaky vessels + microthrombi = oxygen doesn\'t reach cells. They switch to anaerobic glycolysis.',c:'<b>Lactate</b> rises. This is where Unit 2 begins: hypoxic cell injury in every organ.'},
+ mof:{t:'Multi-organ failure',d:'Lungs: ARDS. Kidneys: acute tubular necrosis. Liver: jaundice, low clotting factors. Brain: confusion. Heart: depressed by cytokines. Gut: barrier breaks and lets more bacteria in.',c:'Each failing organ roughly doubles mortality. Early antibiotics and fluids within the first hour matter most.'}
+};
+inits.defense=()=>{
+  const svg=$('#phSvg');const r=rng(41);
+  const gran=Array.from({length:14},()=>({a:r()*6.283,d:.3+r()*.6}));
+  const bx0=400,by=135;
+  function draw(t){
+    const chem=ease(ramp(t,0,.2)),ops=ramp(t,.2,.4),eng=ease(ramp(t,.4,.6)),kill=ramp(t,.6,.85),fin=ramp(t,.85,1);
+    const nx=lerp(110,300,chem),ny=by;const NR=62;
+    const bx=lerp(bx0,nx+6,eng),bopa=1-ramp(t,.72,.85);
+    let s=`<rect x="0" y="0" width="640" height="30" style="fill:var(--bad-soft)"/><text x="12" y="20" class="t-sm">BLOOD VESSEL · neutrophil squeezes out (diapedesis)</text>`;
+    // gradient dots (chemoattractants)
+    if(t<.45){for(let i=0;i<22;i++){const a=r()*6.283,d=30+r()*170;s+=`<circle cx="${f1(bx0+d*Math.cos(a)*1.3)}" cy="${f1(by+d*Math.sin(a)*.7)}" r="2.2" style="fill:var(--warn);opacity:${(.9*(1-d/200)*(1-ramp(t,.3,.45))).toFixed(2)}"/>`}
+      s+=`<text x="${bx0}" y="${by+70}" class="t-sm t-mid" style="opacity:${(1-ramp(t,.3,.45)).toFixed(2)}">C5a · IL-8 · fMet peptides</text>`}
+    // neutrophil
+    s+=`<path d="${blob(nx,ny,NR,5,1.1+chem*2,100)}" style="fill:var(--macro);stroke:var(--hema);stroke-width:2.5"/>`;
+    // pseudopods
+    if(eng>0&&eng<1){const px=nx+NR-8;s+=`<path d="M${f1(px)} ${by-30} Q${f1(bx+40*eng+10)} ${by-48*eng-20} ${f1(bx+44*eng)} ${f1(by-6)}" style="fill:none;stroke:var(--hema);stroke-width:2.5;stroke-linecap:round"/><path d="M${f1(px)} ${by+30} Q${f1(bx+40*eng+10)} ${by+48*eng+20} ${f1(bx+44*eng)} ${f1(by+6)}" style="fill:none;stroke:var(--hema);stroke-width:2.5;stroke-linecap:round"/>`}
+    // nucleus lobes
+    [[-18,-14],[-2,12],[16,-10]].forEach(([a,b])=>s+=`<ellipse cx="${f1(nx+a-10*eng)}" cy="${f1(ny+b)}" rx="12" ry="10" style="fill:var(--nuc)"/>`);
+    // granules
+    gran.forEach((g,i)=>{const mv=kill*(i<9?1:0);const gx=lerp(nx+NR*g.d*Math.cos(g.a),bx,mv),gy=lerp(ny+NR*g.d*Math.sin(g.a),by,mv);s+=`<circle cx="${f1(gx)}" cy="${f1(gy)}" r="3.5" style="fill:var(--eosin);opacity:${(1-mv*ramp(t,.7,.8)).toFixed(2)}"/>`});
+    // phagosome
+    if(eng>.5){const pr=30;s+=`<circle cx="${f1(bx)}" cy="${by}" r="${pr}" style="fill:${kill>.2?'var(--warn-soft)':'var(--field)'};stroke:var(--memb);stroke-width:1.5;opacity:${ramp(eng,.5,1).toFixed(2)}"/>`;
+      if(kill>.2)s+=`<text x="${f1(bx)}" y="${by+46}" class="t-sm t-mid" style="fill:var(--warn)">O₂•⁻ → H₂O₂ → HOCl</text>`}
+    // bacterium
+    if(bopa>0){s+=`<g opacity="${bopa.toFixed(2)}"><rect x="${f1(bx-22)}" y="${by-9}" width="44" height="18" rx="9" style="fill:var(--saf)"/>`;
+      if(ops>0)for(let k=0;k<6;k++){const a=k/6*6.283;const x=bx+24*Math.cos(a)*(k%2?1:.8),y=by+14*Math.sin(a);s+=`<g opacity="${ops.toFixed(2)}" transform="translate(${f1(x)} ${f1(y)}) rotate(${(a*180/Math.PI+90).toFixed(0)})"><path d="M0 0v-6M0 -6l-4 -5M0 -6l4 -5" style="stroke:var(--good);stroke-width:1.8;fill:none"/></g>`}
+      s+='</g>'}
+    if(ops>0&&eng<.2)s+=`<text x="${bx0}" y="${by-40}" class="t-sm t-mid" style="fill:var(--good);opacity:${ops.toFixed(2)}">IgG + C3b opsonins</text>`;
+    if(ramp(t,.72,.85)>0&&fin<1){for(let k=0;k<8;k++){const a=k/8*6.283,d=6+14*ramp(t,.72,.85);s+=`<circle cx="${f1(bx+d*Math.cos(a))}" cy="${f1(by+d*Math.sin(a))}" r="2" style="fill:var(--saf);opacity:${(1-fin).toFixed(2)}"/>`}}
+    if(fin>0){for(let k=0;k<6;k++){const x=nx+NR+10+fin*50+k*9,y=by-20+k*8;s+=`<circle cx="${f1(x)}" cy="${f1(y)}" r="2" style="fill:var(--saf);opacity:${(fin*(1-fin*.5)).toFixed(2)}"/>`}s+=`<text x="${f1(nx+NR+40)}" y="${by+50}" class="t-sm" style="opacity:${fin.toFixed(2)}">debris out · neutrophil dies → pus</text>`}
+    s+=`<text x="${f1(nx)}" y="${by+NR+22}" class="t-sm t-mid">neutrophil</text>`;
+    const p=t<.2?0:t<.4?1:t<.6?2:t<.85?3:4;
+    $$('[data-ps]').forEach((b,i)=>b.setAttribute('aria-pressed',i===p));
+    const P=PHS[p];$('#phNote').innerHTML=`<div class="kicker">${P.k}</div><h4>${P.t}</h4><p>${P.txt}</p><div class="hook"><b>How bacteria fight back</b>${P.bug}</div>`;
+    svg.innerHTML=s;
+  }
+  $('#phSteps').innerHTML=PHS.map((p,i)=>`<button data-ps="${i}" aria-pressed="false"><b>STEP ${i+1}</b><span>${p.t}</span></button>`).join('');
+  const rg=$('#phT');const stop=playWire(rg,$('#phPlay'),draw,13000,'Replay','defense');
+  $('#phSteps').addEventListener('click',e=>{const b=e.target.closest('[data-ps]');if(b){stop();rg.value=[0.02,.22,.42,.66,.88][+b.dataset.ps];draw(+rg.value)}});
+  draw(+rg.value);
+  $('#defCards').innerHTML=DEFC.map(c=>`<div class="card"><h4>${c.t}</h4><p>${c.d}</p><div class="hook"><b>Exam hook</b>${c.h}</div></div>`).join('');
+  const sv=$('#sepSvg');let g=fmark('sepm');
+  g+=fnode('lps',20,30,180,56,['Endotoxin (LPS)','Gram− cell wall · lipid A'],'src');
+  g+=fnode('tlr',240,30,180,56,['Macrophage TLR4','CD14 · NF-κB']);
+  g+=fnode('cyt',460,30,180,56,['TNF · IL-1 · IL-6','cytokine storm']);
+  g+=fnode('fev',680,30,120,56,['Fever','PGE₂']);
+  g+=fnode('vas',240,150,170,56,['Vasodilation','nitric oxide · warm, ↓BP']);
+  g+=fnode('leak',450,150,170,56,['Capillary leak','edema · ↓volume']);
+  g+=fnode('coag',660,150,160,56,['DIC','tissue factor · microthrombi']);
+  g+=fnode('perf',350,270,200,56,['Tissue hypoperfusion','lactate ↑ · hypoxic injury']);
+  g+=fnode('mof',620,270,200,56,['Multi-organ failure','ARDS · AKI · liver · brain'],'end');
+  g+=farr('M200 58H236','sepm')+farr('M420 58H456','sepm')+farr('M640 58H676','sepm');
+  g+=farr('M520 86 L330 146','sepm')+farr('M545 86 L538 146','sepm')+farr('M580 86 L730 146','sepm');
+  g+=farr('M330 206 L430 266','sepm')+farr('M535 206 L470 266','sepm')+farr('M730 206 L520 266','sepm')+farr('M550 298H616','sepm');
+  sv.innerHTML=g;
+  wireFlow(sv,$('#sepNote'),SEP,'lps',n=>`<h4>${n.t}</h4><p>${n.d}</p><div class="hook"><b>Clinical</b>${n.c}</div>`);
+};
+
+/* =============== 1.10 antibiotics =============== */
+const ABT={
+ wall:{t:'Cell wall synthesis',drugs:'<b>β-lactams</b> (penicillins, cephalosporins, carbapenems, aztreonam) bind penicillin-binding proteins and stop peptidoglycan cross-linking. <b>Vancomycin</b> binds the D-Ala-D-Ala building block itself. Bacitracin, fosfomycin.',kind:'Bactericidal, but only on cells that are actively building wall (log phase).',hook:'Useless against <i>Mycoplasma</i> (no wall) and intracellular bugs. β-lactamase inhibitors (clavulanate, tazobactam) protect the drug. Vancomycin is too big to cross the Gram-negative outer membrane: Gram-positives only.'},
+ mem:{t:'Cell membrane',drugs:'<b>Polymyxins</b> (colistin) are detergents that bind LPS and wreck the Gram-negative outer membrane. <b>Daptomycin</b> inserts into Gram-positive membranes and depolarizes them.',kind:'Bactericidal.',hook:'Colistin is a last resort for carbapenem-resistant Gram-negatives (nephrotoxic). Daptomycin is inactivated by lung surfactant, so never for pneumonia.'},
+ s30:{t:'30S ribosomal subunit',drugs:'<b>Aminoglycosides</b> (gentamicin, tobramycin, amikacin): misreading of mRNA; bactericidal; need oxygen to enter the cell, so no effect on anaerobes. <b>Tetracyclines</b> (doxycycline, minocycline): block tRNA binding; bacteriostatic.',kind:'Aminoglycosides kill; tetracyclines stop.',hook:'Aminoglycosides: nephrotoxic, ototoxic; synergize with β-lactams (the hole in the wall lets them in). Tetracyclines: chelated by Ca²⁺, Fe²⁺, antacids; stain teeth; photosensitivity; avoid in pregnancy and under 8.'},
+ s50:{t:'50S ribosomal subunit',drugs:'<b>Macrolides</b> (azithromycin, erythromycin), <b>clindamycin</b>, <b>chloramphenicol</b>, <b>linezolid</b>. Block the growing peptide chain.',kind:'Mostly bacteriostatic.',hook:'Macrolides for atypical pneumonia (<i>Mycoplasma</i>, <i>Legionella</i>, <i>Chlamydia</i>); prolong QT. Clindamycin: anaerobes above the diaphragm; classic cause of <i>C. difficile</i>. Chloramphenicol: aplastic anemia, gray baby. Linezolid: MRSA and VRE; serotonin syndrome, low platelets. Mnemonic: "buy AT 30, CCEL at 50".'},
+ dna:{t:'DNA & RNA',drugs:'<b>Fluoroquinolones</b> (ciprofloxacin, levofloxacin) block DNA gyrase and topoisomerase IV. <b>Metronidazole</b> is reduced to radicals inside anaerobes and breaks their DNA. <b>Rifampin</b> blocks RNA polymerase. <b>Nitrofurantoin</b> damages DNA in the urine.',kind:'Bactericidal.',hook:'Quinolones: tendon rupture, QT, avoid in children and pregnancy. Metronidazole: anaerobes below the diaphragm and protozoa; disulfiram reaction with alcohol; metallic taste. Rifampin: orange tears and urine, big CYP inducer, never alone (fast resistance).'},
+ fol:{t:'Folate pathway',drugs:'<b>Sulfonamides</b> mimic PABA and block dihydropteroate synthase. <b>Trimethoprim</b> blocks dihydrofolate reductase. Together (TMP-SMX) they hit two steps in a row.',kind:'Each is bacteriostatic; combined they are bactericidal.',hook:'Bacteria must make their own folate; we eat ours, which is the selectivity. TMP-SMX for UTI, <i>Pneumocystis</i>, <i>Nocardia</i>, MRSA skin infections. Side effects: rash (Stevens–Johnson), hyperkalemia, megaloblastic anemia, kernicterus in newborns.'},
+ myc:{t:'Mycolic acid (TB only)',drugs:'<b>Isoniazid</b> blocks mycolic acid synthesis (needs KatG activation). <b>Ethambutol</b> blocks arabinogalactan. With <b>rifampin</b> and <b>pyrazinamide</b>: RIPE.',kind:'Isoniazid is cidal on growing TB.',hook:'Isoniazid: hepatitis, neuropathy (give vitamin B₆). Ethambutol: optic neuritis (red-green). Pyrazinamide: hyperuricemia. TB needs 4 drugs for 2 months then 2 for 4 because the population is large and resistance arises by mutation.'}
+};
+const ABROWS=[
+ ['Penicillins','Cell wall (PBPs)','Cidal','Penicillin G, amoxicillin, nafcillin, piperacillin','Nafcillin/oxacillin for MSSA; amoxicillin + clavulanate beats β-lactamase; piperacillin-tazobactam covers <i>Pseudomonas</i>'],
+ ['Cephalosporins','Cell wall','Cidal','1st cefazolin · 2nd cefuroxime · 3rd ceftriaxone · 4th cefepime · 5th ceftaroline','Each generation reaches further into Gram-negatives. Ceftriaxone for meningitis and gonorrhea. Ceftaroline is the one that covers MRSA. None cover <i>Enterococcus</i> or <i>Listeria</i>'],
+ ['Carbapenems','Cell wall','Cidal','Meropenem, imipenem, ertapenem','Broadest β-lactams; ESBL producers. Resistance = CRE, a major threat'],
+ ['Glycopeptides','Cell wall (D-Ala-D-Ala)','Cidal (slow)','Vancomycin','MRSA, <i>C. difficile</i> (oral), <i>Enterococcus</i>. Red man syndrome if infused fast; nephrotoxic'],
+ ['Aminoglycosides','30S','Cidal','Gentamicin, tobramycin, amikacin','Aerobic Gram-negatives; no anaerobes; nephro- and ototoxic'],
+ ['Tetracyclines','30S','Static','Doxycycline, minocycline','Rickettsia, <i>Chlamydia</i>, Lyme, <i>Mycoplasma</i>, acne, MRSA skin; not with milk or antacids'],
+ ['Macrolides','50S','Static','Azithromycin, clarithromycin, erythromycin','Atypical pneumonia, pertussis, <i>Chlamydia</i>; QT prolongation; CYP inhibition (erythro, clarithro)'],
+ ['Lincosamide','50S','Static','Clindamycin','Anaerobes above the diaphragm, toxin-mediated strep and staph disease; <i>C. difficile</i> risk'],
+ ['Oxazolidinone','50S','Static','Linezolid','MRSA, VRE; low platelets, serotonin syndrome'],
+ ['Fluoroquinolones','DNA gyrase / topo IV','Cidal','Ciprofloxacin, levofloxacin, moxifloxacin','UTI, <i>Pseudomonas</i> (cipro), atypicals (levo/moxi); tendons, QT'],
+ ['Nitroimidazole','DNA (anaerobes)','Cidal','Metronidazole','Anaerobes below the diaphragm, <i>C. difficile</i>, BV, <i>H. pylori</i>, <i>Giardia</i>; no alcohol'],
+ ['Rifamycins','RNA polymerase','Cidal','Rifampin','TB, meningitis prophylaxis, prosthetic-joint staph; orange fluids; CYP inducer'],
+ ['Folate antagonists','DHPS + DHFR','Cidal together','Trimethoprim-sulfamethoxazole','UTI, <i>Pneumocystis</i>, <i>Nocardia</i>, MRSA skin; rash, hyperkalemia'],
+ ['Polymyxins','Outer membrane','Cidal','Colistin, polymyxin B','Last line for MDR Gram-negatives; nephrotoxic'],
+ ['Lipopeptide','Membrane (Gram+)','Cidal','Daptomycin','MRSA bacteremia, VRE; not for pneumonia; check CK'],
+ ['Nitrofuran','Multiple (DNA, ribosome)','Cidal in urine','Nitrofurantoin','Simple cystitis only; no kidney tissue levels']
+];
+const GT=[
+ {t:'Transformation',k:'Naked DNA from a dead cell',txt:'A donor cell dies and breaks apart. Its DNA fragments float free. A <b>competent</b> recipient binds a fragment, pulls it in, and swaps it into its own chromosome by homologous recombination.',who:'<i>Streptococcus pneumoniae</i> (Griffith\'s 1928 experiment: rough + heat-killed smooth → smooth), <i>Haemophilus</i>, <i>Neisseria</i>, <i>Bacillus</i>.',hook:'Only naturally competent species do it, and only with DNA from close relatives. Penicillin-resistant pneumococci got their mosaic PBP genes this way.'},
+ {t:'Transduction',k:'A virus carries it',txt:'A <b>bacteriophage</b> infects the donor. While packing new virus particles it accidentally stuffs a piece of bacterial DNA into a capsid (<b>generalized</b>), or a prophage excising from the chromosome takes a neighbouring gene along (<b>specialized</b>). That phage injects the DNA into the next cell.',who:'Phage-encoded toxins, "ABCD\'S": Shig<b>A</b>-like toxin (EHEC), <b>B</b>otulinum, <b>C</b>holera, <b>D</b>iphtheria, erythrogenic toxin of <b>S</b>trep pyogenes (scarlet fever). Also staph enterotoxins.',hook:'A <i>C. diphtheriae</i> strain is only toxigenic if it carries the β-prophage: the Elek test checks for toxin, not the species.'},
+ {t:'Conjugation',k:'Bacterial "mating"',txt:'An F⁺ (donor) cell builds a <b>sex pilus</b>, hooks a recipient and pulls it close. The F plasmid is nicked and one strand is copied across (rolling circle). Both cells end up F⁺. If the F plasmid has integrated into the chromosome (Hfr), chromosomal genes get dragged across too.',who:'The main way <b>resistance plasmids</b> (R factors) spread, including between species: ESBLs among gut Gram-negatives; the <i>vanA</i> gene from <i>Enterococcus</i> to <i>S. aureus</i> (VRSA).',hook:'A single plasmid can carry resistance to five or six drug classes at once, plus toxin and adhesin genes. Transposons ("jumping genes") move them between plasmids and chromosomes.'}
+];
+const RES=[
+ ['Destroy the drug','<b>β-lactamases</b> cut the β-lactam ring: penicillinase (staph), extended-spectrum β-lactamases (ESBL: <i>E. coli</i>, <i>Klebsiella</i>), carbapenemases (KPC, NDM-1 → CRE). Aminoglycoside-modifying enzymes. Chloramphenicol acetyltransferase.','Counter: β-lactamase inhibitors (clavulanate, tazobactam, avibactam), or a drug the enzyme can\'t cut.'],
+ ['Change the target','MRSA: <i>mecA</i> gene → <b>PBP2a</b>, a wall-building enzyme β-lactams can\'t bind. VRE: <i>vanA</i> → D-Ala-D-<b>Lac</b>, so vancomycin has nothing to grip. <i>erm</i> methylates the 50S (macrolides, clindamycin). Gyrase mutations (quinolones). <i>rpoB</i> mutations (rifampin). Altered PBPs in penicillin-resistant pneumococcus.','Counter: a drug with a different target (vancomycin, linezolid, daptomycin for MRSA).'],
+ ['Pump it out','<b>Efflux pumps</b> push the drug out as fast as it comes in: tetracyclines, macrolides, quinolones. <i>Pseudomonas</i> has many.','Counter: higher doses rarely help; switch class.'],
+ ['Keep it out','Gram-negatives lose <b>porins</b> so the drug can\'t cross the outer membrane (<i>Pseudomonas</i> and carbapenems). The outer membrane itself blocks vancomycin. Anaerobes can\'t import aminoglycosides.','Counter: drugs that cross by other routes, or combinations.'],
+ ['Go around it','Overproduce PABA or use an altered enzyme to bypass a sulfonamide block. <b>Biofilm</b> and dormant <b>persister</b> cells tolerate drugs without any genetic change, then regrow.','Counter: remove the device the biofilm is on; long courses; combinations.']
+];
+inits.abx=()=>{
+  const svg=$('#abxSvg');
+  let h=`<rect x="90" y="60" width="500" height="200" rx="100" style="fill:var(--hema-soft);stroke:var(--hema);stroke-width:1;stroke-dasharray:4 5;opacity:.6"/>`;
+  h+=`<g class="fn" data-fn="wall" role="button" tabindex="0"><rect x="108" y="78" width="464" height="164" rx="82" style="fill:none;stroke:var(--wall);stroke-width:10"/><rect x="108" y="78" width="464" height="164" rx="82" style="fill:transparent;stroke:transparent;stroke-width:22"/></g>`;
+  h+=`<g class="fn" data-fn="mem" role="button" tabindex="0"><rect x="120" y="90" width="440" height="140" rx="70" style="fill:var(--cyto);stroke:var(--memb);stroke-width:4"/></g>`;
+  h+=`<g class="fn" data-fn="dna" role="button" tabindex="0"><ellipse cx="300" cy="160" rx="70" ry="44" style="fill:transparent;stroke:transparent"/><path d="M252 158c6-24 40-26 50-6s-26 34-6 40 46-4 44-28-26-32-48-20-38 24-22 38 50 14 62-4" style="fill:none;stroke:var(--nuc);stroke-width:3;stroke-linecap:round"/></g>`;
+  let rb='';const r=rng(13);for(let i=0;i<30;i++){const x=150+r()*380,y=110+r()*100;if(Math.abs(x-300)<80&&Math.abs(y-160)<50)continue;if(Math.hypot(x-470,y-150)<40)continue;rb+=`<circle cx="${f1(x)}" cy="${f1(y)}" r="3.4"/>`}
+  h+=`<g class="fn" data-fn="s30" role="button" tabindex="0" style="fill:var(--hema)">${rb}<rect x="130" y="100" width="100" height="120" rx="20" style="fill:transparent;stroke:transparent"/></g>`;
+  h+=`<g class="fn" data-fn="s50" role="button" tabindex="0"><rect x="400" y="100" width="150" height="120" rx="20" style="fill:transparent;stroke:transparent"/><g style="fill:var(--hema)"><circle cx="450" cy="130" r="3.4"/><circle cx="470" cy="150" r="3.4"/><circle cx="500" cy="135" r="3.4"/><circle cx="520" cy="170" r="3.4"/><circle cx="455" cy="185" r="3.4"/><circle cx="490" cy="200" r="3.4"/></g></g>`;
+  h+=`<g class="fn" data-fn="fol" role="button" tabindex="0"><rect x="400" y="135" width="64" height="40" rx="8" style="fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.5"/><text x="432" y="152" class="t-sm t-mid" style="fill:var(--warn)">PABA →</text><text x="432" y="166" class="t-sm t-mid" style="fill:var(--warn)">folate</text></g>`;
+  h+=`<g class="fn" data-fn="myc" role="button" tabindex="0"><rect x="300" y="18" width="150" height="30" rx="15" style="fill:var(--unst);stroke:var(--unst-line);stroke-width:1.5"/><text x="375" y="37" class="t-sm t-mid">mycolic acid (TB)</text></g>`;
+  const L=(x1,y1,x2,y2,tx,ty,txt,anchor='start')=>`<path class="lead" d="M${x1} ${y1} L${x2} ${y2}"/><text x="${tx}" y="${ty}" class="t-lbl" text-anchor="${anchor}">${txt}</text>`;
+  h+=L(112,120,60,80,10,74,'Cell wall')+L(126,200,60,262,10,280,'Membrane')+L(170,160,100,310,60,330,'30S ribosome')+L(480,150,600,300,560,322,'50S ribosome')+L(300,118,300,300,300,322,'DNA · RNA','middle')+L(460,160,640,180,600,170,'Folate');
+  svg.innerHTML=h;
+  $('#abxRows').innerHTML=ABROWS.map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('');
+  wireFlow(svg,$('#abxNote'),ABT,'wall',n=>`<div class="kicker">Target</div><h4>${n.t}</h4><dl class="kv"><div><dt>Drugs</dt><dd>${n.drugs}</dd></div><div><dt>Kills or stops?</dt><dd>${n.kind}</dd></div></dl><div class="hook"><b>Exam hook</b>${n.hook}</div>`);
+  // gene transfer
+  const gs=$('#gtSvg');let mode=0;
+  const cell=(x,y,w,h,label,col='var(--cv)')=>`<rect x="${f1(x-w/2)}" y="${f1(y-h/2)}" width="${w}" height="${h}" rx="${h/2}" style="fill:var(--cyto);stroke:${col};stroke-width:3"/><text x="${f1(x)}" y="${f1(y+h/2+18)}" class="t-sm t-mid">${label}</text>`;
+  const chrom=(x,y)=>`<path d="M${x-30} ${y}c6-16 20-16 30-4s20 12 30-4" style="fill:none;stroke:var(--nuc);stroke-width:2.5"/>`;
+  const gene=(x,y,o=1)=>`<rect x="${f1(x-10)}" y="${f1(y-4)}" width="20" height="8" rx="3" style="fill:var(--eosin);opacity:${o.toFixed(2)}"/>`;
+  function draw(t){let s='';
+    if(mode===0){const ly=ease(ramp(t,.05,.3)),up=ease(ramp(t,.4,.7)),integ=ramp(t,.75,1);
+      s+=`<g opacity="${(1-ly*.8).toFixed(2)}">${cell(150,120,180,80,'donor (dying)','var(--muted)')}</g>`;
+      if(ly>0){for(let k=0;k<7;k++){const a=k/7*6.283;s+=`<path d="M${f1(150+ly*60*Math.cos(a))} ${f1(120+ly*40*Math.sin(a))} l14 4" style="stroke:var(--nuc);stroke-width:2.5;opacity:${ly.toFixed(2)}"/>`}}
+      const gx=lerp(200,440,up),gy=lerp(110,120,up);
+      s+=cell(470,120,180,80,'competent recipient')+chrom(470,120);
+      s+=gene(integ>0?lerp(gx,470,integ):gx,integ>0?lerp(gy,116,integ):gy);
+      if(up>.2&&up<1)s+=`<text x="330" y="80" class="t-sm t-mid" style="opacity:${(1-integ).toFixed(2)}">naked DNA fragment taken up</text>`;
+      if(integ>.5)s+=`<text x="470" y="60" class="t-sm t-mid" style="fill:var(--eosin)">recombined into chromosome</text>`;}
+    if(mode===1){const inf=ease(ramp(t,0,.25)),pack=ramp(t,.3,.5),mv=ease(ramp(t,.55,.8)),inj=ramp(t,.82,1);
+      s+=cell(150,140,180,80,'donor')+chrom(150,140)+gene(150,136,1-pack);
+      const px=lerp(150,470,mv),py=lerp(60,70,mv);
+      s+=`<g transform="translate(${f1(px)} ${f1(py)})"><polygon points="0,-22 16,-10 16,10 0,22 -16,10 -16,-10" style="fill:var(--panel-2);stroke:var(--hema);stroke-width:2"/><path d="M0 22v18M-10 40l10-8 10 8" style="fill:none;stroke:var(--hema);stroke-width:2"/>${pack>0?gene(0,0,pack):''}</g>`;
+      if(inf<1&&mv===0)s+=`<path d="M150 100v-20" style="stroke:var(--hema);stroke-width:2;stroke-dasharray:3 3"/><text x="150" y="30" class="t-sm t-mid">phage infects, packs bacterial DNA by mistake</text>`;
+      s+=cell(470,140,180,80,'new host')+chrom(470,140);
+      if(inj>0){s+=gene(470,lerp(70,136,inj));s+=`<text x="470" y="30" class="t-sm t-mid" style="fill:var(--eosin)">phage injects the gene</text>`}}
+    if(mode===2){const pil=ease(ramp(t,0,.3)),app=ease(ramp(t,.3,.55)),tr=ramp(t,.6,.9),done=ramp(t,.9,1);
+      const dx=lerp(150,230,app),rx=lerp(500,330,app);
+      s+=cell(dx,130,180,80,'F⁺ donor')+chrom(dx,130)+`<circle cx="${f1(dx+45)}" cy="118" r="14" style="fill:none;stroke:var(--eosin);stroke-width:3"/>`;
+      s+=cell(rx,130,180,80,done>0?'now F⁺ too':'recipient')+chrom(rx,130);
+      if(pil>0)s+=`<line x1="${f1(dx+90)}" y1="130" x2="${f1(dx+90+pil*(rx-90-dx-90))}" y2="130" style="stroke:var(--wall);stroke-width:4;stroke-linecap:round"/>`;
+      if(tr>0){const sx=dx+45,sy=118,ex=rx-45,ey=118;s+=`<path d="M${f1(sx+14)} ${sy} C${f1(sx+60)} ${sy-50} ${f1(ex-60)} ${ey-50} ${f1(ex-14)} ${ey}" pathLength="1" style="fill:none;stroke:var(--eosin);stroke-width:2.5;stroke-dasharray:${tr.toFixed(2)} 1"/>`;
+        s+=`<circle cx="${f1(ex)}" cy="${ey}" r="14" style="fill:none;stroke:var(--eosin);stroke-width:3;opacity:${tr.toFixed(2)}"/>`;s+=`<text x="320" y="50" class="t-sm t-mid">one strand of the plasmid is copied across the pilus</text>`}
+      else if(pil>.5)s+=`<text x="320" y="50" class="t-sm t-mid">sex pilus reaches out and reels the recipient in</text>`;
+      s+=`<text x="12" y="240" class="t-sm">● = R plasmid (resistance genes)</text>`}
+    gs.innerHTML=s;}
+  $('#gtTabs').innerHTML=GT.map((g,i)=>`<button data-gt="${i}" aria-pressed="${i===0}"><b>${['NAKED DNA','PHAGE','PLASMID'][i]}</b><span>${g.t}</span></button>`).join('');
+  const rg=$('#gtT');const stop=playWire(rg,$('#gtPlay'),draw,7000,'Replay','abx');
+  function setMode(i){mode=i;$$('[data-gt]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.gt===i));const g=GT[i];
+    $('#gtNote').innerHTML=`<div class="kicker">${g.k}</div><h4>${g.t}</h4><p>${g.txt}</p><dl class="kv"><div><dt>Who does it</dt><dd>${g.who}</dd></div></dl><div class="hook"><b>Exam hook</b>${g.hook}</div>`;draw(+rg.value)}
+  $('#gtTabs').addEventListener('click',e=>{const b=e.target.closest('[data-gt]');if(b){stop();rg.value=0.5;setMode(+b.dataset.gt)}});
+  setMode(2);
+  $('#resCards').innerHTML=RES.map(r=>`<div class="card"><h4>${r[0]}</h4><p>${r[1]}</p><div class="hook"><b>Counter</b>${r[2]}</div></div>`).join('')+`<div class="card"><h4>The ones to know by name</h4><p><b>MRSA</b> (PBP2a), <b>VRE</b> (vanA), <b>ESBL</b> <i>E. coli</i>/<i>Klebsiella</i>, <b>CRE</b> (carbapenemase), MDR <i>Pseudomonas</i> and <i>Acinetobacter</i>, MDR/XDR <b>TB</b>, <i>C. difficile</i>.</p><div class="hook"><b>Why it spreads</b>Overuse in people and livestock, broad drugs when narrow would do, hospitals concentrating sick patients and resistant strains, and plasmids that move between species. Stewardship: right drug, right dose, right duration, and cultures before antibiotics.</div></div>`;
+};
+
+/* =============== 1.11 lab id =============== */
+const TREE={
+ root:{q:'What did the Gram stain show?',o:[['gpc','Gram-positive cocci','purple spheres'],['gpr','Gram-positive rods','purple rods'],['gnc','Gram-negative cocci or coccobacilli','pink spheres, pairs, or short plump rods'],['gnr','Gram-negative rods','pink rods'],['oth','Nothing useful','stains poorly or not at all']]},
+ gpc:{q:'Catalase test (drop of H₂O₂): bubbles?',o:[['staph','Bubbles: catalase +','Staphylococcus'],['strep','No bubbles: catalase −','Streptococcus or Enterococcus']]},
+ staph:{q:'Coagulase (clots plasma)?',o:[['L_sa','Coagulase +','S. aureus'],['cons','Coagulase −','coagulase-negative staph']]},
+ cons:{q:'Novobiocin disc?',o:[['L_se','Sensitive','S. epidermidis'],['L_ss','Resistant','S. saprophyticus']]},
+ strep:{q:'Hemolysis on blood agar?',o:[['beta','β: clear halo','complete hemolysis'],['alpha','α: green','partial hemolysis'],['gamma','γ: none','no hemolysis']]},
+ beta:{q:'Bacitracin disc (and PYR)?',o:[['L_pyo','Sensitive, PYR +','group A'],['L_aga','Resistant, CAMP +, hippurate +','group B']]},
+ alpha:{q:'Optochin disc / bile solubility?',o:[['L_pne','Sensitive, bile-soluble','S. pneumoniae'],['L_vir','Resistant, insoluble','viridans group']]},
+ gamma:{q:'Grows in 6.5% NaCl (bile esculin + for both)?',o:[['L_ent','Yes, PYR +','Enterococcus'],['L_bov','No','S. bovis / gallolyticus']]},
+ gpr:{q:'Does it form spores?',o:[['spore','Yes','Bacillus or Clostridium'],['nospore','No','']]},
+ spore:{q:'Oxygen?',o:[['L_bac','Aerobe','Bacillus'],['L_clo','Anaerobe','Clostridium']]},
+ nospore:{q:'What does it look like?',o:[['L_cor','Club-shaped, "Chinese letters", metachromatic granules','Corynebacterium'],['L_lis','Short rods, tumbling motility, grows in the cold','Listeria'],['branch','Long branching filaments','Actinomyces or Nocardia']]},
+ branch:{q:'Weakly acid-fast and aerobic?',o:[['L_noc','Yes','Nocardia'],['L_act','No: anaerobe, sulfur granules','Actinomyces']]},
+ gnc:{q:'Shape?',o:[['neis','Kidney-bean diplococci, oxidase +','Neisseria / Moraxella'],['ccb','Coccobacilli','small, fastidious']]},
+ neis:{q:'Sugar fermentation?',o:[['L_men','Maltose and glucose','N. meningitidis'],['L_gon','Glucose only','N. gonorrhoeae']]},
+ ccb:{q:'What does it need to grow / where did it come from?',o:[['L_hib','Chocolate agar with factors X (hemin) and V (NAD)','Haemophilus influenzae'],['L_bor','Bordet–Gengou or Regan–Lowe agar; whooping cough','Bordetella pertussis'],['L_pas','Cat or dog bite','Pasteurella multocida'],['L_bru','Unpasteurized dairy, livestock, undulating fever','Brucella'],['L_fra','Rabbits, ticks, ulcer + swollen node','Francisella tularensis']]},
+ gnr:{q:'MacConkey agar: pink (lactose fermenter)?',o:[['lac','Pink: ferments lactose','Enterobacterales'],['nolac','Colorless: no lactose','']]},
+ lac:{q:'Fast or slow fermenter?',o:[['fast','Fast (pink in 24 h)',''],['L_slow','Slow','Citrobacter, Serratia']]},
+ fast:{q:'Indole?',o:[['L_eco','Indole +, green sheen on EMB','E. coli'],['L_kle','Indole −, very mucoid, urease +','Klebsiella (also Enterobacter)']]},
+ nolac:{q:'Oxidase?',o:[['oxp','Oxidase +',''],['oxn','Oxidase −','']]},
+ oxp:{q:'Shape and habits?',o:[['L_pse','Straight rod, blue-green pigment, fruity smell','Pseudomonas'],['L_cam','Curved, grows at 42 °C, microaerophilic','Campylobacter'],['L_vib','Comma, grows on TCBS, likes alkaline','Vibrio'],['L_hpy','Curved, strongly urease +','H. pylori'],['L_leg','Faint, needs charcoal yeast extract with cysteine and iron','Legionella']]},
+ oxn:{q:'H₂S on triple sugar iron agar?',o:[['h2s','H₂S + (black)',''],['L_shi','H₂S −, non-motile','Shigella (also Yersinia: bipolar, cold growth)']]},
+ h2s:{q:'Urease / swarming?',o:[['L_pro','Urease +, swarms across the plate','Proteus'],['L_sal','Urease −, motile','Salmonella']]},
+ oth:{q:'Why won\'t it stain?',o:[['L_myc','Waxy wall: acid-fast stain shows red rods','Mycobacterium'],['L_spi','Too thin: darkfield or serology','spirochetes'],['L_myp','No cell wall at all','Mycoplasma'],['L_icl','Lives inside cells','Chlamydia, Rickettsia']]}
+};
+const LEAF={
+ L_sa:[['Staphylococcus aureus','Also: mannitol salt agar turns yellow, β-hemolytic, golden colonies. Think abscess, osteomyelitis, endocarditis, food poisoning, TSS.']],
+ L_se:[['Staphylococcus epidermidis','Catheter and prosthetic-device biofilms; common blood culture contaminant.']],
+ L_ss:[['Staphylococcus saprophyticus','UTI in young sexually active women (second only to E. coli).']],
+ L_pyo:[['Streptococcus pyogenes (group A)','Pharyngitis, impetigo, cellulitis, necrotizing fasciitis, scarlet fever; rheumatic fever and glomerulonephritis later. Rapid strep antigen test.']],
+ L_aga:[['Streptococcus agalactiae (group B)','Neonatal sepsis, meningitis, pneumonia. Screen pregnant women at 36–37 weeks.']],
+ L_pne:[['Streptococcus pneumoniae','Lancet-shaped diplococci with capsule (Quellung reaction). Pneumonia, meningitis, otitis, sinusitis. Urine antigen.']],
+ L_vir:[['Viridans streptococci','S. mutans (caries), S. sanguinis (subacute endocarditis after dental work), S. anginosus (abscesses).']],
+ L_ent:[['Enterococcus faecalis / faecium','UTI, endocarditis, biliary infection; hospital VRE. Grows in bile and salt.']],
+ L_bov:[['Streptococcus gallolyticus (bovis)','Bacteremia or endocarditis → look for colon cancer.']],
+ L_bac:[['Bacillus anthracis','Non-motile, non-hemolytic, "medusa head" colonies, protein capsule. Anthrax.'],['Bacillus cereus','Motile, β-hemolytic. Reheated rice food poisoning (emetic toxin) or diarrheal form.']],
+ L_clo:[['Clostridium tetani','Terminal spore ("drumstick"). Tetanus.'],['Clostridium botulinum','Botulism: canned food, infant honey.'],['Clostridium perfringens','Double-zone hemolysis, lecithinase (Nagler). Gas gangrene, food poisoning.'],['Clostridioides difficile','Toxin A/B in stool (PCR or EIA). Pseudomembranous colitis.']],
+ L_cor:[['Corynebacterium diphtheriae','Tellurite agar (black colonies), Löffler medium, Elek test for toxin. Gray pseudomembrane.']],
+ L_lis:[['Listeria monocytogenes','Tumbling motility, grows at 4 °C, narrow β-hemolysis, CAMP +. Meningitis in newborns and the elderly; pregnancy.']],
+ L_noc:[['Nocardia','Weakly acid-fast branching rods, aerobic. Pneumonia and brain abscess in the immunosuppressed. TMP-SMX.']],
+ L_act:[['Actinomyces israelii','Anaerobic branching rods, yellow sulfur granules. Jaw abscess with draining sinus after dental work. Penicillin.']],
+ L_men:[['Neisseria meningitidis','Maltose +, capsule. Meningitis, meningococcemia with petechiae. Thayer–Martin agar.']],
+ L_gon:[['Neisseria gonorrhoeae','Maltose −, no capsule. Gram-negative diplococci inside neutrophils on a urethral smear. NAAT is the usual test now.']],
+ L_hib:[['Haemophilus influenzae','Needs factors X and V; satellite growth around S. aureus. Epiglottitis, meningitis (unvaccinated), otitis, COPD flares.']],
+ L_bor:[['Bordetella pertussis','Lymphocytosis, whooping cough stages. PCR of nasopharyngeal swab.']],
+ L_pas:[['Pasteurella multocida','Rapid cellulitis after a cat or dog bite. Amoxicillin-clavulanate.']],
+ L_bru:[['Brucella','Undulant fever, night sweats, from unpasteurized dairy or livestock contact. Slow-growing; warn the lab.']],
+ L_fra:[['Francisella tularensis','Tularemia: ulcer at the bite, big lymph nodes. Very low infectious dose; warn the lab.']],
+ L_slow:[['Citrobacter','Slow lactose fermenter; hospital UTI and sepsis; neonatal brain abscess (C. koseri).'],['Serratia marcescens','Red pigment, slow lactose. Hospital UTI, pneumonia, line infection; catalase + (CGD).']],
+ L_eco:[['Escherichia coli','Indole +, green metallic sheen on EMB. UTI, diarrhea, neonatal meningitis, sepsis. O157:H7 doesn\'t ferment sorbitol.']],
+ L_kle:[['Klebsiella pneumoniae','Very mucoid capsule, urease +, indole −. Currant-jelly sputum in alcoholics, UTI, liver abscess; ESBL/CRE.'],['Enterobacter','Lactose +, motile. Hospital infections, inducible β-lactamase.']],
+ L_pse:[['Pseudomonas aeruginosa','Oxidase +, pyocyanin (blue-green), grape smell, non-fermenter. Burns, CF, ventilator pneumonia, ecthyma gangrenosum, swimmer\'s ear.']],
+ L_cam:[['Campylobacter jejuni','Grows at 42 °C in low oxygen; "seagull" shapes. Most common bacterial diarrhea; Guillain–Barré.']],
+ L_vib:[['Vibrio cholerae','TCBS agar (yellow), oxidase +, "shooting star" motility. Rice-water stools.'],['Vibrio parahaemolyticus / vulnificus','Raw oysters: diarrhea; wound infection and sepsis in liver disease (vulnificus).']],
+ L_hpy:[['Helicobacter pylori','Urease strongly +, urea breath test, stool antigen. Gastritis, ulcers, gastric cancer.']],
+ L_leg:[['Legionella pneumophila','Silver stain, BCYE agar, urine antigen. Atypical pneumonia with diarrhea, confusion, low sodium; water systems. Macrolides or quinolones.']],
+ L_shi:[['Shigella','Non-motile, no H₂S, no lactose. Bloody diarrhea, tiny infectious dose, person-to-person.'],['Yersinia enterocolitica','Bipolar "safety pin" staining, grows in the cold. Pseudoappendicitis from pork or puppy feces.'],['Yersinia pestis','Plague: buboes; fleas and rodents.']],
+ L_pro:[['Proteus mirabilis','Swarming motility, urease +, H₂S +. UTI with alkaline urine and struvite stones.']],
+ L_sal:[['Salmonella','Motile, H₂S +, no lactose. Gastroenteritis (poultry, eggs, reptiles); S. Typhi: typhoid fever, gallbladder carriers.']],
+ L_myc:[['Mycobacterium tuberculosis','Acid-fast (Ziehl–Neelsen) or auramine stain; Löwenstein–Jensen agar takes weeks; PCR; interferon-γ release assay or PPD for latent TB.'],['Mycobacterium leprae','Won\'t grow in culture; skin biopsy. Leprosy: cool body parts.'],['M. avium complex','Disseminated disease in advanced HIV.']],
+ L_spi:[['Treponema pallidum','Darkfield of chancre fluid; screen RPR/VDRL, confirm FTA-ABS. Syphilis.'],['Borrelia burgdorferi','Serology (ELISA then western blot). Lyme: erythema migrans, Ixodes tick.'],['Leptospira','Darkfield or serology. Rat urine in water; Weil disease.']],
+ L_myp:[['Mycoplasma pneumoniae','"Fried egg" colonies on Eaton agar (slow); cold agglutinins; PCR. Walking pneumonia. No wall = no β-lactams.']],
+ L_icl:[['Chlamydia trachomatis','NAAT on urine or swab; iodine-staining inclusions in cells. Urethritis, PID, trachoma, LGV.'],['Chlamydophila pneumoniae / psittaci','Atypical pneumonia; psittaci from birds.'],['Rickettsia rickettsii','Serology; Weil–Felix (old). Rocky Mountain spotted fever: tick, rash wrists and ankles inward. Doxycycline.']]
+};
+const MEDIA=[
+ ['Blood agar','Grows most bacteria; shows hemolysis','α green (pneumococcus, viridans), β clear (S. aureus, groups A and B strep), γ none (Enterococcus)'],
+ ['Chocolate agar','Heated blood releases factors X (hemin) and V (NAD)','Haemophilus, Neisseria'],
+ ['MacConkey','Bile salts + crystal violet stop Gram-positives; lactose fermenters turn pink','"Lactose is KEE": Klebsiella, E. coli, Enterobacter (Citrobacter, Serratia slowly)'],
+ ['Eosin-methylene blue (EMB)','Gram-negative selective; E. coli grows with a green metallic sheen','E. coli'],
+ ['Thayer–Martin (VPN)','Chocolate agar + vancomycin, polymyxin, nystatin kill competitors','Neisseria'],
+ ['Mannitol salt agar','7.5% salt selects staph; mannitol fermenters turn it yellow','S. aureus yellow; S. epidermidis pink'],
+ ['Bile esculin','Group D strep and Enterococcus blacken it','Add 6.5% NaCl to separate Enterococcus (grows) from S. bovis'],
+ ['Löwenstein–Jensen','Egg-based medium with malachite green; 3–8 weeks','Mycobacterium'],
+ ['Bordet–Gengou / Regan–Lowe','Potato-blood or charcoal with cephalexin','Bordetella pertussis'],
+ ['Buffered charcoal yeast extract','Iron and cysteine added','Legionella'],
+ ['TCBS','Thiosulfate-citrate-bile-sucrose; alkaline','Vibrio (yellow colonies)'],
+ ['Eaton agar','Cholesterol-rich, for wall-less bacteria','Mycoplasma'],
+ ['Tellurite / Löffler','Black colonies / shows metachromatic granules','Corynebacterium diphtheriae'],
+ ['Thioglycolate broth','Oxygen gradient top to bottom','Oxygen requirements (module 1.5)'],
+ ['Catalase','Bubbles with H₂O₂','Staph + / Strep −; the CGD organisms are catalase +'],
+ ['Coagulase','Clots rabbit plasma','S. aureus + (the only common one)'],
+ ['Oxidase','Cytochrome c oxidase turns reagent purple','Pseudomonas, Neisseria, Vibrio, Campylobacter, H. pylori +; Enterobacterales −'],
+ ['Urease','Splits urea → ammonia, pH indicator turns pink','Proteus, H. pylori, Klebsiella, Ureaplasma, Nocardia, Cryptococcus'],
+ ['Indole','Tryptophan → indole, red ring','E. coli +, Klebsiella −'],
+ ['Triple sugar iron (TSI)','Sugars + iron: black = H₂S','Salmonella, Proteus +; Shigella −'],
+ ['Quellung reaction','Antibody makes the capsule swell visibly','S. pneumoniae capsule typing'],
+ ['Elek test','Toxin–antitoxin precipitation line','Toxigenic C. diphtheriae'],
+ ['Modern shortcuts','PCR/NAAT (Chlamydia, gonorrhea, TB, C. diff), MALDI-TOF mass spectrometry (species in minutes from a colony), urine antigens (Legionella, pneumococcus), serology','Culture is still needed for susceptibility testing']
+];
+const STER=[
+ ['Autoclave','Steam under pressure: 121 °C, 15 psi, 15–20 min','Yes','Surgical instruments, media, dressings. Spore strips (G. stearothermophilus) check it. Prions need harsher conditions'],
+ ['Dry heat','160–170 °C for 1–2 h','Yes','Glassware, powders, oils'],
+ ['Incineration','Burn it','Yes','Infectious waste, loops'],
+ ['Pasteurization','72 °C for 15 s (or 63 °C for 30 min); ultra-high 135 °C for 1–2 s','No','Milk, juice: kills pathogens (Brucella, Listeria, Salmonella, Coxiella), not spores'],
+ ['Boiling','100 °C for 10 min','No','Kills vegetative cells and most viruses; spores survive hours'],
+ ['Filtration','0.22 µm membrane removes bacteria','Yes (removes)','Heat-sensitive liquids (vaccines, antibiotics); HEPA filters for air. Viruses and toxins pass through'],
+ ['Ionizing radiation','Gamma or electron beam breaks DNA','Yes','Disposable syringes, gloves, some foods'],
+ ['Ultraviolet light','Thymine dimers in DNA; no penetration','Poorly','Surfaces and air in hoods and rooms; not through glass or dust'],
+ ['Ethylene oxide gas','Alkylates proteins and DNA; needs hours and aeration','Yes','Heat-sensitive plastics, endoscopes, catheters; toxic and flammable'],
+ ['Hydrogen peroxide plasma / vapor','Oxidizing radicals','Yes','Endoscopes and electronics in short cycles'],
+ ['Glutaraldehyde, peracetic acid','Alkylating or oxidizing liquids, 20 min to 10 h','Yes, with long exposure','High-level disinfection of endoscopes'],
+ ['Chlorine (bleach)','Hypochlorous acid oxidizes everything','Yes, at high concentration','Surfaces, water, blood spills (1:10 dilution); C. difficile rooms'],
+ ['Alcohols (70% ethanol or isopropanol)','Denature proteins; need water to work, so 70% beats 100%','No','Hand rubs, skin prep, thermometers. Not for C. difficile spores or non-enveloped viruses'],
+ ['Iodine / povidone-iodine','Oxidizes and iodinates proteins','Slowly','Skin prep before surgery and blood cultures'],
+ ['Chlorhexidine','Disrupts membranes; keeps working on skin for hours','No','Surgical scrub, bathing ICU patients, mouthwash, line insertion'],
+ ['Quaternary ammonium compounds','Cationic detergents','No','Low-level surface cleaning; inactive against TB, spores, Pseudomonas can grow in them']
+];
+inits.labid=()=>{
+  const box=$('#tree');let path=['root'];
+  function render(){const id=path[path.length-1];const crumbs=path.map((p,i)=>{if(i===0)return '<b>Gram stain</b>';const prev=TREE[path[i-1]];const o=prev.o.find(x=>x[0]===p);return `<span class="sep">›</span><span>${o?o[1]:''}</span>`}).join('');
+    let body;
+    if(TREE[id]){const n=TREE[id];body=`<div class="qbig">${n.q}</div><div class="choice">${n.o.map(o=>`<button data-opt="${o[0]}"><b>${o[1]}</b>${o[2]?`<small>${o[2]}</small>`:''}</button>`).join('')}</div>`}
+    else{const L=LEAF[id]||[];body=`<div class="qbig">${L.length>1?'It\'s one of these':'Identified'}</div><div class="orgs">${L.map(o=>`<div class="card"><h4><i>${o[0]}</i></h4><p>${o[1]}</p><div><button class="btn ghost" style="padding:4px 10px" data-go="gallery">Gallery card →</button></div></div>`).join('')}</div>`}
+    box.innerHTML=`<div class="crumbs">${crumbs}</div>${body}<div class="ctrls">${path.length>1?'<button class="btn" id="trBack">← Back one step</button><button class="btn ghost" id="trReset">Start over</button>':'<span class="stage-cap">Pick the stain result to begin.</span>'}</div>`;
+    const b=$('#trBack');if(b)b.onclick=()=>{path.pop();render()};const rs=$('#trReset');if(rs)rs.onclick=()=>{path=['root'];render()}}
+  box.addEventListener('click',e=>{const b=e.target.closest('[data-opt]');if(b){path.push(b.dataset.opt);render()}});
+  render();
+  $('#mediaRows').innerHTML=MEDIA.map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+  $('#sterRows').innerHTML=STER.map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td><td><span class="tag ${r[2].startsWith('Yes')?'good':r[2]==='No'?'bad':'warn'}">${r[2]}</span></td><td>${r[3]}</td></tr>`).join('');
+};
+
+/* =============== 2.4 mechanisms =============== */
+const ATP={
+ hyp:{t:'Hypoxia or ischemia',d:'Oxygen stops arriving. <b>Hypoxia</b> = low oxygen for any reason (lung disease, anemia, CO). <b>Ischemia</b> = blood flow itself is cut, which is worse: no oxygen, no glucose, and waste piles up.',see:'Types of hypoxia: hypoxic (low PO₂), anemic (low Hb or CO poisoning), ischemic (low flow), histotoxic (cyanide blocks the enzyme that uses oxygen).'},
+ tox:{t:'Mitochondrial poisons',d:'Cyanide and carbon monoxide block cytochrome oxidase, so oxygen is there but can\'t be used. Same downstream result as hypoxia.',see:'Cyanide: almond smell, bright red venous blood, lactic acidosis.'},
+ ox:{t:'Oxidative phosphorylation falls',d:'Without oxygen as the final electron acceptor, the mitochondrial chain stalls. ATP production drops to a trickle.',see:'This happens within seconds. Heart muscle stops contracting in about a minute.'},
+ atp:{t:'ATP depletion',d:'ATP falls to 5–10% of normal. Everything that needs energy fails at once. This single event explains most of what you see in a reversibly injured cell.',see:'The branches below are the consequences; all are reversible if ATP returns in time.'},
+ pump:{t:'Na⁺/K⁺ pump fails',d:'The ATP-driven pump stops. Sodium and calcium stay in, potassium leaks out, and water follows the sodium.',see:'Cell swelling (hydropic change), swollen mitochondria and ER, surface blebs, loss of microvilli. The hallmark of reversible injury.'},
+ swell:{t:'Cell swelling',d:'The first morphologic sign of injury. The organ looks pale, turgid and heavy; under the microscope the cytoplasm has clear vacuoles (pinched-off ER).',see:'Fully reversible.'},
+ glyc:{t:'Anaerobic glycolysis',d:'The cell switches to glycolysis to make what ATP it can. Glycogen is burned through quickly; lactic acid and inorganic phosphate accumulate.',see:'Intracellular pH falls.'},
+ chrom:{t:'Low pH: chromatin clumps',d:'Acid makes nuclear chromatin condense and knocks enzymes off their optimum. Still reversible.',see:'Clumping of chromatin is visible by electron microscopy.'},
+ ca:{t:'Ca²⁺ pump fails',d:'Calcium is normally kept 10,000× lower inside the cell than outside. With no ATP it floods in from outside and leaks out of mitochondria and ER.',see:'Rising cytosolic calcium is the trigger for the irreversible phase.'},
+ enz:{t:'Calcium switches on destructive enzymes',d:'<b>Phospholipases</b> eat membranes, <b>proteases</b> cut cytoskeleton and membrane proteins, <b>endonucleases</b> shred DNA, <b>ATPases</b> waste what ATP is left. Calcium also opens the mitochondrial permeability transition pore and triggers caspases.',see:'Membrane damage + mitochondrial failure = point of no return.'},
+ rib:{t:'Ribosomes detach',d:'Ribosomes fall off the rough ER, so protein synthesis stops. Structural proteins and enzymes aren\'t replaced; lipoproteins can\'t be exported.',see:'Fatty change in liver cells (lipid can\'t leave without apoprotein).'},
+ lip:{t:'Lipid deposition',d:'Fat droplets accumulate because the cell can\'t package and export triglyceride.',see:'Steatosis, visible as clear vacuoles. Reversible.'},
+ misf:{t:'Misfolded proteins',d:'Low ATP, low pH and oxidative stress all cause protein misfolding. The ER mounts the <b>unfolded protein response</b>: slow translation, make chaperones.',see:'If the load is too great the response flips to apoptosis.'},
+ apo:{t:'Apoptosis',d:'Prolonged ER stress, DNA damage and mitochondrial leakage of cytochrome c all converge on the caspases.',see:'See module 2.8 for the pathway.'}
+};
+const MECHC=[
+ {t:'Mitochondrial damage',d:'Hypoxia, toxins, radiation and high calcium injure mitochondria. Two outcomes: a high-conductance channel, the <b>mitochondrial permeability transition pore</b>, opens → the membrane potential is lost → no more ATP → necrosis. And the outer membrane leaks <b>cytochrome c</b> into the cytosol → apoptosis.',h:'Mitochondria decide between necrosis (no ATP) and apoptosis (some ATP left to run caspases).'},
+ {t:'Calcium influx',d:'Normally ~0.1 µmol/L inside vs 1.3 mmol/L outside. Ischemia and toxins let it in. Calcium activates phospholipases, proteases, endonucleases and ATPases, opens the transition pore, and directly activates caspases.',h:'Calcium is the common executioner in both reversible-to-irreversible transitions and in reperfusion injury.'},
+ {t:'Membrane damage',d:'Causes: free radicals (lipid peroxidation), less phospholipid synthesis (no ATP), more phospholipid breakdown (calcium-activated phospholipases), cytoskeletal damage (proteases) letting the swollen cell tear its own membrane. Consequences: mitochondrial membrane → pore opens; plasma membrane → gradients lost, contents leak (troponin, ALT); lysosomal membrane → enzymes digest the cell (autolysis).',h:'Leaked enzymes in blood are how you diagnose cell death: troponin (heart), ALT/AST (liver), CK (muscle), lipase (pancreas).'},
+ {t:'DNA and protein damage',d:'Radiation, chemotherapy, radicals and replication errors damage DNA; misfolding damages proteins. Cells detect it (ATM/ATR → p53) and pause to repair. If repair fails, <b>p53</b> triggers apoptosis rather than let a mutant cell live.',h:'Lose p53 and damaged cells survive and divide: the most commonly mutated gene in human cancer.'},
+ {t:'Ischemia–reperfusion injury',d:'Restoring blood flow can <i>add</i> damage: a burst of free radicals from damaged mitochondria and incoming neutrophils, calcium overload, complement activation, and inflammation. Cells that were on the edge die anyway.',h:'Matters in heart attacks and strokes after clot removal, and in organ transplants. Contraction-band necrosis in a reperfused infarct is the signature.'},
+ {t:'Chemical (toxic) injury',d:'<b>Direct</b>: the chemical binds a critical molecule. Mercury binds sulfhydryl groups of membrane proteins (kidney, gut); cyanide binds cytochrome oxidase. <b>Indirect</b>: the liver converts a harmless chemical into a reactive one. CCl₄ → CCl₃• radical; acetaminophen → NAPQI.',h:'Indirect toxins hit the liver first because that is where the activating P450 enzymes are.'}
+];
+inits.mech=()=>{
+  const svg=$('#atpSvg');let h=fmark('atpm');
+  h+=fnode('hyp',20,20,170,52,['Hypoxia / ischemia','most common cause'],'src')+fnode('tox',20,90,170,52,['Mitochondrial poisons','cyanide · CO'],'src');
+  h+=fnode('ox',240,55,190,52,['↓ Oxidative phosphorylation','electron chain stalls'])+fnode('atp',480,55,150,52,['↓ ATP','to 5–10% of normal'],'end');
+  const B=[['pump',10,'Na⁺/K⁺ pump fails','Na⁺, Ca²⁺, H₂O in · K⁺ out','swell','Cell swelling','blebs · ER dilation'],['glyc',175,'↑ Anaerobic glycolysis','glycogen ↓ · lactate ↑ · pH ↓','chrom','Chromatin clumps','enzymes falter'],['ca',340,'Ca²⁺ pump fails','cytosolic Ca²⁺ ↑','enz','Destructive enzymes on','phospholipase · protease · endonuclease'],['rib',505,'Ribosomes detach','protein synthesis ↓','lip','Lipid deposition','less repair'],['misf',670,'Misfolded proteins','unfolded protein response','apo','Apoptosis','if it persists']];
+  B.forEach(b=>{h+=fnode(b[0],b[1],190,160,52,[b[2],b[3]])+fnode(b[4],b[1],280,160,52,[b[5],b[6]])+farr(`M${b[1]+80} 242 V276`,'atpm')+farr(`M555 107 L${b[1]+80} 186`,'atpm')});
+  h+=farr('M190 46 L236 70','atpm')+farr('M190 116 L236 92','atpm')+farr('M430 81H476','atpm');
+  svg.innerHTML=h;
+  wireFlow(svg,$('#mechNote'),ATP,'atp',n=>`<h4>${n.t}</h4><p>${n.d}</p><div class="hook"><b>What you\'d see</b>${n.see}</div>`);
+  $('#mechCards').innerHTML=MECHC.map(c=>`<div class="card"><h4>${c.t}</h4><p>${c.d}</p><div class="hook"><b>Exam hook</b>${c.h}</div></div>`).join('');
+  const rs=$('#rosSvg');let g=fmark('rosm')+fmark('rosg','var(--good)');
+  const box=(x,y,w,txt,sub,cls)=>`<g><rect x="${x}" y="${y}" width="${w}" height="54" rx="10" style="fill:${cls==='bad'?'var(--bad-soft)':cls==='good'?'var(--good-soft)':'var(--panel-2)'};stroke:${cls==='bad'?'var(--bad)':cls==='good'?'var(--good)':'var(--line)'};stroke-width:1.5"/><text x="${x+w/2}" y="${y+23}" class="t-lbl t-mid">${txt}</text><text x="${x+w/2}" y="${y+40}" class="t-sm t-mid">${sub}</text></g>`;
+  g+=box(20,120,130,'O₂','normal oxygen')+box(200,120,150,'O₂•⁻ superoxide','1 extra electron','bad')+box(400,120,150,'H₂O₂ peroxide','2 electrons','bad')+box(600,120,140,'•OH hydroxyl','most reactive','bad');
+  g+=farr('M150 147H196','rosm')+farr('M350 147H396','rosm')+farr('M550 147H596','rosm');
+  g+=`<text x="275" y="110" class="t-sm t-mid" style="fill:var(--good);font-weight:700">SOD</text><text x="475" y="110" class="t-sm t-mid">Fe²⁺ (Fenton)</text>`;
+  g+=`<text x="20" y="40" class="t-lbl">Made by</text><text x="20" y="60" class="t-sm">mitochondrial electron leak · radiation · NADPH oxidase in phagocytes</text><text x="20" y="76" class="t-sm">reperfusion · metals (Fe, Cu) · drugs (CCl₄ → CCl₃•) · nitric oxide → peroxynitrite</text>`;
+  g+=box(400,215,150,'H₂O','harmless','good')+farr('M475 174V211','rosg')+`<text x="560" y="230" class="t-sm" style="fill:var(--good);font-weight:700">catalase (peroxisomes)</text><text x="560" y="246" class="t-sm" style="fill:var(--good);font-weight:700">glutathione peroxidase</text>`;
+  g+=`<text x="20" y="225" class="t-lbl">Defenses</text><text x="20" y="245" class="t-sm">enzymes: SOD, catalase, glutathione peroxidase</text><text x="20" y="261" class="t-sm">scavengers: vitamins E, C, A; glutathione</text><text x="20" y="277" class="t-sm">metal binders: transferrin, ferritin, ceruloplasmin</text>`;
+  g+=`<text x="670" y="200" class="t-sm t-mid" style="fill:var(--bad)">attacks lipids,</text><text x="670" y="214" class="t-sm t-mid" style="fill:var(--bad)">proteins, DNA</text>`;
+  rs.innerHTML=g;
+};
+
+/* =============== 2.6 infarct =============== */
+const MI=[
+ {to:.5,t:'Reversible injury',micro:'Nothing visible by light microscope. Inside the cell: ATP falls, glycogen is used up, myofibrils relax.',gross:'Normal.',tip:'Contraction stops within 60 seconds. Open the artery now and the cells recover fully.'},
+ {to:4,t:'Irreversible injury begins (20–40 min)',micro:'Still almost nothing by light microscope. Electron microscope: swollen mitochondria with dense deposits, torn sarcolemma. At the edge, <b>wavy fibers</b>: dead fibers stretched by their beating neighbors.',gross:'Normal.',tip:'Membranes rupture → troponin starts leaking into the blood at about 3–4 h.'},
+ {to:12,t:'Early coagulative necrosis',micro:'Fibers turn more pink (hypereosinophilic). Edema and some hemorrhage between fibers. Nuclei begin to shrink.',gross:'Usually normal; occasionally dark mottling.',tip:'Triphenyltetrazolium chloride staining can show the infarct (unstained, pale) from 2–3 h.'},
+ {to:24,t:'Coagulative necrosis established',micro:'Deep pink fibers, pyknotic nuclei, striations fading. <b>Contraction bands</b> (dark transverse bars) where reperfused fibers hypercontracted. First neutrophils arrive.',gross:'Dark mottling.',tip:'Most deaths in the first 24 h are from arrhythmias (ventricular fibrillation), not pump failure.'},
+ {to:72,t:'Neutrophils flood in',micro:'Nuclei gone. A dense neutrophil infiltrate starts digesting the dead fibers.',gross:'Mottled, with a yellow-tan center.',tip:'Fibrinous pericarditis (a friction rub) over a transmural infarct, days 1–3.'},
+ {to:168,t:'Macrophages clear the debris',micro:'Dead fibers disintegrate. Neutrophils die; macrophages move in from the border and eat the debris.',gross:'Soft yellow-tan center with a hyperemic red border. The wall is at its weakest.',tip:'Rupture risk peaks (days 3–7): free wall → tamponade; septum → VSD; papillary muscle → acute mitral regurgitation.'},
+ {to:240,t:'Granulation tissue begins',micro:'Phagocytosis well under way; new capillaries and fibroblasts grow in from the margins.',gross:'Maximally yellow and soft, with depressed red-tan margins.',tip:'Still fragile.'},
+ {to:336,t:'Granulation tissue established',micro:'Loose tissue rich in new vessels, fibroblasts and early collagen replaces dead muscle from the outside in.',gross:'Red-gray depressed borders.',tip:'Dressler syndrome: autoimmune pericarditis with fever, weeks 2–10.'},
+ {to:1344,t:'Scar forming',micro:'Collagen increases; cells and vessels decrease.',gross:'Gray-white scar spreading from the border toward the core.',tip:'A thin scarred wall can bulge: ventricular aneurysm.'},
+ {to:1e9,t:'Mature scar',micro:'Dense collagen with few cells. The muscle is gone for good; the rest of the heart hypertrophies to compensate.',gross:'Firm white scar; the wall is thinned.',tip:'Late complications: aneurysm, mural thrombus → stroke, chronic heart failure, arrhythmias from the scar.'}
+];
+const MICOMP=[[0,24,'Arrhythmia (VF)','bad'],[0,72,'Cardiogenic shock if >40% of LV','warn'],[24,96,'Fibrinous pericarditis','warn'],[72,336,'Rupture: wall, septum, papillary muscle','bad'],[240,1680,'Dressler syndrome','warn'],[336,1e9,'Aneurysm · mural thrombus','warn'],[336,1e9,'Heart failure','warn']];
+const INFC=[
+ {t:'White (anemic) infarct',d:'Solid organs with a single end-arterial supply: heart, kidney, spleen. Wedge-shaped, apex pointing at the blocked vessel, pale, coagulative necrosis. Little bleeding because the tissue is dense.',h:'Kidney and spleen infarcts: sharp wedge with a thin red rim.'},
+ {t:'Red (hemorrhagic) infarct',d:'Blood seeps into the dead tissue. Happens with venous occlusion (testicular or ovarian torsion), loose tissue (lung), dual blood supply (lung, liver, small intestine), or after reperfusion.',h:'"Red = reperfusion, loose, or dual supply." Pulmonary embolism → red wedge at the pleura.'},
+ {t:'Brain',d:'The exception to coagulative necrosis: ischemic brain tissue liquefies. Over weeks it becomes a fluid-filled cyst lined by gliosis. Neurons die after only 3–4 minutes without oxygen.',h:'Red neurons at 12–24 h; microglia clean up; cyst by 2 weeks or more.'},
+ {t:'Bowel',d:'Red infarct (dual arcades, venous congestion). The wall dies full thickness, bacteria cross it, and it perforates. Surgical emergency.',h:'Pain out of proportion to the exam, then bloody stool; watershed splenic flexure in low-flow states.'},
+ {t:'What decides the outcome',d:'(1) Anatomy of supply: collaterals protect (lung, liver, hand). (2) Speed of occlusion: slow lets collaterals grow. (3) Tissue vulnerability: neurons 3–4 min, heart 20–30 min, fibroblasts hours. (4) Blood oxygen: anemia or heart failure makes a partial block deadly.',h:'A gradually narrowing coronary artery may cause angina but no infarct; a sudden plaque rupture causes a full-thickness MI.'}
+];
+inits.infarct=()=>{
+  const micro=$('#miMicro'),gross=$('#miGross'),lab=$('#miLab'),rg=$('#miT');
+  const LOGR=Math.log10(20000),hOf=s=>0.1*Math.pow(10,s*LOGR),sOf=h=>Math.log10(h/0.1)/LOGR;
+  const tl=h=>h<1?`${Math.round(h*60)} min`:h<48?`${h<10?h.toFixed(1):Math.round(h)} h`:h<336?`${(h/24).toFixed(h<96?1:0)} days`:`${(h/168).toFixed(1)} weeks`;
+  const r=rng(77);const NEU=Array.from({length:70},()=>({x:20+r()*520,y:30+r()*250}));const MAC=Array.from({length:22},()=>({x:30+r()*500,y:40+r()*230}));const VES=Array.from({length:12},()=>({x:40+r()*480,y:40+r()*230,s:4+r()*4}));const FIB=Array.from({length:24},()=>({x:30+r()*500,y:36+r()*240,a:r()*180}));const SP=Array.from({length:40},()=>({a:r(),d:r()}));
+  const KEYF=[[0,[168,64,79]],[12,[168,64,79]],[24,[106,36,50]],[72,[184,135,63]],[168,[214,181,106]],[336,[181,154,134]],[1344,[201,201,207]],[3000,[227,227,232]]];
+  const grossCol=h=>{const l=Math.log10(Math.max(h,.1));for(let i=1;i<KEYF.length;i++){const a=KEYF[i-1],b=KEYF[i];const la=Math.log10(Math.max(a[0],.1)),lb=Math.log10(b[0]);if(l<=lb){const t=clamp((l-la)/(lb-la));return `rgb(${a[1].map((c,k)=>Math.round(lerp(c,b[1][k],t))).join(',')})`}}return `rgb(${KEYF.at(-1)[1].join(',')})`};
+  function drawMicro(h){
+    const wav=ramp(h,.5,4)*(1-ramp(h,24,72)),eos=ramp(h,4,24),pyk=ramp(h,8,24),gone=ramp(h,24,72),band=ramp(h,12,24)*(1-ramp(h,168,336)),neut=ramp(h,12,48)*(1-ramp(h,96,240)),mac=ramp(h,72,240)*(1-ramp(h,336,1344)),frag=ramp(h,72,336),gran=ramp(h,168,336)*(1-ramp(h,672,1344)),coll=ramp(h,336,1344);
+    let s=`<rect x="0" y="0" width="560" height="300" style="fill:var(--field)"/>`;
+    for(let i=0;i<6;i++){const y=45+i*44;let d=`M10 ${y}`;for(let x=10;x<=550;x+=10){d+=` L${x} ${f1(y+wav*7*Math.sin(x/18+i))}`}
+      const fo=1-.85*frag;
+      s+=`<g opacity="${fo.toFixed(2)}"><path d="${d}" style="fill:none;stroke:var(--cyto);stroke-width:24;stroke-linejoin:round"/><path d="${d}" style="fill:none;stroke:var(--eosin);stroke-width:24;stroke-linejoin:round;opacity:${(.55*eos).toFixed(2)}"/>`;
+      for(let x=20;x<550;x+=10){const yy=y+wav*7*Math.sin(x/18+i);s+=`<line x1="${x}" y1="${f1(yy-10)}" x2="${x}" y2="${f1(yy+10)}" style="stroke:var(--memb);stroke-width:.8;opacity:${(.5*(1-gone)).toFixed(2)}"/>`}
+      if(band>0)for(let x=16;x<90;x+=9)s+=`<line x1="${x}" y1="${y-11}" x2="${x}" y2="${y+11}" style="stroke:var(--nuc-deep);stroke-width:3.5;opacity:${band.toFixed(2)}"/>`;
+      const nx=140+i*60;s+=`<ellipse cx="${nx}" cy="${f1(y+wav*7*Math.sin(nx/18+i))}" rx="${f1(12-5*pyk)}" ry="${f1(6-2.5*pyk)}" style="fill:${pyk>.5?'var(--nuc-deep)':'var(--nuc)'};opacity:${(1-gone).toFixed(2)}"/></g>`}
+    NEU.slice(0,Math.round(70*neut)).forEach(p=>s+=`<g><circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="6" style="fill:var(--macro);stroke:var(--hema);stroke-width:1"/><circle cx="${f1(p.x-2)}" cy="${f1(p.y-1)}" r="1.8" style="fill:var(--nuc)"/><circle cx="${f1(p.x+2)}" cy="${f1(p.y+1.5)}" r="1.8" style="fill:var(--nuc)"/><circle cx="${f1(p.x+1)}" cy="${f1(p.y-2.5)}" r="1.6" style="fill:var(--nuc)"/></g>`);
+    MAC.slice(0,Math.round(22*mac)).forEach(p=>s+=`<g><circle cx="${f1(p.x)}" cy="${f1(p.y)}" r="11" style="fill:var(--macro);stroke:var(--hema);stroke-width:1.2"/><path d="M${f1(p.x-5)} ${f1(p.y-2)}a5 5 0 1 0 8 0 3 3 0 0 1-8 0z" style="fill:var(--nuc)"/><circle cx="${f1(p.x+4)}" cy="${f1(p.y+4)}" r="2" style="fill:var(--eosin);opacity:.7"/></g>`);
+    VES.slice(0,Math.round(12*gran)).forEach(v=>s+=`<circle cx="${f1(v.x)}" cy="${f1(v.y)}" r="${f1(v.s)}" style="fill:var(--bad-soft);stroke:var(--bad);stroke-width:1.5"/>`);
+    FIB.slice(0,Math.round(24*Math.max(gran,coll*.6))).forEach(f=>s+=`<ellipse cx="${f1(f.x)}" cy="${f1(f.y)}" rx="9" ry="2.5" transform="rotate(${f1(coll>.5?0:f.a)} ${f1(f.x)} ${f1(f.y)})" style="fill:var(--nuc)"/>`);
+    if(coll>0)for(let i=0;i<14;i++){const y=30+i*19;let d=`M10 ${y}`;for(let x=10;x<=550;x+=20)d+=` Q${x+10} ${y+(i%2?3:-3)} ${x+20} ${y}`;s+=`<path d="${d}" style="fill:none;stroke:var(--er);stroke-width:${f1(1+2*coll)};opacity:${(.8*coll).toFixed(2)}"/>`}
+    s+=`<text x="12" y="290" class="t-sm">${h<.5?'NORMAL MYOCARDIUM':h<4?'WAVY FIBERS AT THE BORDER':h<24?'COAGULATIVE NECROSIS · PYKNOSIS':h<72?'NEUTROPHILS':h<240?'MACROPHAGES · FIBERS DISINTEGRATING':h<672?'GRANULATION TISSUE':'COLLAGEN SCAR'}</text>`;
+    micro.innerHTML=s;}
+  function drawGross(h){const cx=150,cy=130,Ro=110,Ri=58+20*ramp(h,1344,3000);const a0=-125*Math.PI/180,a1=-55*Math.PI/180;
+    const P=(rr,a)=>[cx+rr*Math.cos(a),cy+rr*Math.sin(a)];const [x0,y0]=P(Ro,a0),[x1,y1]=P(Ro,a1),[x2,y2]=P(Ri,a1),[x3,y3]=P(Ri,a0);
+    const wedge=`M${f1(x0)} ${f1(y0)} A${Ro} ${Ro} 0 0 1 ${f1(x1)} ${f1(y1)} L${f1(x2)} ${f1(y2)} A${f1(Ri)} ${f1(Ri)} 0 0 0 ${f1(x3)} ${f1(y3)}Z`;
+    let s=`<rect x="0" y="0" width="300" height="260" rx="12" style="fill:var(--field)"/><circle cx="${cx}" cy="${cy}" r="${Ro}" style="fill:#a8404f;stroke:#6b2733;stroke-width:1.5"/><circle cx="${cx}" cy="${cy}" r="58" style="fill:#5a1b26"/><circle cx="${cx+78}" cy="${cy-10}" r="24" style="fill:#5a1b26;stroke:#6b2733"/>`;
+    s+=`<path d="${wedge}" style="fill:${grossCol(h)}"/>`;
+    const mot=ramp(h,12,24)*(1-ramp(h,72,168));if(mot>0)SP.forEach(p=>{const a=a0+(a1-a0)*p.a,rr=Ri+6+(Ro-Ri-12)*p.d;const [x,y]=P(rr,a);s+=`<circle cx="${f1(x)}" cy="${f1(y)}" r="2.2" style="fill:#3a0f18;opacity:${mot.toFixed(2)}"/>`});
+    const hyp=ramp(h,72,168)*(1-ramp(h,336,672));if(hyp>0)s+=`<path d="${wedge}" style="fill:none;stroke:#d4323f;stroke-width:5;opacity:${hyp.toFixed(2)}"/>`;
+    s+=`<path d="${wedge}" style="fill:none;stroke:var(--ink);stroke-width:1;stroke-dasharray:3 3;opacity:.5"/>`;
+    s+=`<text x="${cx}" y="${cy+4}" class="t-sm t-mid" style="fill:#fff">LV</text><text x="${cx+78}" y="${cy-6}" class="t-sm t-mid" style="fill:#fff">RV</text><text x="12" y="248" class="t-sm">CROSS-SECTION · anterior wall infarct (LAD)</text>`;
+    gross.innerHTML=s;}
+  const X=h=>50+sOf(Math.max(h,.1))*450,Y=v=>180-v*140;
+  const lg=h=>Math.log10(Math.max(h,.1));
+  const trop=h=>Math.pow(ramp(lg(h),lg(3),lg(30)),2)*(1-Math.pow(ramp(lg(h),lg(30),lg(240)),1.5));
+  const ck=h=>Math.pow(ramp(lg(h),lg(4),lg(24)),2)*(1-ramp(lg(h),lg(24),lg(72)))*.8;
+  const myo=h=>Math.pow(ramp(lg(h),lg(1),lg(6)),2)*(1-ramp(lg(h),lg(6),lg(24)))*.6;
+  (function drawLab(){let s='';[[.1],[1],[10],[100],[1000]].forEach(([h])=>s+=`<line x1="${f1(X(h))}" x2="${f1(X(h))}" y1="40" y2="180" style="stroke:var(--line)"/><text x="${f1(X(h))}" y="198" class="t-sm t-mid">${h<1?'6 min':h<24?h+' h':h<168?(h/24).toFixed(0)+' d':(h/168).toFixed(0)+' wk'}</text>`);
+    const curve=(f,col)=>{let d='';for(let s2=0;s2<=1.001;s2+=.01){const h=hOf(s2);d+=(d?'L':'M')+f1(X(h))+' '+f1(Y(f(h)))}return `<path d="${d}" style="fill:none;stroke:${col};stroke-width:2.5"/>`};
+    s+=curve(myo,'var(--warn)')+curve(ck,'var(--hema)')+curve(trop,'var(--eosin)');
+    s+=`<line x1="50" x2="500" y1="180" y2="180" style="stroke:var(--ink);stroke-width:1.2"/><text x="50" y="26" class="t-sm"><tspan style="fill:var(--eosin);font-weight:700">■</tspan> troponin I/T  <tspan style="fill:var(--hema);font-weight:700">■</tspan> CK-MB  <tspan style="fill:var(--warn);font-weight:700">■</tspan> myoglobin</text><text x="12" y="110" class="t-sm" transform="rotate(-90 12 110)" text-anchor="middle">blood level</text>`;
+    s+=`<line id="miCur" y1="40" y2="180" style="stroke:var(--ink);stroke-width:1.2;stroke-dasharray:3 3"/>`;lab.innerHTML=s})();
+  let lastI=-1;
+  function draw(s){const h=hOf(s);drawMicro(h);drawGross(h);$('#miCur').setAttribute('x1',X(h));$('#miCur').setAttribute('x2',X(h));
+    const i=MI.findIndex(m=>h<m.to),M=MI[i];$('#miGrossCap').textContent='Gross: '+M.gross;
+    const comps=MICOMP.filter(c=>h>=c[0]&&h<c[1]);
+    $('#miRead').innerHTML=`<span>time <b>${tl(h)}</b></span><span>troponin <b>${trop(h)<.02?'normal':trop(h)>.6?'high':trop(h)>.2?'rising / falling':'detectable'}</b></span><span>status <b>${h<.5?'reversible':h<168?'necrosis':h<1344?'healing':'scar'}</b></span>`;
+    if(i!==lastI){lastI=i;$('#miNote').innerHTML=`<div class="kicker">${tl(h)} after occlusion</div><h4>${M.t}</h4><dl class="kv"><div><dt>Microscope</dt><dd>${M.micro}</dd></div><div><dt>Gross specimen</dt><dd>${M.gross}</dd></div></dl>${M.tip?`<div class="hook"><b>Clinical</b>${M.tip}</div>`:''}<div><div class="kicker" style="margin-bottom:6px">Complications to watch now</div><div class="pill-row">${comps.length?comps.map(c=>`<span class="tag ${c[3]}">${c[2]}</span>`).join(''):'<span class="tag good">none specific</span>'}</div></div>`}
+    $$('[data-mt]').forEach(b=>b.setAttribute('aria-pressed',Math.abs(sOf(+b.dataset.mt)-s)<.03))}
+  const TIMES=[[.1,'0'],[.5,'30 min'],[4,'4 h'],[24,'24 h'],[72,'3 d'],[168,'7 d'],[336,'2 wk'],[1344,'8 wk']];
+  $('#miTimes').innerHTML=TIMES.map(t=>`<button data-mt="${t[0]}" aria-pressed="false">${t[1]}</button>`).join('');
+  const stop=playWire(rg,$('#miPlay'),draw,16000,'Replay','infarct');
+  $('#miTimes').addEventListener('click',e=>{const b=e.target.closest('[data-mt]');if(b){stop();rg.value=sOf(+b.dataset.mt);draw(+rg.value)}});
+  draw(+rg.value);
+  $('#infCards').innerHTML=INFC.map(c=>`<div class="card"><h4>${c.t}</h4><p>${c.d}</p><div class="hook"><b>Exam hook</b>${c.h}</div></div>`).join('');
+};
+
+/* =============== 2.8 apoptosis pathways =============== */
+const AP={
+ fasl:{t:'Death ligands',d:'<b>Fas ligand</b> on cytotoxic T cells, or <b>TNF</b> from macrophages, binds receptors on the target cell. This is how the immune system orders a cell to die.',k:'Extrinsic pathway · start'},
+ dr:{t:'Death receptors',d:'<b>Fas (CD95)</b> and <b>TNF receptor 1</b> carry a "death domain" on their inner tail. Ligand binding clusters three receptors together.',k:'Extrinsic'},
+ fadd:{t:'FADD adaptor',d:'Fas-Associated Death Domain protein docks on the clustered receptors and recruits several pro-caspase-8 molecules side by side, where they activate each other.',k:'Extrinsic'},
+ c8:{t:'Caspase-8',d:'The initiator caspase of the extrinsic pathway. Once active it cleaves executioner caspases directly, and cleaves BID to recruit the mitochondria as an amplifier.',k:'Extrinsic · initiator'},
+ flip:{t:'FLIP: the brake',d:'FLIP looks like pro-caspase-8 but has no enzyme activity; it jams the complex. Some viruses make FLIP-like proteins to keep infected cells alive.',k:'Regulator'},
+ stress:{t:'Cell stress',d:'DNA damage (via <b>p53</b>), loss of growth-factor signals, misfolded proteins (ER stress), radiation, hypoxia. The cell senses it is beyond repair.',k:'Intrinsic pathway · start'},
+ bh3:{t:'BH3-only sensors',d:'<b>BIM, BID, PUMA, NOXA</b>. Stress raises their levels (p53 switches on PUMA and NOXA). They neutralize the anti-apoptotic guards and free the effectors.',k:'Intrinsic'},
+ bax:{t:'BAX/BAK vs BCL-2',d:'<b>BAX and BAK</b> are the effectors: they form pores in the mitochondrial outer membrane. <b>BCL-2, BCL-XL, MCL-1</b> hold them back. The balance decides life or death.',k:'Intrinsic · the switch'},
+ mito:{t:'Mitochondrial leak',d:'With BAX/BAK pores open, <b>cytochrome c</b> and SMAC/DIABLO escape into the cytosol. Cytochrome c normally carries electrons in respiration; outside the mitochondrion it is a death signal.',k:'Intrinsic'},
+ apaf:{t:'Apoptosome → Caspase-9',d:'Cytochrome c binds <b>APAF-1</b>, which assembles into a wheel-shaped apoptosome that activates <b>caspase-9</b>, the intrinsic initiator. SMAC removes IAPs (inhibitors of apoptosis) that would otherwise block caspases.',k:'Intrinsic · initiator'},
+ bid:{t:'BID links the two',d:'Caspase-8 cuts BID into tBID, which activates BAX/BAK. So a death-receptor signal also fires the mitochondrial pathway. In liver cells this amplification is essential.',k:'Crosstalk'},
+ ctl:{t:'Cytotoxic T cell route',d:'A CTL or NK cell releases <b>perforin</b> (pores) and <b>granzyme B</b>, which enters the target and cleaves caspases directly. The third door into the same room.',k:'Third route'},
+ exec:{t:'Executioner caspases 3 & 6',d:'Cysteine proteases that cut after aspartate (c-asp-ase). They activate the DNase (CAD) that cuts DNA between nucleosomes, cleave lamins (nucleus collapses) and cytoskeletal proteins, and switch off DNA repair.',k:'Execution'},
+ end:{t:'Taking the cell apart',d:'DNA is cut into 180-base-pair multiples (the "ladder" on a gel). The nucleus condenses and fragments. The cell shrinks and blebs, then breaks into membrane-bound <b>apoptotic bodies</b>.',k:'Execution'},
+ eat:{t:'Quiet removal',d:'<b>Phosphatidylserine</b> flips from the inner to the outer leaflet and thrombospondin coats the bodies: "eat me" signals. Macrophages engulf them within minutes, before anything leaks. No inflammation.',k:'Clearance'}
+};
+const OD=[
+ {t:'Necroptosis',d:'"Programmed necrosis." TNF receptor signaling with caspase-8 blocked → <b>RIPK1 and RIPK3</b> kinases → <b>MLKL</b> punches holes in the plasma membrane. The cell swells and bursts like necrosis, but by a program.',h:'Seen when viruses block caspases, in steatohepatitis, pancreatitis, reperfusion injury and neurodegeneration. Causes inflammation.'},
+ {t:'Pyroptosis',d:'Death by fire. Infected or stressed cells assemble an <b>inflammasome</b> → <b>caspase-1</b> → <b>IL-1β and IL-18</b> released, and <b>gasdermin D</b> forms pores. The cell swells and lyses, spilling cytokines.',h:'Kills bacteria-infected macrophages (Salmonella, Shigella) and causes fever. Overactive in gout and some auto-inflammatory syndromes.'},
+ {t:'Ferroptosis',d:'Iron-dependent death by <b>lipid peroxidation</b>. When <b>glutathione peroxidase 4</b> can\'t keep up, peroxidized membrane lipids accumulate and the cell dies. Looks like shrunken mitochondria.',h:'Implicated in stroke, kidney injury, neurodegeneration, and being exploited to kill cancer cells.'},
+ {t:'Autophagy',d:'Self-eating. A starving cell wraps its own organelles in a double membrane (<b>autophagosome</b>, marked by LC3) and fuses it with a lysosome to recycle them. A survival strategy that becomes a death pathway if starvation continues.',h:'Important in atrophy, aging, neurodegeneration (clearing misfolded proteins) and cancer. mTOR inhibits it; rapamycin and fasting turn it up.'},
+ {t:'NETosis',d:'Neutrophils unspool their chromatin and throw it out as sticky <b>neutrophil extracellular traps</b> studded with antimicrobial proteins, dying in the process.',h:'Traps bacteria in pus and abscesses; also drives thrombosis and lupus autoantibodies.'},
+ {t:'Mitotic catastrophe & entosis',d:'A cell that tries to divide with broken DNA or spindle dies in mitosis (how radiation and many chemotherapies kill). Entosis: one living cell swallows another.',h:'Mostly of interest in tumors.'}
+];
+inits.apop=()=>{
+  const svg=$('#apSvg');let h=fmark('apm');
+  h+=fnode('fasl',20,20,230,46,['Death ligands','FasL on T cell · TNF'],'src')+fnode('dr',20,96,230,46,['Death receptors','Fas (CD95) · TNFR1'])+fnode('fadd',20,172,230,46,['FADD adaptor','death domain'])+fnode('c8',20,248,230,46,['Caspase-8','initiator']);
+  h+=fnode('stress',610,20,230,46,['Cell stress','DNA damage (p53) · no growth factors · misfolding'],'src')+fnode('bh3',610,96,230,46,['BH3-only sensors','BIM · BID · PUMA · NOXA'])+fnode('bax',610,172,230,46,['BAX / BAK on · BCL-2 off','the switch'])+fnode('mito',610,248,230,46,['Mitochondrial outer membrane leaks','cytochrome c out'])+fnode('apaf',610,324,230,46,['Apoptosome → Caspase-9','cyt c + APAF-1 · initiator']);
+  h+=fnode('ctl',310,20,240,46,['Cytotoxic T cell','perforin + granzyme B'],'src')+fnode('flip',310,96,240,46,['FLIP','blocks caspase-8 (viruses)'])+fnode('bid',310,172,240,46,['Caspase-8 cuts BID → tBID','links the two pathways']);
+  h+=fnode('exec',310,324,240,46,['Executioner caspases 3 & 6','cut after aspartate'],'end')+fnode('end',310,400,240,46,['DNA ladder · lamins · cytoskeleton','blebs → apoptotic bodies'])+fnode('eat',310,468,240,46,['Phosphatidylserine flips out','macrophage eats · no inflammation']);
+  h+=farr('M135 66V92','apm')+farr('M135 142V168','apm')+farr('M135 218V244','apm')+farr('M135 294 L300 334','apm')+farr('M250 271 L306 203','apm')+farr('M550 195 L606 195','apm');
+  h+=farr('M725 66V92','apm')+farr('M725 142V168','apm')+farr('M725 218V244','apm')+farr('M725 294V320','apm')+farr('M610 347 L554 347','apm');
+  h+=farr('M430 66 V320','apm')+farr('M430 370V396','apm')+farr('M430 446V464','apm');
+  h+=`<line x1="310" y1="119" x2="250" y2="119" style="stroke:var(--bad);stroke-width:2"/><line x1="258" y1="110" x2="258" y2="128" style="stroke:var(--bad);stroke-width:3"/>`;
+  svg.innerHTML=h;
+  wireFlow(svg,$('#apNote'),AP,'bax',n=>`<div class="kicker">${n.k}</div><h4>${n.t}</h4><p>${n.d}</p>`);
+  $('#odCards').innerHTML=OD.map(c=>`<div class="card"><h4>${c.t}</h4><p>${c.d}</p><div class="hook"><b>Where it matters</b>${c.h}</div></div>`).join('');
+};
+
+/* =============== 2.10 accumulations =============== */
+function accSvg(k){const r=rng(k.length*31);let s='';const cell=(x,y,w,h,extra='')=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1.2"/>${extra}`;
+  switch(k){
+    case 'fat':for(let i=0;i<4;i++){const x=8+i*58;s+=cell(x,14,52,66,`<circle cx="${x+26}" cy="47" r="${i%2?20:14}" style="fill:var(--field);stroke:var(--memb);stroke-width:1"/><ellipse cx="${x+(i%2?46:40)}" cy="${i%2?22:66}" rx="6" ry="7" style="fill:var(--nuc)"/>`)}break;
+    case 'chol':s+=`<rect x="0" y="60" width="240" height="40" style="fill:var(--eosin-soft)"/>`;for(let i=0;i<5;i++){const x=20+i*44,y=38;s+=`<circle cx="${x}" cy="${y}" r="18" style="fill:var(--cyto);stroke:var(--memb)"/>`;for(let k2=0;k2<10;k2++){const a=r()*6.283,d=r()*11;s+=`<circle cx="${f1(x+d*Math.cos(a))}" cy="${f1(y+d*Math.sin(a))}" r="2.6" style="fill:var(--field);stroke:var(--memb);stroke-width:.6"/>`}s+=`<circle cx="${x-8}" cy="${y+8}" r="4" style="fill:var(--nuc)"/>`}s+=`<path d="M60 70l20-6 24 8 30-10 26 8 30-12" style="fill:none;stroke:var(--fat);stroke-width:5"/>`;break;
+    case 'prot':for(let i=0;i<4;i++){const x=8+i*58;let dots='';for(let k2=0;k2<9;k2++)dots+=`<circle cx="${f1(x+10+r()*32)}" cy="${f1(y0=22+r()*44)}" r="${f1(3+r()*3)}" style="fill:var(--eosin);opacity:.9"/>`;s+=cell(x,14,52,66,dots+`<ellipse cx="${x+26}" cy="70" rx="8" ry="5" style="fill:var(--nuc)"/>`)}break;
+    case 'hyal':s+=`<circle cx="120" cy="55" r="48" style="fill:var(--eosin);opacity:.45"/><circle cx="120" cy="55" r="48" style="fill:none;stroke:var(--memb);stroke-width:1.5"/><circle cx="120" cy="55" r="16" style="fill:var(--bad-soft);stroke:var(--memb)"/>`;for(let i=0;i<8;i++){const a=i/8*6.283;s+=`<ellipse cx="${f1(120+34*Math.cos(a))}" cy="${f1(55+34*Math.sin(a))}" rx="4" ry="2" transform="rotate(${f1(a*57.3)} ${f1(120+34*Math.cos(a))} ${f1(55+34*Math.sin(a))})" style="fill:var(--nuc)"/>`}s+=`<text x="120" y="12" class="t-sm t-mid">thick glassy arteriole wall</text>`;break;
+    case 'glyc':for(let i=0;i<4;i++){const x=8+i*58;s+=cell(x,14,52,66,`<rect x="${x+8}" y="22" width="36" height="50" rx="8" style="fill:var(--field)"/><ellipse cx="${x+26}" cy="47" rx="8" ry="9" style="fill:var(--nuc)"/>`)}break;
+    case 'lipo':for(let i=0;i<4;i++){const x=8+i*58;let g='';for(let k2=0;k2<12;k2++){const a=r()*6.283,d=10+r()*8;g+=`<circle cx="${f1(x+26+d*Math.cos(a))}" cy="${f1(47+d*Math.sin(a)*.8)}" r="2.2" style="fill:#9a6a2a"/>`}s+=cell(x,14,52,66,`<ellipse cx="${x+26}" cy="47" rx="7" ry="8" style="fill:var(--nuc)"/>`+g)}break;
+    case 'mel':s+=`<rect x="0" y="70" width="240" height="30" style="fill:var(--eosin-soft)"/>`;for(let i=0;i<6;i++){const x=20+i*40;s+=`<rect x="${x-12}" y="30" width="24" height="40" rx="6" style="fill:var(--cyto);stroke:var(--memb)"/><ellipse cx="${x}" cy="58" rx="6" ry="7" style="fill:var(--nuc)"/>`;for(let k2=0;k2<6;k2++)s+=`<circle cx="${f1(x-8+r()*16)}" cy="${f1(34+r()*14)}" r="1.8" style="fill:#3a2418"/>`}s+=`<path d="M60 70q6-24 20-30t16 30" style="fill:#5a3a24;stroke:#2a1a10"/>`;break;
+    case 'hemo':for(let i=0;i<4;i++){const x=20+i*56;s+=`<circle cx="${x+12}" cy="52" r="22" style="fill:var(--cyto);stroke:var(--memb)"/>`;for(let k2=0;k2<10;k2++){const a=r()*6.283,d=r()*14;s+=`<circle cx="${f1(x+12+d*Math.cos(a))}" cy="${f1(52+d*Math.sin(a))}" r="${f1(2+r()*2)}" style="fill:${i<2?'#b8862b':'#2a4fb8'}"/>`}}s+=`<text x="48" y="92" class="t-sm t-mid">H&E: golden</text><text x="176" y="92" class="t-sm t-mid">Prussian blue</text>`;break;
+    case 'bili':s+=`<rect x="20" y="20" width="200" height="70" rx="12" style="fill:var(--cyto);stroke:var(--memb)"/>`;for(let i=0;i<5;i++){const x=40+i*40;s+=`<ellipse cx="${x}" cy="55" rx="8" ry="9" style="fill:var(--nuc)"/>`}s+=`<path d="M20 40c40 8 80 8 120 2s60-4 80 2" style="fill:none;stroke:#7a8f1e;stroke-width:5"/><path d="M20 72c40-6 80-6 120 0s60 6 80 0" style="fill:none;stroke:#7a8f1e;stroke-width:5"/><text x="120" y="12" class="t-sm t-mid">bile plugs in canaliculi</text>`;break;
+    case 'carb':s+=`<circle cx="120" cy="55" r="46" style="fill:var(--field);stroke:var(--memb)"/>`;for(let i=0;i<5;i++){const x=70+i*25,y=30+(i%2)*45;s+=`<circle cx="${x}" cy="${y}" r="12" style="fill:var(--cyto);stroke:var(--memb)"/>`;for(let k2=0;k2<7;k2++)s+=`<circle cx="${f1(x-7+r()*14)}" cy="${f1(y-7+r()*14)}" r="1.8" style="fill:#111"/>`}s+=`<text x="120" y="102" class="t-sm t-mid">macrophages full of soot</text>`;break;
+  }
+  return `<svg viewBox="0 0 240 110" aria-hidden="true">${s}</svg>`;
+}
+let y0;
+const ACC=[
+ {k:'fat',t:'Steatosis (fatty change)',see:'Clear round vacuoles that push the nucleus to the edge (the fat dissolves during processing; oil red O on frozen sections shows it).',why:'Too much fatty acid delivered, too little burned, or no apoprotein to export it as VLDL.',ex:'Liver: alcohol (most common in the West), obesity and diabetes (NAFLD), malnutrition (kwashiorkor), toxins (CCl₄), pregnancy. Heart: hypoxia gives a "tigered" striped look.',h:'Reversible. With inflammation it becomes steatohepatitis and can progress to cirrhosis.'},
+ {k:'chol',t:'Cholesterol & cholesterol esters',see:'Foamy macrophages; needle-shaped clefts where crystals sat.',why:'Macrophages gorge on oxidized LDL and can\'t digest the cholesterol.',ex:'Atherosclerotic plaques (foam cells), xanthomas of skin and tendons in hyperlipidemia, "strawberry gallbladder" (cholesterolosis), Niemann–Pick type C.',h:'Foam cells in the arterial intima are the fatty streak, the first lesion of atherosclerosis.'},
+ {k:'prot',t:'Proteins',see:'Round pink droplets or dense pink inclusions.',why:'Too much protein coming in, or misfolded protein that can\'t be secreted or degraded.',ex:'Reabsorption droplets in kidney tubules (proteinuria). Russell bodies: immunoglobulin in plasma cells. Mallory–Denk bodies: keratin filaments in alcoholic hepatitis. Neurofibrillary tangles (tau). α₁-antitrypsin deficiency: misfolded protein trapped in hepatocyte ER → liver damage, and no antitrypsin in the lung → emphysema.',h:'Amyloid is also a protein deposit, but extracellular: Congo red, apple-green birefringence.'},
+ {k:'hyal',t:'Hyaline change',see:'Homogeneous, glassy, pink. A description, not a diagnosis.',why:'Various: protein leaked into vessel walls, condensed filaments, old collagen.',ex:'Hyaline arteriolosclerosis in hypertension and diabetes (thick glassy arteriole walls, small lumen). Hyaline membranes in ARDS and neonatal respiratory distress. Alcoholic hyaline (Mallory bodies). Hyalinized scars.',h:'Hyaline arteriolosclerosis is why diabetics and hypertensives get small-vessel kidney and retinal damage.'},
+ {k:'glyc',t:'Glycogen',see:'Clear vacuoles, like fat, but PAS-positive and removed by diastase.',why:'Abnormal glucose or glycogen metabolism.',ex:'Diabetes mellitus: glycogen in kidney tubule cells, hepatocytes, β cells. Glycogen storage diseases: von Gierke (liver, glucose-6-phosphatase), Pompe (heart, lysosomal acid maltase), McArdle (muscle phosphorylase).',h:'Pompe disease: cardiomegaly in an infant; the only one that is a lysosomal storage disease.'},
+ {k:'lipo',t:'Lipofuscin',see:'Fine yellow-brown granules around the nucleus. "Wear-and-tear" pigment.',why:'Indigestible leftovers of lipid peroxidation of membranes. A record of past free-radical damage.',ex:'Aging heart and liver (brown atrophy), neurons, atrophic organs.',h:'Harmless in itself; it just marks a cell that has been around a long time or under oxidative stress.'},
+ {k:'mel',t:'Melanin',see:'Brown-black granules. Made from tyrosine in melanocytes and handed to keratinocytes.',why:'Normal protection from UV; abnormal when too much or in the wrong place.',ex:'Tanning, freckles, nevi, melanoma. Neuromelanin in the substantia nigra (lost in Parkinson disease). Melanin in macrophages after skin inflammation (post-inflammatory hyperpigmentation).',h:'The only endogenous brown-black pigment. Everything else brown is lipofuscin or hemosiderin until proven otherwise.'},
+ {k:'hemo',t:'Hemosiderin',see:'Golden-brown coarse granules; Prussian blue stains them blue.',why:'Aggregates of ferritin: iron stored when there is more than the cell can hold as ferritin.',ex:'Local: a bruise (red → blue-green biliverdin → golden hemosiderin → yellow), "heart failure cells" (macrophages in congested lungs). Systemic: hemosiderosis from transfusions or hemolysis; hemochromatosis (HFE gene) → bronze skin, diabetes, cirrhosis, cardiomyopathy.',h:'Hemosiderosis = iron deposited without damage. Hemochromatosis = iron with organ damage.'},
+ {k:'bili',t:'Bilirubin',see:'Yellow-green pigment; bile plugs in liver canaliculi.',why:'Heme breakdown product that the liver can\'t conjugate or excrete fast enough.',ex:'Jaundice from hemolysis, hepatitis, or bile duct obstruction. Kernicterus: unconjugated bilirubin crossing into the newborn brain.',h:'Visible on skin and sclera above about 2.5 mg/dL.'},
+ {k:'carb',t:'Carbon (anthracosis)',see:'Black granules in alveolar macrophages and hilar lymph nodes; blackened lungs.',why:'Inhaled soot and coal dust that macrophages carry but cannot degrade.',ex:'Smokers, city dwellers, miners. Harmless by itself; heavy coal exposure → coal workers\' pneumoconiosis with fibrosis.',h:'Tattoo pigment behaves the same way: dermal macrophages hold it for life.'}
+];
+inits.accum=()=>{$('#accCards').innerHTML=ACC.map(a=>`<article class="card"><div class="mini">${accSvg(a.k)}</div><h4>${a.t}</h4><p><span class="lbl">What you see</span>${a.see}</p><p><span class="lbl">Why</span>${a.why}</p><p><span class="lbl">Where</span>${a.ex}</p><div class="hook"><b>Exam hook</b>${a.h}</div></article>`).join('')};
+
+/* =============== 2.11 aging =============== */
+const TELM={
+ som:{l:'Normal body cell',len:d=>1-d/55,txt:'Every time DNA is copied, the very end of each chromosome can\'t be finished (the end-replication problem). The protective <b>telomere</b> caps get a little shorter. After about 50 divisions (the <b>Hayflick limit</b>) they are critically short; the cell reads them as broken DNA, p53 and p16 switch on, and it stops dividing for good: <b>replicative senescence</b>.',hook:'Senescent cells don\'t die; they sit there secreting inflammatory factors (the SASP), which contributes to aging tissue.'},
+ stem:{l:'Stem / germ cell',len:d=>1-d/220,txt:'Stem cells and germ cells make <b>telomerase</b>, an enzyme that rebuilds the caps with its own RNA template. So they can keep dividing for a lifetime. Most adult body cells have telomerase switched off.',hook:'Dyskeratosis congenita: inherited telomerase defects → bone marrow failure, early aging.'},
+ can:{l:'Cancer cell',len:d=>Math.max(.45,1-d/55)+(d>30?0:0),txt:'Cancer cells have to solve the telomere problem or they would senesce. About 90% <b>reactivate telomerase</b>; the rest use recombination. That is one of the hallmarks of cancer: limitless replication.',hook:'Telomerase is a target for anti-cancer drugs, and telomerase in a biopsy suggests malignancy.'}
+};
+const AGEC=[
+ {t:'DNA damage accumulates',d:'Radicals, radiation, replication errors. Repair enzymes also decline. Mutations pile up in body cells over decades.',h:'Werner syndrome (defective DNA helicase) and Hutchinson–Gilford progeria (abnormal lamin A) look like fast-forwarded aging.'},
+ {t:'Replicative senescence',d:'Telomere shortening plus rising p16/INK4a. Senescent cells stop dividing and secrete inflammatory and matrix-degrading factors (SASP) that damage neighbors.',h:'Clearing senescent cells ("senolytics") extends healthy life in mice.'},
+ {t:'Defective protein homeostasis',d:'Chaperones that fold proteins, and the proteasome and autophagy that remove bad ones, all work less well. Misfolded proteins accumulate.',h:'Alzheimer, Parkinson and other neurodegenerative diseases are, at the cellular level, diseases of failed protein quality control with age.'},
+ {t:'Deregulated nutrient sensing',d:'Insulin/IGF-1 signalling and mTOR tell cells to grow; less of it, in worms, flies and mice, means longer life. <b>Caloric restriction</b> extends lifespan via <b>sirtuins</b> (NAD-dependent deacetylases) and lower mTOR.',h:'Rapamycin (mTOR inhibitor) and metformin are being studied as anti-aging drugs for this reason.'},
+ {t:'Mitochondrial dysfunction',d:'Aging mitochondria leak more radicals and make less ATP; mitochondrial DNA (no histones, poor repair) mutates faster than nuclear DNA.',h:'The free-radical theory of aging, now one piece of a larger picture.'},
+ {t:'Chronic inflammation',d:'"Inflammaging": low-grade inflammation from senescent cells, gut flora changes and accumulating debris. Drives atherosclerosis, sarcopenia, dementia.',h:'CRP and IL-6 rise with age even without infection.'},
+ {t:'Stem cell exhaustion',d:'Tissue stem cells decline in number and function, so repair slows: thinner skin, weaker bone, slower healing, less immune diversity.',h:'Immunosenescence is why older adults respond less to vaccines and get shingles.'},
+ {t:'Genes and environment',d:'About a quarter of lifespan variation is inherited. The rest: smoking, UV, diet, exercise, pollution, infections. Aging is not a program; it is accumulated damage outrunning repair.',h:'Calorie restriction is the only intervention that reliably extends lifespan across species.'}
+];
+inits.aging=()=>{
+  let mode='som';const svg=$('#telSvg'),rg=$('#telD');
+  $('#telMode').innerHTML=Object.keys(TELM).map(k=>`<button class="btn" data-tm="${k}" aria-pressed="${k===mode}">${TELM[k].l}</button>`).join('');
+  function draw(){const d=+rg.value,M=TELM[mode],len=clamp(M.len(d)),sen=mode==='som'&&len<=.1;
+    const capW=70*len;let s=`<text x="12" y="24" class="t-sm">ONE CHROMOSOME · telomeres in yellow</text>`;
+    s+=`<rect x="100" y="60" width="360" height="26" rx="13" style="fill:var(--nuc)"/><rect class="cap" x="${f1(100-capW)}" y="60" width="${f1(capW+2)}" height="26" rx="13"/><rect class="cap" x="${f1(458)}" y="60" width="${f1(capW+2)}" height="26" rx="13"/>`;
+    s+=`<text x="280" y="110" class="t-sm t-mid">telomere length ${Math.round(len*100)}% · ${sen?'critically short':len<.35?'getting short':'fine'}</text>`;
+    const n=Math.min(d,28);for(let i=0;i<n;i++){const x=24+i*19,y=150+(i%2)*4;s+=`<circle cx="${x}" cy="${y}" r="8" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1"/><circle cx="${x}" cy="${y}" r="2.5" style="fill:var(--nuc)"/>`}
+    if(d>28)s+=`<text x="${24+28*19}" y="155" class="t-sm">… ×${d}</text>`;
+    s+=`<text x="12" y="186" class="t-sm">${d} DIVISIONS</text>`;
+    if(sen)s+=`<path d="${blob(300,215,34,4,1,80)}" transform="translate(300 215) scale(1.8 .7) translate(-300 -215)" style="fill:var(--panel-2);stroke:var(--memb);stroke-width:1.5"/><circle cx="300" cy="215" r="9" style="fill:var(--nuc-deep)"/><text x="300" y="246" class="t-sm t-mid" style="fill:var(--bad)">senescent: large, flat, p16 ↑, SA-β-gal +, no more divisions</text>`;
+    else if(mode!=='som')s+=`<g transform="translate(300 215)"><path d="M-40 0 q40 -24 80 0" style="fill:none;stroke:var(--good);stroke-width:3"/><text x="0" y="28" class="t-sm t-mid" style="fill:var(--good)">telomerase rebuilds the caps every division</text></g>`;
+    else s+=`<text x="300" y="222" class="t-sm t-mid">still dividing normally</text>`;
+    svg.innerHTML=s;
+    $('#telRead').innerHTML=`<span>mode <b>${M.l}</b></span><span>state <b>${sen?'senescent':'dividing'}</b></span><span>Hayflick limit <b>~50</b></span>`;
+    $('#telNote').innerHTML=`<div class="chips"><span class="tag ${mode==='som'?'warn':mode==='stem'?'good':'bad'}">${mode==='som'?'telomerase off':mode==='stem'?'telomerase on':'telomerase reactivated'}</span></div><h4>${M.l}</h4><p>${M.txt}</p><div class="hook"><b>Exam hook</b>${M.hook}</div>`}
+  rg.addEventListener('input',draw);
+  $('#telMode').addEventListener('click',e=>{const b=e.target.closest('[data-tm]');if(b){mode=b.dataset.tm;$$('[data-tm]').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()}});
+  draw();
+  $('#ageCards').innerHTML=AGEC.map(c=>`<div class="card"><h4>${c.t}</h4><p>${c.d}</p><div class="hook"><b>Exam hook</b>${c.h}</div></div>`).join('');
 };
 
 /* =============== boot =============== */
