@@ -1,0 +1,1558 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Interactive study companion for pathogenic bacteria and cellular adaptation, injury and death.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Bugs &amp; Cells</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a microscope-slide app. Left rail = specimen index, one module "on the stage" at a time.
+   Palette borrows the lab's own stains: crystal violet / hematoxylin (Unit 1) and safranin / eosin (Unit 2). */
+:root{
+  --bg:#f4f2f8; --panel:#ffffff; --panel-2:#eeebf5; --ink:#1b1730; --muted:#5f5a77; --line:#dbd5e7;
+  --hema:#4536a8; --hema-soft:#e7e4fb; --on-hema:#ffffff;
+  --eosin:#c8336b; --eosin-soft:#fbe4ec;
+  --cv:#5b3cc4; --saf:#e0457b; --unst:#e9e5ef; --unst-line:#b9b2c8;
+  --cyto:#fbe3ec; --memb:#b0457a; --wall:#7b6cc4; --nuc:#4b3fa6; --nuc-deep:#1f165f;
+  --er:#c46b9b; --mito:#e3955a; --fat:#fff0ad; --macro:#e6def8; --field:#fbfaf5;
+  --good:#1f8466; --good-soft:#d9f0e7; --warn:#a96a09; --warn-soft:#f8ead2; --bad:#bd3232; --bad-soft:#f8dcdc;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e0c17; --panel:#171428; --panel-2:#211d37; --ink:#ece9f7; --muted:#a59fc0; --line:#2e2949;
+    --hema:#a198ff; --hema-soft:#27224f; --on-hema:#0e0c17;
+    --eosin:#ff7ea9; --eosin-soft:#3a1828;
+    --cv:#a58dff; --saf:#ff7aa6; --unst:#2a2640; --unst-line:#4c4568;
+    --cyto:#3a2134; --memb:#f08cbc; --wall:#a79cf0; --nuc:#9087f2; --nuc-deep:#dcd6ff;
+    --er:#e08fb9; --mito:#f0a765; --fat:#5f531c; --macro:#2c2650; --field:#1d1a2c;
+    --good:#4fd1a5; --good-soft:#123a2f; --warn:#f0b54d; --warn-soft:#3a2b10; --bad:#ff7a7a; --bad-soft:#3d1717;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e0c17; --panel:#171428; --panel-2:#211d37; --ink:#ece9f7; --muted:#a59fc0; --line:#2e2949;
+  --hema:#a198ff; --hema-soft:#27224f; --on-hema:#0e0c17;
+  --eosin:#ff7ea9; --eosin-soft:#3a1828;
+  --cv:#a58dff; --saf:#ff7aa6; --unst:#2a2640; --unst-line:#4c4568;
+  --cyto:#3a2134; --memb:#f08cbc; --wall:#a79cf0; --nuc:#9087f2; --nuc-deep:#dcd6ff;
+  --er:#e08fb9; --mito:#f0a765; --fat:#5f531c; --macro:#2c2650; --field:#1d1a2c;
+  --good:#4fd1a5; --good-soft:#123a2f; --warn:#f0b54d; --warn-soft:#3a2b10; --bad:#ff7a7a; --bad-soft:#3d1717;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--body);-webkit-font-smoothing:antialiased}
+i,em{font-style:italic}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--hema);outline-offset:2px;border-radius:6px}
+h1,h2,h3,h4{text-wrap:balance}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:276px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;overflow:auto;background:var(--panel);border-right:1px solid var(--line);
+  padding-block:22px 28px;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:16px;display:flex;flex-direction:column;gap:20px;z-index:20}
+.brand{display:flex;gap:10px;align-items:center;font-family:var(--display);font-weight:800;font-size:23px;letter-spacing:-.02em;cursor:pointer;background:none;border:0;padding:0;text-align:left;white-space:nowrap}
+.brand svg{width:34px;height:34px;flex:none}
+.brand .amp{color:var(--eosin)}
+.navgroup{display:flex;flex-direction:column;gap:6px}
+.navgroup h3{font:700 10.5px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.13em;color:var(--muted);margin:0 0 2px 10px}
+.navgroup ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.navbtn{width:100%;text-align:left;display:flex;gap:10px;align-items:baseline;padding:7px 10px;border-radius:9px;border:0;background:none;font-size:14.5px;cursor:pointer;line-height:1.3}
+.navbtn .n{font:700 11px var(--mono);color:var(--muted);min-width:24px;flex:none}
+.navbtn:hover{background:var(--panel-2)}
+.navbtn[aria-current="page"]{background:var(--hema-soft);color:var(--hema);font-weight:700}
+.navbtn[aria-current="page"] .n{color:var(--hema)}
+.u2 .navbtn[aria-current="page"],.u3 .navbtn[aria-current="page"]{background:var(--eosin-soft);color:var(--eosin)}
+.u2 .navbtn[aria-current="page"] .n,.u3 .navbtn[aria-current="page"] .n{color:var(--eosin)}
+.side-foot{margin-top:auto;font-size:12.5px;color:var(--muted);line-height:1.45;padding-left:10px}
+main{min-width:0;padding-block:30px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mod{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+@media (min-width:901px){ main{padding-left:40px;padding-right:max(40px,env(safe-area-inset-right,0px))} }
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{height:auto;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;border-right:0;border-bottom:1px solid var(--line);
+    padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));gap:14px;scrollbar-width:none}
+  .side::-webkit-scrollbar{display:none}
+  .brand{font-size:18px}
+  .brand svg{width:26px;height:26px}
+  .navgroup{flex-direction:row;align-items:center}
+  .navgroup h3{display:none}
+  .navgroup ol{flex-direction:row;gap:4px}
+  .navbtn{white-space:nowrap;padding:6px 10px;border:1px solid var(--line);border-radius:999px;font-size:13.5px}
+  .side-foot{display:none}
+}
+
+/* ---------- type ---------- */
+.eyebrow{font:700 12px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.13em;color:var(--hema);margin:0}
+.u2c .eyebrow,.u3c .eyebrow{color:var(--eosin)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(44px,7vw,84px);line-height:.95;letter-spacing:-.035em;margin:0}
+h2{font-family:var(--display);font-weight:800;font-size:clamp(30px,4.2vw,46px);line-height:1.04;letter-spacing:-.025em;margin:0}
+h3.sub{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:-.015em;margin:8px 0 0}
+.lede{font-size:18.5px;color:var(--muted);max-width:64ch;margin:0}
+.mhead{display:flex;flex-direction:column;gap:10px}
+p{margin:0}
+.prose{max-width:68ch;display:flex;flex-direction:column;gap:10px}
+.sp{font-style:italic}
+.tag{display:inline-flex;align-items:center;gap:6px;font:700 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:6px;background:var(--panel-2);color:var(--muted);white-space:nowrap}
+.tag.pos{background:var(--hema-soft);color:var(--cv)}
+.tag.neg{background:var(--eosin-soft);color:var(--saf)}
+.tag.good{background:var(--good-soft);color:var(--good)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}
+
+/* ---------- lab layout ---------- */
+.lab{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:18px;align-items:start}
+.lab.even{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media (max-width:1040px){ .lab,.lab.even{grid-template-columns:minmax(0,1fr)} }
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.stage svg{width:100%;height:auto;display:block}
+.stage svg.wide{min-width:560px}
+.stage-cap{font:500 12px/1.4 var(--mono);color:var(--muted);letter-spacing:.02em}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.note h4{font-family:var(--display);font-weight:800;font-size:24px;line-height:1.1;letter-spacing:-.015em;margin:0}
+.note .kicker{font:700 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.kv{margin:0;display:flex;flex-direction:column;gap:10px}
+.kv dt{font:700 10.5px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:3px}
+.kv dd{margin:0}
+.hook{background:var(--warn-soft);border-radius:10px;padding:10px 12px;font-size:15px}
+.hook b:first-child{font:700 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--warn);display:block;margin-bottom:2px}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font-weight:700;font-size:14px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);cursor:pointer;line-height:1.2;transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--muted)}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.primary{background:var(--hema);color:var(--on-hema);border-color:var(--hema)}
+.u2c .btn.primary,.u3c .btn.primary{background:var(--eosin);border-color:var(--eosin);color:var(--on-hema)}
+.btn.ghost{background:transparent}
+.btn .k{font:700 11px var(--mono);opacity:.7;margin-right:6px}
+input[type=range]{accent-color:var(--hema);width:100%}
+.u2c input[type=range]{accent-color:var(--eosin)}
+.readout{display:flex;flex-wrap:wrap;gap:8px 18px;font:500 13px var(--mono);color:var(--muted)}
+.readout b{color:var(--ink);font-weight:700}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:11px 14px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+thead th{font:700 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);background:var(--panel-2)}
+tbody th{font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h4{margin:0;font-family:var(--display);font-weight:800;font-size:19px;line-height:1.15;letter-spacing:-.01em}
+.card .mini{background:var(--field);border-radius:10px;border:1px solid var(--line)}
+.card .mini svg{display:block;width:100%;height:auto}
+.card p{font-size:14.5px}
+.card .lbl{font:700 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:1px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.pager{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:18px;margin-top:10px}
+.pager button{background:none;border:0;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:2px;padding:6px 0;max-width:48%}
+.pager button.next{text-align:right;margin-left:auto}
+.pager small{font:700 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.pager span{font-family:var(--display);font-weight:800;font-size:18px}
+.callout{border-left:3px solid var(--hema);padding:4px 0 4px 14px;max-width:70ch}
+.u2c .callout,.u3c .callout{border-left-color:var(--eosin)}
+.split2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:700px){ .split2{grid-template-columns:minmax(0,1fr)} }
+
+/* ---------- SVG text & parts ---------- */
+.t-lbl{font:700 13px var(--body);fill:var(--ink)}
+.t-sm{font:500 11px var(--mono);fill:var(--muted)}
+.t-mid{text-anchor:middle}
+.lead{stroke:var(--muted);stroke-width:1;fill:none}
+[data-part]{cursor:pointer;transition:opacity .25s}
+.anat.has-sel [data-part]:not(.sel){opacity:.28}
+.anat [data-part].sel .t-lbl{fill:var(--hema)}
+.anat .hit{fill:transparent;stroke:transparent;stroke-width:16}
+.anat #sporeG{transition:opacity .4s}
+.anat:not(.spore) #sporeG{opacity:0;pointer-events:none}
+
+/* gram */
+.gram-cell{transition:fill .9s ease,opacity .9s ease,stroke .9s}
+.gs .pos,.gs .neg{fill:var(--unst);stroke:var(--unst-line)}
+.gs[data-step="1"] .pos,.gs[data-step="1"] .neg,.gs[data-step="2"] .pos,.gs[data-step="2"] .neg,
+.gs[data-step="3"] .pos,.gs[data-step="4"] .pos{fill:var(--cv);stroke:var(--cv)}
+.gs[data-step="4"] .neg{fill:var(--saf);stroke:var(--saf)}
+.gs .om{transition:opacity .9s}
+.gs[data-step="3"] .om,.gs[data-step="4"] .om{opacity:.18}
+.gs .cvi{opacity:0;transition:opacity .6s}
+.gs[data-step="2"] .cvi,.gs[data-step="3"] .cvi.keep,.gs[data-step="4"] .cvi.keep{opacity:1}
+.stepper{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.stepper button{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 6px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stepper button b{font:700 10.5px var(--mono);color:var(--muted);letter-spacing:.06em}
+.stepper button span{font-size:13px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.stepper button[aria-pressed="true"]{border-color:var(--hema);background:var(--hema-soft)}
+.stepper button[aria-pressed="true"] b{color:var(--hema)}
+.swatch{width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:5px}
+@media (max-width:560px){ .stepper{grid-template-columns:repeat(3,minmax(0,1fr))} }
+
+/* oxygen */
+.tube{cursor:pointer}
+.tube .glass{fill:var(--panel);stroke:var(--muted);stroke-width:1.5}
+.tube.sel .glass{stroke:var(--hema);stroke-width:3}
+.tube .nm{transition:fill .2s}
+.tube.sel .nm{fill:var(--hema)}
+
+/* virulence storyboard */
+.vb .vbug{transition:transform 1.1s cubic-bezier(.6,.05,.25,1)}
+.vb .layer{opacity:0;transition:opacity .6s}
+.vb.st1 .l1,.vb.st2 .l2,.vb.st3 .l3,.vb.st4 .l4{opacity:1}
+.vb .vbug{transform:translate(150px,168px)}
+.vb.st2 .vbug{transform:translate(358px,226px) rotate(90deg)}
+.vb.st3 .vbug{transform:translate(470px,120px)}
+.vb.st4 .vbug{transform:translate(300px,110px)}
+.vb .cellL,.vb .cellR{transition:transform 1s}
+.vb.st2 .cellL{transform:translateX(-10px)}
+.vb.st2 .cellR{transform:translateX(10px)}
+.vb .epi rect{transition:fill .8s}
+.vb.st4 .epi .hurt{fill:var(--bad-soft)}
+.vb .phago{transition:transform 1.2s}
+.vb .phago{transform:translate(640px,60px)}
+.vb.st3 .phago{transform:translate(560px,90px)}
+@keyframes flow{to{stroke-dashoffset:-40}}
+.vb .flowline{stroke-dasharray:14 26;animation:flow 1.2s linear infinite}
+@keyframes drift{0%{transform:translate(0,0);opacity:0}15%{opacity:1}100%{transform:translate(var(--dx),var(--dy));opacity:0}}
+.vb .tox{animation:drift 2.4s ease-in infinite}
+@keyframes bump{0%,100%{transform:translate(0,0)}50%{transform:translate(-14px,6px)}}
+.vb.st3 .phagoBody{animation:bump 1.6s ease-in-out infinite}
+@keyframes glow{50%{stroke-width:6}}
+.vb.st3 .vcap{animation:glow 1.6s ease-in-out infinite}
+
+/* spectrum */
+.node{cursor:pointer}
+.node .ring{fill:transparent;stroke:transparent;stroke-width:3}
+.node.sel .ring{stroke:var(--eosin)}
+.node:hover .ring{stroke:var(--line)}
+.node.sel:hover .ring{stroke:var(--eosin)}
+.arrow{stroke:var(--muted);stroke-width:1.6;fill:none}
+
+/* adaptation lab */
+.lc rect{transition:fill .6s,stroke .6s}
+.lc ellipse{transition:fill .6s}
+.lc rect{fill:var(--cyto);stroke:var(--memb);stroke-width:1.5}
+.lc ellipse{fill:var(--nuc)}
+.lab-sq .lc rect{fill:var(--eosin-soft)}
+.lab-dys .lc ellipse{fill:var(--nuc-deep)}
+.lab-atr .lc rect{fill:var(--panel-2)}
+.modebar{display:flex;flex-wrap:wrap;gap:6px}
+.modebar .btn.warnb[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:var(--on-hema)}
+.scen{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.scen .card{gap:8px}
+.scen .ans{font-size:14.5px}
+.scen .ans b{color:var(--eosin)}
+
+/* injury */
+.featlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:14.5px}
+.featlist li{display:flex;gap:9px;align-items:flex-start;opacity:.38;transition:opacity .3s}
+.featlist li.on{opacity:1}
+.featlist .dot{width:10px;height:10px;border-radius:50%;margin-top:6px;flex:none;border:2px solid var(--good)}
+.featlist li.on .dot{background:var(--good)}
+.featlist li.irr .dot{border-color:var(--bad)}
+.featlist li.irr.on .dot{background:var(--bad)}
+.featlist h5{margin:6px 0 2px;font:700 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.sev{position:relative;padding-top:22px}
+.sev .ponr{position:absolute;top:0;left:55%;transform:translateX(-50%);font:700 10.5px var(--mono);letter-spacing:.06em;color:var(--bad);white-space:nowrap}
+.sev .ponr::after{content:"";position:absolute;left:50%;top:15px;width:2px;height:22px;background:var(--bad)}
+.stagepill{font:700 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px;border-radius:999px}
+
+/* flashcards & quiz */
+.fc-wrap{perspective:1200px}
+.fc{position:relative;min-height:240px;cursor:pointer;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.4,.2,.2,1)}
+.fc.flip{transform:rotateY(180deg)}
+.fc .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);
+  padding:26px;display:flex;flex-direction:column;justify-content:center;gap:10px}
+.fc .back{transform:rotateY(180deg);background:var(--hema-soft)}
+.fc .front p{font-family:var(--display);font-weight:800;font-size:clamp(21px,3vw,28px);line-height:1.2;letter-spacing:-.01em}
+.fc .back p{font-size:17px}
+.fc .face small{font:700 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.qcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:14px}
+.qcard .q{font-family:var(--display);font-weight:800;font-size:22px;line-height:1.2;letter-spacing:-.01em}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:15.5px;display:flex;gap:10px}
+.opt .l{font:700 12px var(--mono);color:var(--muted);padding-top:2px}
+.opt:hover:not([disabled]){border-color:var(--hema)}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt[disabled]{cursor:default}
+.expl{border-radius:10px;padding:12px 14px;background:var(--panel-2);font-size:15px}
+.bar{height:6px;background:var(--panel-2);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--hema);width:0;transition:width .3s}
+.mn{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.mn .card b.big{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.01em;line-height:1.1}
+
+/* home */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px;align-items:center;padding-block:10px 6px}
+@media (max-width:900px){ .hero{grid-template-columns:minmax(0,1fr)} }
+.hero h1 .amp{color:var(--eosin);font-weight:600}
+.units{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){ .units{grid-template-columns:minmax(0,1fr)} }
+.unit{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:10px}
+.unit h3{margin:0;font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.01em}
+.unit ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.unit li button{width:100%;display:grid;grid-template-columns:34px minmax(0,1fr);gap:4px 8px;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 2px;cursor:pointer}
+.unit li:first-child button{border-top:0}
+.unit li button:hover b{color:var(--hema)}
+.unit.two li button:hover b{color:var(--eosin)}
+.unit li .n{font:700 11px var(--mono);color:var(--muted);padding-top:4px;grid-row:span 2}
+.unit li b{font-size:16px}
+.unit li small{color:var(--muted);font-size:14px}
+.tips{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.tips div{font-size:14.5px;color:var(--muted)}
+.tips b{display:block;color:var(--ink);font-size:15px}
+
+.bridge{display:flex;flex-direction:column;gap:12px}
+.chain{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;grid-template-columns:minmax(150px,1fr) 24px minmax(0,1.6fr) 24px minmax(150px,1fr);gap:10px;align-items:center}
+.chain .arr{color:var(--muted);font:700 18px var(--mono);text-align:center}
+.chain .bug{font-weight:700}
+.chain .mid{font-size:14.5px;color:var(--muted)}
+.chain .out{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+@media (max-width:760px){ .chain{grid-template-columns:minmax(0,1fr)} .chain .arr{transform:rotate(90deg);width:24px} }
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
+</style>
+
+</head>
+<body>
+<div class="app">
+<nav class="side" id="side" aria-label="Modules">
+  <button class="brand" data-go="home" aria-label="Bugs and Cells home">
+    <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="12" width="22" height="13" rx="6.5" style="fill:var(--cv)"/><path d="M25 18.5c3-3 5 3 8 0s4-2 5 0" style="fill:none;stroke:var(--cv);stroke-width:2;stroke-linecap:round"/><circle cx="27" cy="31" r="7" style="fill:var(--cyto);stroke:var(--saf);stroke-width:2"/><circle cx="27" cy="31" r="2.6" style="fill:var(--nuc)"/></svg>
+    <span>Bugs <span class="amp">&amp;</span> Cells</span>
+  </button>
+  <div id="navgroups" style="display:contents"></div>
+  <p class="side-foot">A study companion for pathogenic bacteria and cellular adaptation &amp; injury. Your place is saved on this device.</p>
+</nav>
+
+<main id="main">
+
+<!-- ================= HOME ================= -->
+<section class="mod" id="m-home" data-mod="home">
+  <div class="hero">
+    <div class="mhead">
+      <p class="eyebrow">Microbiology &amp; Pathology · study companion</p>
+      <h1>Bugs <span class="amp">&amp;</span> Cells</h1>
+      <p class="lede">Two units, one story: the bacteria that make us sick, and how our cells adapt, get hurt, and die. Every diagram is something you can touch. Tap a part, press play, drag a slider.</p>
+      <div class="ctrls" style="margin-top:6px">
+        <button class="btn primary" data-go="anatomy">Start with Unit 1</button>
+        <button class="btn" data-go="spectrum">Jump to Unit 2</button>
+        <button class="btn ghost" data-go="quiz">Test yourself</button>
+      </div>
+    </div>
+    <div class="stage" style="background:var(--field)">
+      <svg viewBox="0 0 520 300" role="img" aria-label="Bacteria on the left attacking a row of tissue cells on the right">
+        <g>
+          <rect x="34" y="66" width="120" height="50" rx="25" style="fill:var(--cv)"/>
+          <path d="M154 91c14-14 26 14 40 0s24-12 32 0" style="fill:none;stroke:var(--cv);stroke-width:3;stroke-linecap:round"/>
+          <g style="fill:var(--cv)"><circle cx="60" cy="168" r="13"/><circle cx="84" cy="160" r="13"/><circle cx="72" cy="183" r="13"/><circle cx="96" cy="182" r="13"/><circle cx="50" cy="191" r="13"/></g>
+          <rect x="120" y="150" width="78" height="30" rx="15" style="fill:var(--saf)"/>
+          <rect x="106" y="198" width="78" height="30" rx="15" style="fill:var(--saf)" transform="rotate(-14 145 213)"/>
+          <text x="40" y="258" class="t-sm">UNIT 1 · THE ATTACKERS</text>
+        </g>
+        <path d="M232 150h46" style="stroke:var(--muted);stroke-width:2;stroke-dasharray:4 5;fill:none"/>
+        <path d="M272 143l10 7-10 7" style="stroke:var(--muted);stroke-width:2;fill:none"/>
+        <g>
+          <rect x="298" y="210" width="210" height="10" rx="3" style="fill:var(--panel-2)"/>
+          <rect x="300" y="146" width="44" height="64" rx="8" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1.5"/><ellipse cx="322" cy="184" rx="9" ry="10" style="fill:var(--nuc)"/>
+          <rect x="348" y="112" width="58" height="98" rx="10" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1.5"/><ellipse cx="377" cy="170" rx="13" ry="15" style="fill:var(--nuc)"/>
+          <path d="M412 210v-62c0-14 8-18 22-18s22 4 24 16l2 8c6 2 6 10 0 12l-2 4v40z" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1.5;stroke-dasharray:9 5"/><circle cx="436" cy="176" r="7" style="fill:var(--nuc-deep)"/>
+          <g style="fill:var(--nuc)"><circle cx="476" cy="190" r="4"/><circle cx="488" cy="182" r="3"/><circle cx="494" cy="196" r="3.5"/><circle cx="481" cy="202" r="2.5"/></g>
+          <text x="300" y="258" class="t-sm">UNIT 2 · THE RESPONSE</text>
+          <text x="377" y="100" class="t-sm t-mid">adapted</text>
+          <text x="436" y="120" class="t-sm t-mid">injured</text>
+          <text x="487" y="168" class="t-sm t-mid">dead</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <div class="units" id="homeUnits"></div>
+  <div class="tips">
+    <div><b>Tap anything that looks like a label.</b>Diagrams explain themselves when you select a part.</div>
+    <div><b>Purple is Unit 1, pink is Unit 2.</b>The colors come from real lab stains: crystal violet and eosin.</div>
+    <div><b>Exam hooks</b>are the yellow boxes. They hold the one-liners that show up on tests.</div>
+    <div><b>Finish with Review.</b>Flashcards, mnemonics and a quiz with explanations.</div>
+  </div>
+</section>
+
+<!-- ================= 1.1 ANATOMY ================= -->
+<section class="mod" id="m-anatomy" data-mod="anatomy" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 1 · Pathogenic bacteria</p>
+    <h2>Anatomy of a bacterium</h2>
+    <p class="lede">Bacteria are prokaryotes: no nucleus, no mitochondria, and a cell wall we don't have. Those differences are exactly what antibiotics aim at. Tap any part.</p>
+  </div>
+  <div class="lab">
+    <div class="stage">
+      <div class="scroll">
+      <svg class="wide anat" id="anat" viewBox="0 0 780 390" role="group" aria-label="Labeled bacterial cell">
+        <g data-part="capsule"><rect x="150" y="100" width="440" height="200" rx="100" style="fill:var(--hema-soft);stroke:var(--hema);stroke-width:1.5;stroke-dasharray:4 5"/>
+          <path class="lead" d="M120 72 L178 118"/><text x="62" y="66" class="t-lbl">Capsule</text></g>
+        <g data-part="pili" id="pili" style="stroke:var(--wall);stroke-width:2.2;stroke-linecap:round">
+          <path class="lead" d="M318 52 L312 92" style="stroke-width:1;stroke:var(--muted)"/><text x="270" y="44" class="t-lbl" style="stroke:none">Pili (fimbriae)</text></g>
+        <g data-part="wall"><rect x="170" y="122" width="400" height="156" rx="78" style="fill:none;stroke:var(--wall);stroke-width:9"/>
+          <rect class="hit" x="170" y="122" width="400" height="156" rx="78"/>
+          <path class="lead" d="M606 96 L548 130"/><text x="610" y="94" class="t-lbl">Cell wall</text></g>
+        <g data-part="membrane"><rect x="182" y="134" width="376" height="132" rx="66" style="fill:var(--cyto);stroke:var(--memb);stroke-width:3"/>
+          <path class="lead" d="M606 312 L540 262"/><text x="610" y="318" class="t-lbl">Cell membrane</text></g>
+        <g data-part="ribosomes" id="ribos" style="fill:var(--hema)">
+          <path class="lead" d="M150 340 L232 238"/><text x="70" y="356" class="t-lbl">Ribosomes (70S)</text></g>
+        <g data-part="nucleoid"><ellipse class="hit" cx="365" cy="200" rx="62" ry="40" style="stroke-width:0"/>
+          <path d="M318 196c6-24 40-26 50-6s-26 34-6 40 46-4 44-28-26-32-48-20-38 24-22 38 50 14 62-4" style="fill:none;stroke:var(--nuc);stroke-width:3;stroke-linecap:round"/>
+          <path class="lead" d="M352 334 L360 240"/><text x="300" y="352" class="t-lbl">Nucleoid (DNA)</text></g>
+        <g data-part="plasmid"><circle cx="468" cy="160" r="11" style="fill:none;stroke:var(--eosin);stroke-width:2.6"/><circle cx="452" cy="236" r="8" style="fill:none;stroke:var(--eosin);stroke-width:2.6"/>
+          <path class="lead" d="M486 334 L456 248"/><text x="470" y="352" class="t-lbl">Plasmids</text></g>
+        <g data-part="granule"><ellipse cx="232" cy="200" rx="16" ry="12" style="fill:var(--warn);opacity:.55"/>
+          <path class="lead" d="M120 268 L220 210"/><text x="36" y="286" class="t-lbl">Inclusion granule</text></g>
+        <g data-part="flagellum"><path d="M570 200c25-26 50 26 75 0s50-26 75 0 40 20 52 6" style="fill:none;stroke:var(--wall);stroke-width:3;stroke-linecap:round"/>
+          <path d="M570 200c25-26 50 26 75 0s50-26 75 0 40 20 52 6" class="hit"/>
+          <path class="lead" d="M700 152 L690 190"/><text x="660" y="146" class="t-lbl">Flagellum</text></g>
+        <g data-part="spore" id="sporeG"><ellipse cx="518" cy="200" rx="30" ry="24" style="fill:var(--panel);stroke:var(--ink);stroke-width:5"/><ellipse cx="518" cy="200" rx="17" ry="12" style="fill:var(--nuc);opacity:.75"/>
+          <path class="lead" d="M640 250 L548 210"/><text x="644" y="258" class="t-lbl">Endospore</text></g>
+      </svg>
+      </div>
+      <div class="ctrls" id="anatChips" aria-label="Parts"></div>
+      <div class="ctrls"><button class="btn" id="sporeBtn" aria-pressed="false">Show a sporulating cell</button><span class="stage-cap">Rod (bacillus) shape shown. Not every bacterium has every part.</span></div>
+    </div>
+    <aside class="note" id="anatNote" aria-live="polite"></aside>
+  </div>
+  <div class="callout prose"><p><b>Why "70S" matters:</b> our ribosomes are 80S. That size difference is why drugs like tetracyclines, aminoglycosides (30S subunit), macrolides and clindamycin (50S subunit) can jam bacterial protein synthesis while mostly sparing ours.</p></div>
+</section>
+
+<!-- ================= 1.2 GRAM ================= -->
+<section class="mod" id="m-gram" data-mod="gram" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 1 · Pathogenic bacteria</p>
+    <h2>The Gram stain, step by step</h2>
+    <p class="lede">One 5-minute stain splits most bacteria into two camps. The secret is the cell wall: thick peptidoglycan holds purple dye, thin peptidoglycan plus an outer membrane lets it wash out.</p>
+  </div>
+  <div class="stepper" id="gramSteps"></div>
+  <div class="lab even gs" id="gramStage" data-step="0">
+    <div class="stage">
+      <svg viewBox="0 0 420 300" id="gramField" role="img" aria-label="Microscope field of view with cocci and rods">
+        <defs><clipPath id="fov"><circle cx="210" cy="150" r="138"/></clipPath></defs>
+        <circle cx="210" cy="150" r="140" style="fill:var(--field);stroke:var(--ink);stroke-width:4"/>
+        <g clip-path="url(#fov)" id="gramCells"></g>
+        <text x="12" y="22" class="t-sm">1000× · oil immersion</text>
+      </svg>
+      <div class="readout"><span><i class="swatch" style="background:var(--cv)"></i>Gram-positive cocci</span><span><i class="swatch" style="background:var(--saf)"></i>Gram-negative rods</span></div>
+    </div>
+    <div class="stage">
+      <svg viewBox="0 0 420 300" id="gramWall" role="img" aria-label="Cross-section of Gram-positive and Gram-negative cell walls"></svg>
+      <p class="stage-cap">Zoomed into the cell envelope. Cytoplasm is at the bottom, the outside world at the top.</p>
+    </div>
+  </div>
+  <div class="lab even">
+    <div class="note" id="gramNote" aria-live="polite"></div>
+    <div class="note">
+      <div class="kicker">Won't Gram stain well</div>
+      <dl class="kv">
+        <div><dt><span class="sp">Mycobacterium</span> (TB)</dt><dd>Waxy mycolic acid wall repels the dye. Use the acid-fast (Ziehl–Neelsen) stain: they show up red.</dd></div>
+        <div><dt><span class="sp">Mycoplasma</span></dt><dd>No cell wall at all, so nothing to stain. Also why penicillin can't touch it.</dd></div>
+        <div><dt><span class="sp">Treponema</span> (syphilis)</dt><dd>Too thin to see. Use darkfield microscopy.</dd></div>
+        <div><dt><span class="sp">Chlamydia, Rickettsia</span></dt><dd>Live inside our cells.</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 1.3 SHAPES ================= -->
+<section class="mod" id="m-shapes" data-mod="shapes" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 1 · Pathogenic bacteria</p>
+    <h2>Shapes &amp; arrangements</h2>
+    <p class="lede">Shape plus Gram color is the first clue a lab gives a doctor. "Gram-positive cocci in clusters" already says <span class="sp">Staphylococcus</span> before any culture grows.</p>
+  </div>
+  <div class="readout"><span><i class="swatch" style="background:var(--cv)"></i>Gram-positive</span><span><i class="swatch" style="background:var(--saf)"></i>Gram-negative</span><span><i class="swatch" style="background:var(--muted)"></i>Doesn't Gram stain well</span></div>
+  <div class="cards" id="shapeCards"></div>
+  <div class="callout prose"><p><b>Word roots that help:</b> <i>coccus</i> = berry, <i>bacillus</i> = little rod, <i>staphyle</i> = bunch of grapes, <i>streptos</i> = twisted chain, <i>diplo-</i> = pair, <i>vibrio</i> = to vibrate (comma-shaped, darts around).</p></div>
+</section>
+
+<!-- ================= 1.4 GROWTH ================= -->
+<section class="mod" id="m-growth" data-mod="growth" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 1 · Pathogenic bacteria</p>
+    <h2>The bacterial growth curve</h2>
+    <p class="lede">Drop bacteria into fresh broth and count them every hour. You always get the same four phases. Press play, or drag the time slider.</p>
+  </div>
+  <div class="lab">
+    <div class="stage">
+      <div class="scroll"><svg class="wide" id="gChart" viewBox="0 0 640 340" role="img" aria-label="Growth curve: viable cells on a log scale over 24 hours"></svg></div>
+      <div class="ctrls"><button class="btn primary" id="gPlay">Play</button>
+        <label for="gTime" class="stage-cap" style="flex:1;min-width:180px;display:flex;gap:10px;align-items:center">Time <input type="range" id="gTime" min="0" max="24" step="0.05" value="7"></label></div>
+      <div class="readout" id="gRead"></div>
+    </div>
+    <div class="note">
+      <svg id="gDish" viewBox="0 0 240 240" style="width:100%;max-width:260px;margin:0 auto;display:block" role="img" aria-label="Culture dish showing living and dead bacteria"></svg>
+      <p class="stage-cap" style="text-align:center">The dish counts cells on a normal scale; the graph uses a log scale. That's why the dish looks empty for hours, then fills almost at once.</p>
+      <div id="gNote" aria-live="polite" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+  </div>
+  <div class="split2">
+    <div class="note"><div class="kicker">Doubling math</div><p><span class="sp">E. coli</span> can divide by binary fission every <b>~20 minutes</b> in the lab. In 10 hours that's 30 doublings: 2<sup>30</sup> ≈ <b>1 billion</b> cells from one.</p></div>
+    <div class="note"><div class="kicker">Why it matters clinically</div><p>Drugs that block cell-wall building (penicillins) work best in the <b>log phase</b>, when cells are actively dividing. Spore-formers like <span class="sp">Bacillus</span> and <span class="sp">Clostridium</span> make spores when nutrients run out in the <b>stationary phase</b>.</p></div>
+  </div>
+</section>
+
+<!-- ================= 1.5 OXYGEN ================= -->
+<section class="mod" id="m-oxygen" data-mod="oxygen" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 1 · Pathogenic bacteria</p>
+    <h2>Oxygen needs</h2>
+    <p class="lede">Grow bacteria in a tube of thioglycolate broth: oxygen is high at the top (the pink band is the indicator) and absent at the bottom. Where the bacteria settle tells you how they handle oxygen. Tap a tube.</p>
+  </div>
+  <div class="lab">
+    <div class="stage"><div class="scroll"><svg class="wide" id="o2svg" viewBox="0 0 640 340" role="group" aria-label="Five thioglycolate tubes"></svg></div></div>
+    <aside class="note" id="o2Note" aria-live="polite"></aside>
+  </div>
+  <div class="callout prose"><p><b>Why oxygen can kill:</b> using O<sub>2</sub> makes toxic by-products (superoxide, hydrogen peroxide). <b>Superoxide dismutase</b> and <b>catalase</b> neutralize them. Obligate anaerobes lack these enzymes, so air poisons them.</p></div>
+</section>
+
+<!-- ================= 1.6 VIRULENCE ================= -->
+<section class="mod" id="m-virulence" data-mod="virulence" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 1 · Pathogenic bacteria</p>
+    <h2>How bacteria cause disease</h2>
+    <p class="lede">A pathogen has to do four things: stick, get in, survive our defenses, and do damage. The tools it uses for each are called <b>virulence factors</b>.</p>
+  </div>
+  <div class="stepper" id="vSteps" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+  <div class="lab">
+    <div class="stage">
+      <div class="scroll">
+      <svg class="wide vb st1" id="vb" viewBox="0 0 720 320" role="img" aria-label="Animated infection storyboard">
+        <rect x="0" y="244" width="720" height="76" style="fill:var(--panel-2)"/>
+        <text x="16" y="306" class="t-sm">CONNECTIVE TISSUE</text>
+        <text x="16" y="26" class="t-sm">LUMEN · MUCUS, FLUID FLOW</text>
+        <g class="layer l1" style="stroke:var(--hema);stroke-width:2;fill:none;opacity:.6">
+          <path class="flowline" d="M20 120 H700"/><path class="flowline" d="M20 70 H700" style="animation-delay:-.6s"/>
+        </g>
+        <g class="epi" id="epi"></g>
+        <!-- phagocyte -->
+        <g class="phago layer l3"><g class="phagoBody">
+          <path d="M0 0c30-26 70-20 86 6s10 60-16 72-66 10-80-14-20-48 10-64z" style="fill:var(--macro);stroke:var(--hema);stroke-width:2"/>
+          <path d="M18 34c6-10 18-12 26-4s4 22-8 22-24-6-18-18z" style="fill:var(--nuc)"/>
+          <text x="40" y="104" class="t-sm t-mid">macrophage</text></g></g>
+        <!-- bacterium -->
+        <g class="vbug"><g>
+          <rect class="vcap" x="-46" y="-25" width="92" height="50" rx="25" style="fill:var(--hema-soft);stroke:var(--hema);stroke-width:2;stroke-dasharray:3 4"/>
+          <rect x="-36" y="-16" width="72" height="32" rx="16" style="fill:var(--cv)"/>
+          <g style="stroke:var(--cv);stroke-width:2;stroke-linecap:round"><path d="M-20 16v14M-4 16v16M12 16v14M26 14v12M-20 -16v-12M0 -16v-12M20 -16v-12"/></g>
+        </g></g>
+        <!-- stage labels -->
+        <g class="layer l1"><path class="lead" d="M196 210 L250 170"/><text x="254" y="166" class="t-lbl">pili grip the cell surface</text></g>
+        <g class="layer l2" id="enz"></g>
+        <g class="layer l2"><text x="420" y="200" class="t-lbl">enzymes loosen tissue</text><text x="420" y="218" class="t-sm">hyaluronidase · collagenase · streptokinase</text></g>
+        <g class="layer l3"><path class="lead" d="M440 104 L380 70"/><text x="236" y="62" class="t-lbl">slippery capsule: can't be eaten</text></g>
+        <g class="layer l4" id="toxins"></g>
+        <g class="layer l4"><text x="372" y="70" class="t-lbl">exotoxins secreted</text><text x="372" y="88" class="t-sm">proteins, act on target cells</text>
+          <g transform="translate(600 120)"><rect x="-26" y="-12" width="52" height="24" rx="12" style="fill:none;stroke:var(--saf);stroke-width:2;stroke-dasharray:5 4"/>
+            <g style="stroke:var(--saf);stroke-width:1.6;fill:var(--saf)"><path d="M-30 -22 l-8 -10M30 -20 l9 -9M0 20 l0 12M-24 16 l-8 10M24 16 l9 9"/><circle cx="-38" cy="-32" r="3"/><circle cx="39" cy="-29" r="3"/><circle cx="0" cy="34" r="3"/><circle cx="-32" cy="27" r="3"/><circle cx="33" cy="26" r="3"/></g>
+            <text x="0" y="62" class="t-sm t-mid">Gram− cell bursts:</text><text x="0" y="76" class="t-sm t-mid">LPS endotoxin released</text></g></g>
+      </svg>
+      </div>
+      <div class="ctrls"><button class="btn primary" id="vPlay">Play all four</button><span class="stage-cap">Schematic, not to scale.</span></div>
+    </div>
+    <aside class="note" id="vNote" aria-live="polite"></aside>
+  </div>
+  <h3 class="sub">Exotoxin vs endotoxin</h3>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Exotoxin</th><th>Endotoxin</th></tr></thead>
+    <tbody>
+      <tr><th>What it is</th><td>Protein, actively secreted</td><td>Lipid A part of LPS, built into the outer membrane</td></tr>
+      <tr><th>Made by</th><td>Gram-positive <i>and</i> Gram-negative</td><td>Gram-negative only</td></tr>
+      <tr><th>Released</th><td>While the bacterium is alive</td><td>Mostly when the bacterium dies and breaks apart (lysis)</td></tr>
+      <tr><th>Potency</th><td>Extremely toxic in tiny amounts (botulinum is the deadliest known)</td><td>Less toxic per gram</td></tr>
+      <tr><th>Heat</th><td>Most destroyed by heat</td><td>Heat-stable</td></tr>
+      <tr><th>Vaccine</th><td>Can be made into a <b>toxoid</b> (tetanus, diphtheria)</td><td>No toxoid</td></tr>
+      <tr><th>Effect</th><td>Specific: each toxin hits one target</td><td>General: macrophages release TNF, IL-1, IL-6 → fever, low blood pressure, septic shock, DIC</td></tr>
+    </tbody></table></div>
+  <h3 class="sub">Toxin field guide</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Toxin</th><th>Bacterium</th><th>What it does</th><th>Result</th></tr></thead>
+    <tbody id="toxRows"></tbody></table></div>
+</section>
+
+<!-- ================= 1.7 GALLERY ================= -->
+<section class="mod" id="m-gallery" data-mod="gallery" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 1 · Pathogenic bacteria</p>
+    <h2>Rogues' gallery</h2>
+    <p class="lede">The pathogens that come up again and again. Each card links the bug to its signature weapon and to the cell damage you'll meet in Unit 2.</p>
+  </div>
+  <div class="ctrls" id="galFilter"></div>
+  <div class="cards" id="galCards"></div>
+</section>
+
+<!-- ================= 2.1 SPECTRUM ================= -->
+<section class="mod u2c" id="m-spectrum" data-mod="spectrum" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 2 · Cellular adaptation &amp; injury</p>
+    <h2>The big picture</h2>
+    <p class="lede">A cell under stress has three possible fates: it adapts, it gets injured and recovers, or it is injured past repair and dies. Tap each stage.</p>
+  </div>
+  <div class="lab">
+    <div class="stage"><div class="scroll"><svg class="wide" id="specSvg" viewBox="0 0 820 320" role="group" aria-label="Flow from normal cell to adaptation, injury and death"></svg></div>
+      <p class="stage-cap">Example running through every stage: a heart muscle cell.</p></div>
+    <aside class="note" id="specNote" aria-live="polite"></aside>
+  </div>
+  <h3 class="sub">What injures cells</h3>
+  <div class="cards" id="causeCards"></div>
+</section>
+
+<!-- ================= 2.2 ADAPT ================= -->
+<section class="mod u2c" id="m-adapt" data-mod="adapt" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 2 · Cellular adaptation &amp; injury</p>
+    <h2>Adaptation lab</h2>
+    <p class="lede">Adaptations are reversible changes in a cell's size, number or type that let it survive a new demand. Switch modes and watch the tissue change.</p>
+  </div>
+  <div class="modebar" id="adMode"></div>
+  <div class="lab">
+    <div class="stage">
+      <div class="scroll"><svg class="wide" id="adSvg" viewBox="0 0 720 300" role="img" aria-label="Schematic tissue that changes with each adaptation">
+        <rect x="0" y="252" width="720" height="48" style="fill:var(--panel-2)"/>
+        <line x1="0" y1="251" x2="720" y2="251" style="stroke:var(--memb);stroke-width:2"/>
+        <text x="12" y="290" class="t-sm">BASEMENT MEMBRANE</text>
+        <g id="adCells"></g>
+        <text x="12" y="22" class="t-sm" id="adCap"></text>
+      </svg></div>
+      <div class="readout" id="adRead"></div>
+    </div>
+    <aside class="note" id="adNote" aria-live="polite"></aside>
+  </div>
+  <h3 class="sub">Name that adaptation</h3>
+  <p class="lede" style="font-size:16px">Read the scenario, decide, then reveal.</p>
+  <div class="scen" id="scen"></div>
+</section>
+
+<!-- ================= 2.3 INJURY ================= -->
+<section class="mod u2c" id="m-injury" data-mod="injury" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 2 · Cellular adaptation &amp; injury</p>
+    <h2>Cell injury: past the point of no return</h2>
+    <p class="lede">Drag the slider to raise the severity or length of an injury such as low oxygen. Early changes reverse if oxygen returns. Past the red line, the cell is committed to death.</p>
+  </div>
+  <div class="lab">
+    <div class="stage">
+      <div class="scroll"><svg class="wide" id="injSvg" viewBox="0 0 560 360" role="img" aria-label="A single cell changing as injury increases"></svg></div>
+      <div class="sev"><span class="ponr">point of no return</span>
+        <input type="range" id="injS" min="0" max="100" step="0.5" value="0" aria-label="Injury severity"></div>
+      <div class="ctrls"><button class="btn primary" id="injPlay">Play</button><span class="stagepill" id="injStage"></span><span class="stage-cap" id="injPct"></span></div>
+    </div>
+    <aside class="note">
+      <div class="kicker">What you'd see</div>
+      <ul class="featlist" id="injFeat"></ul>
+    </aside>
+  </div>
+  <div class="split2">
+    <div class="note"><div class="kicker">Why the cell swells first</div><p>Low oxygen → mitochondria make less ATP → the <b>Na⁺/K⁺ pump</b> slows → sodium and water flood in. The cell switches to anaerobic glycolysis, lactic acid builds up, and the falling pH clumps the chromatin.</p></div>
+    <div class="note"><div class="kicker">Why it shows up in blood tests</div><p>Once membranes break, cell proteins leak into the blood. That's how labs detect dead cells: <b>troponin</b> for heart muscle, <b>ALT/AST</b> for liver cells, <b>CK</b> for skeletal muscle.</p></div>
+  </div>
+</section>
+
+<!-- ================= 2.4 DEATH ================= -->
+<section class="mod u2c" id="m-death" data-mod="death" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 2 · Cellular adaptation &amp; injury</p>
+    <h2>Necrosis vs apoptosis</h2>
+    <p class="lede">Necrosis is a messy explosion that injures the neighborhood. Apoptosis is a tidy, programmed implosion that nobody notices. Play both at once.</p>
+  </div>
+  <div class="lab even">
+    <div class="stage"><div class="kicker" style="font:700 11px var(--mono);letter-spacing:.12em;color:var(--bad)">NECROSIS</div>
+      <svg id="necSvg" viewBox="0 0 360 260" role="img" aria-label="Necrosis animation"></svg><p class="stage-cap" id="necCap"></p></div>
+    <div class="stage"><div class="kicker" style="font:700 11px var(--mono);letter-spacing:.12em;color:var(--good)">APOPTOSIS</div>
+      <svg id="apoSvg" viewBox="0 0 360 260" role="img" aria-label="Apoptosis animation"></svg><p class="stage-cap" id="apoCap"></p></div>
+  </div>
+  <div class="ctrls"><button class="btn primary" id="dPlay">Play both</button>
+    <label for="dT" class="stage-cap" style="flex:1;min-width:200px;display:flex;gap:10px;align-items:center">Timeline <input type="range" id="dT" min="0" max="1" step="0.005" value="0.62"></label></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Feature</th><th style="color:var(--bad)">Necrosis</th><th style="color:var(--good)">Apoptosis</th></tr></thead>
+    <tbody>
+      <tr><th>Cell size</th><td>Enlarged (swelling)</td><td>Reduced (shrinkage)</td></tr>
+      <tr><th>Nucleus</th><td>Pyknosis → karyorrhexis → karyolysis</td><td>Fragments into nucleosome-sized pieces</td></tr>
+      <tr><th>Plasma membrane</th><td>Disrupted</td><td>Intact; flips phosphatidylserine outward as an "eat me" signal</td></tr>
+      <tr><th>Cell contents</th><td>Digested by enzymes, leak out</td><td>Packaged into apoptotic bodies</td></tr>
+      <tr><th>Inflammation</th><td>Frequent</td><td>None</td></tr>
+      <tr><th>How many cells</th><td>Usually groups of cells</td><td>Usually single cells</td></tr>
+      <tr><th>Physiologic or pathologic</th><td>Always pathologic</td><td>Often physiologic (embryo shaping, removing old cells); can be pathologic (DNA damage, viral infection)</td></tr>
+      <tr><th>Machinery</th><td>ATP runs out; enzymes and Ca²⁺ run wild</td><td>Caspases. Intrinsic route: mitochondria release cytochrome c (BCL-2 family controls it). Extrinsic route: death receptors (Fas, TNF receptor)</td></tr>
+    </tbody></table></div>
+</section>
+
+<!-- ================= 2.5 PATTERNS ================= -->
+<section class="mod u2c" id="m-patterns" data-mod="patterns" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Unit 2 · Cellular adaptation &amp; injury</p>
+    <h2>Patterns of necrosis</h2>
+    <p class="lede">Dead tissue doesn't all look the same. The pattern tells you the cause, and pathologists name it by what they see. Sketches below are simplified microscope views.</p>
+  </div>
+  <div class="cards" id="patCards"></div>
+  <h3 class="sub">Afterward: pathologic calcification</h3>
+  <div class="split2">
+    <div class="note"><div class="kicker">Dystrophic</div><h4>Calcium lands on damaged tissue</h4><p>Blood calcium is <b>normal</b>. Calcium deposits in dead or dying tissue: old necrosis, atherosclerotic plaques, damaged heart valves, psammoma bodies in some tumors.</p></div>
+    <div class="note"><div class="kicker">Metastatic</div><h4>Calcium lands on normal tissue</h4><p>Blood calcium is <b>high</b> (hyperparathyroidism, kidney failure, bone-destroying tumors, vitamin D excess). Deposits form in healthy tissue such as lungs, kidneys and blood vessels.</p></div>
+  </div>
+</section>
+
+<!-- ================= BRIDGE ================= -->
+<section class="mod u3c" id="m-bridge" data-mod="bridge" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Bridge · Units 1 + 2</p>
+    <h2>Where bacteria meet cells</h2>
+    <p class="lede">The two units are one story. Each row follows a bacterium from its weapon to the pattern of cell damage a pathologist would see.</p>
+  </div>
+  <div class="bridge" id="bridgeList"></div>
+</section>
+
+<!-- ================= REVIEW ================= -->
+<section class="mod u3c" id="m-review" data-mod="review" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Review</p>
+    <h2>Flashcards &amp; mnemonics</h2>
+    <p class="lede">Tap the card (or press space) to flip it. Arrow keys move between cards.</p>
+  </div>
+  <div class="ctrls" id="fcFilter"></div>
+  <div class="fc-wrap"><div class="fc" id="fc" tabindex="0" role="button" aria-label="Flashcard, press to flip">
+    <div class="face front"><small id="fcTagF"></small><p id="fcFront"></p></div>
+    <div class="face back"><small id="fcTagB"></small><p id="fcBack"></p></div>
+  </div></div>
+  <div class="ctrls"><button class="btn" id="fcPrev">← Prev</button><button class="btn primary" id="fcFlip">Flip</button><button class="btn" id="fcNext">Next →</button><button class="btn ghost" id="fcShuf">Shuffle</button><span class="stage-cap" id="fcCount"></span></div>
+  <h3 class="sub">Mnemonics</h3>
+  <div class="mn" id="mnList"></div>
+</section>
+
+<section class="mod u3c" id="m-quiz" data-mod="quiz" hidden>
+  <div class="mhead">
+    <p class="eyebrow">Review</p>
+    <h2>Quiz</h2>
+    <p class="lede">Every answer comes with the reason. Pick a unit or mix both.</p>
+  </div>
+  <div class="ctrls" id="qFilter"></div>
+  <div class="bar"><i id="qBar"></i></div>
+  <div class="qcard" id="qCard" aria-live="polite"></div>
+</section>
+
+</main>
+</div>
+<style>
+.dish .alive{fill:var(--hema)}
+.dish .dead{fill:none;stroke:var(--muted);stroke-width:.9}
+.dish .off{display:none}
+.vb .epi rect{fill:var(--cyto);stroke:var(--memb);stroke-width:1.5}
+.vb .epi ellipse{fill:var(--nuc)}
+.gband{transition:opacity .3s}
+</style>
+<script>
+(()=>{
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const store={get(k,d){try{const v=localStorage.getItem('bugscells:'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('bugscells:'+k,JSON.stringify(v))}catch(e){}}};
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const lerp=(a,b,t)=>a+(b-a)*t, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)), ramp=(x,a,b)=>clamp((x-a)/(b-a));
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const f1=n=>(+n).toFixed(1);
+function animate(dur,step,done){
+  if(RM){step(1);done&&done();return()=>{}}
+  let s=null,id;const f=ts=>{if(s==null)s=ts;const p=Math.min(1,(ts-s)/dur);step(p);if(p<1)id=requestAnimationFrame(f);else done&&done()};
+  id=requestAnimationFrame(f);return()=>cancelAnimationFrame(id);
+}
+function blob(cx,cy,R,amp,seed=0,N=140){
+  let d='';for(let i=0;i<=N;i++){const a=i/N*Math.PI*2;
+    const b=Math.pow(Math.max(0,Math.sin(6*a+seed)),6)+.7*Math.pow(Math.max(0,Math.sin(4*a+seed*2+2.1)),8);
+    const r=R+amp*b;d+=(i?'L':'M')+f1(cx+r*Math.cos(a))+' '+f1(cy+r*Math.sin(a))}
+  return d+'Z';
+}
+const SUP={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
+const sup=n=>String(n).split('').map(c=>SUP[c]||c).join('');
+
+/* =============== routing =============== */
+const MODS=[
+ {id:'home',t:'Start',g:0},
+ {id:'anatomy',t:'Anatomy of a bacterium',g:1,n:'1.1',d:'Tap each part: what it does and which drug hits it.'},
+ {id:'gram',t:'Gram stain',g:1,n:'1.2',d:'Watch purple and pink sort the bacteria.'},
+ {id:'shapes',t:'Shapes & arrangements',g:1,n:'1.3',d:'Clusters, chains, commas and corkscrews.'},
+ {id:'growth',t:'Growth curve',g:1,n:'1.4',d:'Lag, log, stationary, death, played out hour by hour.'},
+ {id:'oxygen',t:'Oxygen needs',g:1,n:'1.5',d:'Five test tubes, five ways to handle oxygen.'},
+ {id:'virulence',t:'Virulence & toxins',g:1,n:'1.6',d:'Stick, invade, evade, damage. Plus a toxin field guide.'},
+ {id:'gallery',t:"Rogues' gallery",g:1,n:'1.7',d:'16 pathogens and their signature weapons.'},
+ {id:'spectrum',t:'The big picture',g:2,n:'2.1',d:'Normal → adapted → injured → dead.'},
+ {id:'adapt',t:'Adaptation lab',g:2,n:'2.2',d:'Morph tissue through hypertrophy, hyperplasia, atrophy, metaplasia.'},
+ {id:'injury',t:'Cell injury slider',g:2,n:'2.3',d:'Drag a cell past the point of no return.'},
+ {id:'death',t:'Necrosis vs apoptosis',g:2,n:'2.4',d:'Two ways to die, animated side by side.'},
+ {id:'patterns',t:'Patterns of necrosis',g:2,n:'2.5',d:'Coagulative, liquefactive, caseous and more.'},
+ {id:'bridge',t:'Where bacteria meet cells',g:3,n:'↔'},
+ {id:'review',t:'Flashcards & mnemonics',g:4,n:'R1'},
+ {id:'quiz',t:'Quiz',g:4,n:'R2'},
+];
+const GROUPS={1:['Unit 1 · Bacteria','u1'],2:['Unit 2 · Cell adaptation','u2'],3:['Bridge','u3'],4:['Review','u3']};
+const inits={},onShow={},onHide={};let cur=null;
+(function buildNav(){
+  let h='';
+  for(const g of [1,2,3,4]){
+    h+=`<div class="navgroup ${GROUPS[g][1]}"><h3>${GROUPS[g][0]}</h3><ol>`;
+    MODS.filter(m=>m.g===g).forEach(m=>{h+=`<li><button class="navbtn" data-go="${m.id}"><span class="n">${m.n}</span><span>${m.t.replace('&','&amp;')}</span></button></li>`});
+    h+='</ol></div>';
+  }
+  $('#navgroups').innerHTML=h;
+  let u='';
+  [[1,'Unit 1','Pathogenic bacteria','one'],[2,'Unit 2','Cellular adaptation, injury & death','two']].forEach(([g,a,b,c])=>{
+    u+=`<div class="unit ${c}"><p class="eyebrow" ${g===2?'style="color:var(--eosin)"':''}>${a}</p><h3>${b}</h3><ol>`;
+    MODS.filter(m=>m.g===g).forEach(m=>{u+=`<li><button data-go="${m.id}"><span class="n">${m.n}</span><b>${m.t.replace('&','&amp;')}</b><small>${m.d}</small></button></li>`});
+    u+='</ol></div>';
+  });
+  $('#homeUnits').innerHTML=u;
+  MODS.forEach((m,i)=>{
+    if(m.id==='home')return;
+    const sec=$('#m-'+m.id);const p=MODS[i-1],n=MODS[i+1];
+    const pg=document.createElement('div');pg.className='pager';
+    pg.innerHTML=(p?`<button data-go="${p.id}"><small>← Previous</small><span>${p.t.replace('&','&amp;')}</span></button>`:'')+(n?`<button class="next" data-go="${n.id}"><small>Next →</small><span>${n.t.replace('&','&amp;')}</span></button>`:'');
+    sec.appendChild(pg);
+  });
+})();
+function show(id){
+  if(!MODS.some(m=>m.id===id))id='home';
+  if(cur&&onHide[cur])onHide[cur]();
+  $$('[data-mod]').forEach(s=>s.hidden=s.dataset.mod!==id);
+  $$('.navbtn').forEach(b=>b.setAttribute('aria-current',b.dataset.go===id?'page':'false'));
+  cur=id;
+  if(inits[id]&&!inits[id].done){inits[id].done=true;inits[id]()}
+  if(onShow[id])onShow[id]();
+  store.set('last',id);
+  try{history.replaceState(null,'','#'+id)}catch(e){}
+  window.scrollTo(0,0);
+  const nb=$(`.navbtn[data-go="${id}"]`);
+  if(nb&&matchMedia('(max-width:900px)').matches){const side=$('#side');side.scrollTo({left:nb.offsetLeft-side.clientWidth/2+nb.offsetWidth/2,behavior:RM?'auto':'smooth'})}
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b){e.preventDefault();show(b.dataset.go)}});
+
+/* =============== 1.1 anatomy =============== */
+const PARTS={
+ capsule:{n:'Capsule',what:'A slimy outer coat, usually made of polysaccharide. (<i>Bacillus anthracis</i> is the odd one out: its capsule is protein.)',why:'Makes the bacterium too slippery for white blood cells to grab and eat. One of the most important virulence factors.',hook:'Encapsulated bacteria are dangerous for people without a spleen. Capsules are what the pneumococcal, Hib and meningococcal vaccines are made from.'},
+ pili:{n:'Pili (fimbriae)',what:'Short, hair-like protein fibers on the surface.',why:'Adhesion: they let bacteria stick to our cells instead of being washed away. A special <b>sex pilus</b> passes DNA from one bacterium to another (conjugation).',hook:'Uropathogenic <i>E. coli</i> uses P fimbriae to climb the urinary tract. <i>N. gonorrhoeae</i> keeps changing its pili to dodge antibodies.'},
+ wall:{n:'Cell wall (peptidoglycan)',what:'A rigid mesh of sugar chains cross-linked by short peptides. It keeps the cell from bursting.',why:'Humans have no peptidoglycan, so it is a perfect drug target. Thick wall = Gram-positive. Thin wall + outer membrane = Gram-negative.',hook:'Penicillins and cephalosporins (β-lactams) block the cross-linking enzymes. Vancomycin blocks the building blocks. No wall (<i>Mycoplasma</i>) = these drugs do nothing.'},
+ membrane:{n:'Cell membrane',what:'A phospholipid bilayer just inside the wall, wrapped around the cytoplasm.',why:'Bacteria have no mitochondria, so this membrane does that job: respiration and ATP production happen here.',hook:'Unlike our membranes it has no cholesterol (<i>Mycoplasma</i> is the exception). Polymyxins kill by damaging it.'},
+ ribosomes:{n:'Ribosomes (70S)',what:'Protein factories built from a 30S and a 50S subunit. Ours are 80S (40S + 60S).',why:'The size difference lets antibiotics jam bacterial protein synthesis while mostly sparing ours.',hook:'30S blockers: aminoglycosides, tetracyclines. 50S blockers: macrolides, clindamycin, chloramphenicol, linezolid.'},
+ nucleoid:{n:'Nucleoid',what:'One circular chromosome lying free in the cytoplasm. No nuclear membrane.',why:'Prokaryote means "before the nucleus". DNA is copied, transcribed and translated all in the same space.',hook:'Fluoroquinolones (ciprofloxacin) block DNA gyrase, the enzyme that untwists bacterial DNA.'},
+ plasmid:{n:'Plasmids',what:'Small extra rings of DNA, separate from the chromosome.',why:'They often carry genes for antibiotic resistance and toxins, and can be passed between bacteria, even between species.',hook:'This is how resistance spreads so fast (MRSA, ESBL-producing Gram-negatives).'},
+ granule:{n:'Inclusion granule',what:'Storage deposits of nutrients such as phosphate, glycogen or lipid.',why:'Helps the cell survive lean times. Some granules stain in a distinctive way and help identify the species.',hook:'<i>Corynebacterium diphtheriae</i> has metachromatic (volutin) granules.'},
+ flagellum:{n:'Flagellum',what:'A long whip-like protein tail spun by a rotary motor in the membrane.',why:'Motility: it swims toward nutrients and spreads through tissue. Its protein is the <b>H antigen</b>.',hook:'<i>E. coli</i> O157:H7: "O" is the LPS antigen, "H" is the flagellar antigen. <i>H. pylori</i> uses its flagella to drill through stomach mucus.'},
+ spore:{n:'Endospore',what:'A dormant, armored version of the cell made when nutrients run out. Calcium dipicolinate in the core makes it tough.',why:'Survives boiling, drying, radiation and alcohol for years, then germinates into an active cell when conditions improve.',hook:'Only <i>Bacillus</i> and <i>Clostridium</i> (both Gram-positive rods) make spores. Kill them with an autoclave: steam under pressure at 121 °C.'}
+};
+inits.anatomy=()=>{
+  const svg=$('#anat'),r=rng(7);
+  let p='';for(let x=232;x<=512;x+=35){p+=`<path d="M${x} 124 L${x-6} 94"/><path d="M${x+12} 276 L${x+18} 306"/>`}
+  $('#pili').insertAdjacentHTML('afterbegin',p);
+  let rb='',n=0,guard=0;
+  while(n<28&&guard++<4000){
+    const x=190+r()*360,y=140+r()*120;
+    const inside=(x>=248&&x<=492)?(y>=144&&y<=256):Math.hypot(x-(x<248?248:492),y-200)<56;
+    if(!inside)continue;
+    if(((x-365)/72)**2+((y-200)/46)**2<1)continue;
+    if(Math.hypot(x-232,y-200)<24||Math.hypot(x-468,y-160)<19||Math.hypot(x-452,y-236)<16||Math.hypot(x-518,y-200)<38)continue;
+    rb+=`<circle cx="${f1(x)}" cy="${f1(y)}" r="3.4"/>`;n++;
+  }
+  $('#ribos').insertAdjacentHTML('afterbegin',rb);
+  const order=['capsule','pili','wall','membrane','ribosomes','nucleoid','plasmid','granule','flagellum','spore'];
+  $('#anatChips').innerHTML=order.map(k=>`<button class="btn" data-part-btn="${k}" aria-pressed="false">${PARTS[k].n.replace(/ \(.*\)/,'')}</button>`).join('');
+  const sporeBtn=$('#sporeBtn');
+  function setSpore(on){svg.classList.toggle('spore',on);sporeBtn.setAttribute('aria-pressed',on);sporeBtn.textContent=on?'Hide the endospore':'Show a sporulating cell'}
+  function sel(k){
+    if(k==='spore')setSpore(true);
+    svg.classList.add('has-sel');
+    $$('[data-part]',svg).forEach(g=>g.classList.toggle('sel',g.dataset.part===k));
+    $$('[data-part-btn]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.partBtn===k));
+    const P=PARTS[k];
+    $('#anatNote').innerHTML=`<div class="kicker">Selected part</div><h4>${P.n}</h4><dl class="kv"><div><dt>What it is</dt><dd>${P.what}</dd></div><div><dt>Why it matters</dt><dd>${P.why}</dd></div></dl><div class="hook"><b>Exam hook</b>${P.hook}</div>`;
+  }
+  svg.addEventListener('click',e=>{const g=e.target.closest('[data-part]');if(g)sel(g.dataset.part)});
+  $('#anatChips').addEventListener('click',e=>{const b=e.target.closest('[data-part-btn]');if(b)sel(b.dataset.partBtn)});
+  sporeBtn.addEventListener('click',()=>{const on=!svg.classList.contains('spore');setSpore(on);if(!on&&$('[data-part="spore"].sel',svg))sel('wall');else if(on)sel('spore')});
+  sel('wall');
+};
+
+/* =============== 1.2 gram =============== */
+const GS=[
+ {s:'Start',t:'Smear',full:'Heat-fixed smear',txt:'Bacteria are spread on a slide, air-dried, and passed through a flame so they stick. Unstained, they are nearly invisible.',see:'Faint, colorless cells.'},
+ {s:'Step 1',t:'Crystal violet',full:'Crystal violet · primary stain',txt:'Purple dye floods the slide and soaks into every cell, whatever its wall.',see:'Everything purple.'},
+ {s:'Step 2',t:'Iodine',full:"Gram's iodine · mordant",txt:'Iodine locks crystal violet into large crystal violet–iodine (CV–I) complexes, the dark specks in the wall diagram. They are too big to slip easily through peptidoglycan.',see:'Still everything purple.'},
+ {s:'Step 3',t:'Alcohol',full:'Alcohol or acetone · decolorizer',txt:'The critical step. Alcohol dissolves the Gram-negative outer membrane, and the thin peptidoglycan underneath can\'t hold the complexes, so the purple washes out. In Gram-positives, alcohol dehydrates the thick wall and shrinks its pores, trapping the dye.',see:'Gram-positives purple. Gram-negatives colorless.',warn:'Leave the alcohol on too long and even Gram-positives start to look pink. Too short and Gram-negatives stay purple.'},
+ {s:'Step 4',t:'Safranin',full:'Safranin · counterstain',txt:'A pink-red dye stains every cell, but it only shows in the now-colorless Gram-negatives. In Gram-positives the dark purple hides it.',see:'Gram-positive = purple. Gram-negative = pink.'}
+];
+inits.gram=()=>{
+  const r=rng(11);let h='';
+  [[130,105],[268,82],[176,214],[300,196],[90,190]].forEach(([cx,cy])=>{
+    const pts=[[0,0]];let k=0;
+    while(pts.length<7&&k++<300){const a=r()*6.283,d=17+r()*4,b=pts[Math.floor(r()*pts.length)];const p=[b[0]+Math.cos(a)*d,b[1]+Math.sin(a)*d];
+      if(pts.every(q=>Math.hypot(q[0]-p[0],q[1]-p[1])>16.5))pts.push(p)}
+    pts.forEach(p=>h+=`<circle class="gram-cell pos" cx="${f1(cx+p[0])}" cy="${f1(cy+p[1])}" r="8.5" style="stroke-width:1"/>`);
+  });
+  [[210,140,20],[150,52,-30],[340,120,70],[244,250,10],[86,124,95],[300,262,-40],[204,186,-60],[360,210,30],[256,140,120],[120,250,40],[200,60,15],[330,64,-15],[60,160,-20]].forEach(([x,y,a])=>{
+    h+=`<rect class="gram-cell neg" x="${x-17}" y="${y-6}" width="34" height="12" rx="6" transform="rotate(${a} ${x} ${y})" style="stroke-width:1"/>`;
+  });
+  $('#gramCells').innerHTML=h;
+  // wall cross-section
+  let w=`<text x="110" y="22" class="t-lbl t-mid">Gram-positive</text><text x="310" y="22" class="t-lbl t-mid">Gram-negative</text>
+  <line x1="210" y1="34" x2="210" y2="292" style="stroke:var(--line);stroke-width:1"/>
+  <rect x="20" y="252" width="180" height="40" style="fill:var(--cyto)"/><rect x="220" y="252" width="180" height="40" style="fill:var(--cyto)"/>
+  <text x="110" y="278" class="t-sm t-mid">cytoplasm</text><text x="310" y="278" class="t-sm t-mid">cytoplasm</text>`;
+  const bilayer=(x0,x1,yTop,cls='')=>{let s=`<g class="${cls}">`;for(let x=x0+5;x<x1;x+=10){s+=`<path d="M${x} ${yTop+4}v8M${x} ${yTop+16}v8" style="stroke:var(--memb);stroke-width:1.2"/><circle cx="${x}" cy="${yTop+3}" r="3.6" style="fill:var(--memb)"/><circle cx="${x}" cy="${yTop+25}" r="3.6" style="fill:var(--memb)"/>`}return s+'</g>'};
+  w+=bilayer(20,200,222)+bilayer(220,400,222);
+  // gram+: thick PG
+  for(let i=0;i<7;i++){const y=200-i*19;w+=`<rect class="gram-cell pos" x="26" y="${y}" width="168" height="13" rx="3"/>`;
+    for(let j=0;j<6;j++)w+=`<path class="cvi keep" d="M${40+j*27+(i%2)*12} ${y+2.5}l4 4-4 4-4-4z" style="fill:var(--nuc-deep)"/>`}
+  w+=`<g style="stroke:var(--ink);stroke-width:1.4;fill:none;opacity:.45">`+[60,110,160].map(x=>`<path d="M${x} 222 q5 -10 0 -20 t0 -20 0 -20 0 -20 0 -20 0 -20 0 -20 0 -20"/>`).join('')+`</g>`;
+  w+=`<text x="110" y="64" class="t-sm t-mid">thick peptidoglycan</text><text x="110" y="78" class="t-sm t-mid">+ teichoic acids</text>`;
+  // gram-: thin PG + outer membrane
+  w+=`<rect class="gram-cell neg" x="226" y="182" width="168" height="12" rx="3"/>`;
+  for(let j=0;j<6;j++)w+=`<path class="cvi" d="M${240+j*27} ${184.5}l4 4-4 4-4-4z" style="fill:var(--nuc-deep)"/>`;
+  w+=`<text x="310" y="174" class="t-sm t-mid">thin peptidoglycan</text><text x="310" y="214" class="t-sm t-mid">periplasm</text>`;
+  w+=`<g class="om">`+bilayer(220,400,118);
+  w+=`<g style="stroke:var(--saf);stroke-width:1.6;fill:var(--saf)">`;
+  for(let x=228;x<396;x+=18){w+=`<path d="M${x} 118 V100" /><circle cx="${x}" cy="96" r="2.6"/><circle cx="${x+3}" cy="89" r="2.6"/><circle cx="${x}" cy="82" r="2.6"/><circle cx="${x+3}" cy="75" r="2.6"/>`}
+  w+=`</g><rect x="268" y="114" width="16" height="38" rx="5" style="fill:var(--wall);opacity:.75"/><rect x="346" y="114" width="16" height="38" rx="5" style="fill:var(--wall);opacity:.75"/>`;
+  w+=`<text x="310" y="54" class="t-sm t-mid">LPS (endotoxin) on</text><text x="310" y="66" class="t-sm t-mid">outer membrane · porins</text></g>`;
+  $('#gramWall').innerHTML=w;
+  const steps=$('#gramSteps'),stage=$('#gramStage');
+  steps.innerHTML=GS.map((g,i)=>`<button data-gs="${i}" aria-pressed="false"><b>${g.s.toUpperCase()}</b><span>${g.t}</span></button>`).join('');
+  let timer=null;
+  function set(i){
+    stage.dataset.step=i;
+    $$('[data-gs]',steps).forEach(b=>b.setAttribute('aria-pressed',+b.dataset.gs===i));
+    const g=GS[i];
+    $('#gramNote').innerHTML=`<div class="kicker">${g.s}</div><h4>${g.full}</h4><p>${g.txt}</p><dl class="kv"><div><dt>Under the microscope</dt><dd><b>${g.see}</b></dd></div></dl>`+(g.warn?`<div class="hook"><b>Watch out</b>${g.warn}</div>`:'')+(i===4?`<div class="hook"><b>Mnemonic</b>Purple = Positive.</div>`:'')+`<div class="ctrls"><button class="btn primary" id="gramPlay">${i===4?'Replay the stain':'Play all steps'}</button>${i<4?`<button class="btn" id="gramNext">Next step →</button>`:''}</div>`;
+    $('#gramPlay').onclick=play;const nx=$('#gramNext');if(nx)nx.onclick=()=>{stop();set(i+1)};
+  }
+  function stop(){clearInterval(timer);timer=null}
+  function play(){stop();let i=0;set(0);timer=setInterval(()=>{i++;set(i);if(i>=4)stop()},RM?300:2300)}
+  steps.addEventListener('click',e=>{const b=e.target.closest('[data-gs]');if(b){stop();set(+b.dataset.gs)}});
+  onHide.gram=stop;
+  set(0);
+};
+
+/* =============== shapes (shared) =============== */
+function morph(type,c){
+  const col=c==='pos'?'var(--cv)':c==='neg'?'var(--saf)':'var(--muted)';
+  const F=`style="fill:${col}"`,S=w=>`style="fill:none;stroke:${col};stroke-width:${w};stroke-linecap:round"`;
+  let s='';
+  switch(type){
+    case 'clusters':[[62,30],[80,27],[98,32],[54,46],[72,45],[90,47],[108,49],[64,62],[82,62],[100,65],[74,78],[46,62]].forEach(([x,y])=>s+=`<circle cx="${x}" cy="${y}" r="8.6" ${F}/>`);break;
+    case 'chains':for(let i=0;i<9;i++)s+=`<circle cx="${18+i*15.5}" cy="${f1(45+14*Math.sin(i*.7))}" r="7.2" ${F}/>`;break;
+    case 'lancet':[[50,46,0],[110,38,-18]].forEach(([x,y,a])=>{s+=`<g transform="rotate(${a} ${x} ${y})"><ellipse cx="${x}" cy="${y}" rx="34" ry="16" style="fill:none;stroke:${col};stroke-width:1;stroke-dasharray:3 3;opacity:.7"/><path d="M${x-26} ${y}q12-11 24 0q-12 11-24 0z" ${F}/><path d="M${x+2} ${y}q12-11 24 0q-12 11-24 0z" ${F}/></g>`});break;
+    case 'bean':[[52,42],[112,54],[86,22]].forEach(([x,y],i)=>{if(i===2){x=34;y=74}s+=`<path d="M${x-2} ${y-10}a10.5 10.5 0 0 0 0 20q-4-10 0-20z" ${F}/><path d="M${x+2} ${y-10}a10.5 10.5 0 0 1 0 20q4-10 0-20z" ${F}/>`});break;
+    case 'rods':[[42,30,-10],[100,26,22],[70,62,-25],[128,64,6],[30,70,60]].forEach(([x,y,a])=>s+=`<rect x="${x-19}" y="${y-6.5}" width="38" height="13" rx="6.5" transform="rotate(${a} ${x} ${y})" ${F}/>`);break;
+    case 'boxcar':[[0,0],[1,0],[2,0],[3,0]].forEach(([i])=>{const x=14+i*33,y=38+i*4;s+=`<g transform="rotate(7 ${x+15} ${y})"><rect x="${x}" y="${y-7}" width="31" height="14" rx="2" ${F}/><ellipse cx="${x+15}" cy="${y}" rx="6" ry="4" style="fill:var(--field)"/></g>`});s+=`<rect x="40" y="62" width="31" height="14" rx="2" ${F}/><rect x="73" y="62" width="31" height="14" rx="2" ${F}/>`;break;
+    case 'drumstick':[[30,30,-8],[86,54,14],[40,70,-20],[112,26,4]].forEach(([x,y,a])=>s+=`<g transform="rotate(${a} ${x} ${y})"><rect x="${x-20}" y="${y-4.5}" width="40" height="9" rx="4.5" ${F}/><circle cx="${x+22}" cy="${y}" r="7.5" style="fill:var(--field);stroke:${col};stroke-width:2.6"/></g>`);break;
+    case 'sporerod':[[40,32,-6],[104,30,18],[66,66,-14],[128,66,8]].forEach(([x,y,a])=>s+=`<g transform="rotate(${a} ${x} ${y})"><rect x="${x-22}" y="${y-7}" width="44" height="14" rx="6" ${F}/><ellipse cx="${x+9}" cy="${y}" rx="6" ry="4.4" style="fill:var(--field)"/></g>`);break;
+    case 'shortrods':[[34,30,-20],[50,36,25],[96,24,70],[104,30,10],[74,62,-30],[124,64,40],[30,70,10]].forEach(([x,y,a])=>s+=`<rect x="${x-11}" y="${y-5}" width="22" height="10" rx="5" transform="rotate(${a} ${x} ${y})" ${F}/>`);break;
+    case 'cocco':[[30,30,0],[56,26,30],[90,32,-20],[120,24,10],[40,62,50],[72,58,0],[106,64,-35],[134,56,20],[20,52,-10]].forEach(([x,y,a])=>s+=`<ellipse cx="${x}" cy="${y}" rx="9" ry="6" transform="rotate(${a} ${x} ${y})" ${F}/>`);break;
+    case 'comma':[[24,52,0],[80,30,40],[100,70,-30]].forEach(([x,y,a])=>s+=`<path d="M${x} ${y}q14-26 34-14" transform="rotate(${a} ${x+17} ${y-8})" ${S(7)}/><path d="M${x+34} ${y-14}l14-6" transform="rotate(${a} ${x+17} ${y-8})" ${S(1.2)}/>`);break;
+    case 'spiral':[[16,40],[78,62]].forEach(([x,y])=>s+=`<path d="M${x} ${y}c8-16 16 16 24 0s16-16 24 0" ${S(6)}/>`);s+=`<path d="M96 24c6-12 12 12 18 0M114 24c6 12 12-12 18 0" ${S(6)}/>`;break;
+    case 'spirochete':{let d='M8 30';for(let x=8;x<=152;x+=6)d+=` Q${x+3} ${30+(((x-8)/6)%2?7:-7)} ${x+6} 30`;s+=`<path d="${d}" ${S(2.4)}/>`;let d2='M18 64';for(let x=18;x<=130;x+=6)d2+=` Q${x+3} ${64+(((x-18)/6)%2?7:-7)} ${x+6} ${f1(64+(x-18)*.06)}`;s+=`<path d="${d2}" ${S(2.4)}/>`;}break;
+    case 'acidfast':[[36,30,-14],[90,26,10],[64,58,24],[120,62,-30],[34,72,6],[132,30,40]].forEach(([x,y,a])=>s+=`<path d="M${x-18} ${y}q18-6 36 0" transform="rotate(${a} ${x} ${y})" ${S(4.2)}/>`);break;
+  }
+  return `<svg viewBox="0 0 160 90" aria-hidden="true">${s}</svg>`;
+}
+const SHAPES=[
+ {type:'clusters',c:'pos',t:'Cocci in clusters',ex:'<i>Staphylococcus</i>',note:'Divides in random planes, so the cells pile up like a bunch of grapes.'},
+ {type:'chains',c:'pos',t:'Cocci in chains',ex:'<i>Streptococcus</i>',note:'Divides in one plane and the cells stay attached, like beads on a string.'},
+ {type:'lancet',c:'pos',t:'Lancet-shaped diplococci',ex:'<i>Streptococcus pneumoniae</i>',note:'Pairs of slightly pointed cocci, often with a clear capsule halo around them.'},
+ {type:'bean',c:'neg',t:'Kidney-bean diplococci',ex:'<i>Neisseria</i> (meningitis, gonorrhea)',note:'Pairs with their flat sides facing. Often seen inside neutrophils.'},
+ {type:'rods',c:'neg',t:'Bacilli (rods)',ex:'<i>E. coli, Salmonella, Pseudomonas</i>',note:'The most common Gram-negative shape, especially among gut bacteria.'},
+ {type:'boxcar',c:'pos',t:'Rods in chains, with spores',ex:'<i>Bacillus anthracis</i>',note:'Square-ended rods lined up like boxcars on a train.'},
+ {type:'drumstick',c:'pos',t:'Rods with end spores',ex:'<i>Clostridium tetani</i>',note:'A swollen spore at one end makes a "drumstick" or "tennis racket".'},
+ {type:'cocco',c:'neg',t:'Coccobacilli',ex:'<i>Haemophilus influenzae, Bordetella pertussis</i>',note:'Short, plump rods, halfway between a coccus and a rod.'},
+ {type:'comma',c:'neg',t:'Comma-shaped (vibrio)',ex:'<i>Vibrio cholerae</i>',note:'Curved rods with one flagellum. They dart around under the microscope.'},
+ {type:'spiral',c:'neg',t:'Spiral or curved',ex:'<i>Helicobacter pylori, Campylobacter</i>',note:'Short, rigid spirals. <i>Campylobacter</i> pairs look like seagull wings.'},
+ {type:'spirochete',c:'oth',t:'Spirochetes',ex:'<i>Treponema</i> (syphilis), <i>Borrelia</i> (Lyme), <i>Leptospira</i>',note:'Long, thin, flexible corkscrews. Too thin for Gram stain: use darkfield.'},
+ {type:'acidfast',c:'oth',t:'Acid-fast rods',ex:'<i>Mycobacterium tuberculosis</i>',note:'Slender, slightly curved, beaded rods. The waxy wall needs the acid-fast stain, which shows them red.'}
+];
+const GL={pos:['Gram +','pos'],neg:['Gram −','neg'],oth:['Special stain','']};
+inits.shapes=()=>{
+  $('#shapeCards').innerHTML=SHAPES.map(s=>`<div class="card"><div class="mini">${morph(s.type,s.c)}</div><div class="chips"><span class="tag ${GL[s.c][1]}">${GL[s.c][0]}</span></div><h4>${s.t}</h4><p><span class="lbl">Example</span>${s.ex}</p><p>${s.note}</p></div>`).join('');
+};
+
+/* =============== 1.4 growth =============== */
+const gL=t=>{const g=4+5/(1+Math.exp(-(t-6)*1.1));const sp=Math.log(1+Math.exp((t-15)*1.6))/1.6;return g-.3*sp};
+const PH=[
+ {n:'Lag',full:'Lag phase',a:0,b:2.5,f:'var(--panel-2)',txt:'The bacteria are adjusting to their new home: making enzymes, repairing damage, growing in size. Almost no dividing yet, so the count stays flat.'},
+ {n:'Log',full:'Log (exponential) phase',a:2.5,b:9.5,f:'var(--hema-soft)',txt:'Every cell divides by binary fission at a steady rate, so the population doubles every generation. On a log graph that is a straight line. Cells are at their most uniform and most sensitive to antibiotics.'},
+ {n:'Stationary',full:'Stationary phase',a:9.5,b:15,f:'var(--panel-2)',txt:'Nutrients run low and waste builds up. New cells are born as fast as others die, so the count levels off. Spore-formers start making endospores, and many bacteria switch on toxin genes.'},
+ {n:'Death',full:'Death (decline) phase',a:15,b:24,f:'var(--bad-soft)',txt:'Deaths now outnumber births, and the number of living cells falls exponentially. A few survivors (and spores) can hang on for a long time.'}
+];
+inits.growth=()=>{
+  const svg=$('#gChart'),X=t=>60+t/24*560,Y=l=>300-(l-3)/7*270;
+  let h='';
+  PH.forEach((p,i)=>h+=`<rect class="gband" data-i="${i}" x="${X(p.a)}" y="30" width="${X(p.b)-X(p.a)}" height="270" style="fill:${p.f}"/>`);
+  for(let l=3;l<=10;l++)h+=`<line x1="60" x2="620" y1="${Y(l)}" y2="${Y(l)}" style="stroke:var(--line);stroke-width:1"/><text x="52" y="${Y(l)+4}" class="t-sm" text-anchor="end">10${sup(l)}</text>`;
+  for(let t=0;t<=24;t+=4)h+=`<text x="${X(t)}" y="318" class="t-sm t-mid">${t}</text>`;
+  h+=`<text x="340" y="336" class="t-sm t-mid">hours after inoculation</text><text transform="rotate(-90 14 165)" x="14" y="165" class="t-sm t-mid">living cells per mL (log scale)</text>`;
+  PH.forEach(p=>h+=`<text x="${(X(p.a)+X(p.b))/2}" y="50" class="t-lbl t-mid">${p.n}</text>`);
+  let d='';for(let t=0;t<=24.001;t+=.1)d+=(t?'L':'M')+f1(X(t))+' '+f1(Y(gL(t)));
+  h+=`<path d="${d}" style="fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:4 5"/><path id="gProg" style="fill:none;stroke:var(--hema);stroke-width:3.5;stroke-linecap:round"/>`;
+  h+=`<line id="gV" y1="30" y2="300" style="stroke:var(--hema);stroke-width:1;stroke-dasharray:3 3"/><circle id="gDot" r="7" style="fill:var(--hema);stroke:var(--panel);stroke-width:3"/>`;
+  h+=`<line x1="60" x2="620" y1="300" y2="300" style="stroke:var(--ink);stroke-width:1.2"/><line x1="60" x2="60" y1="30" y2="300" style="stroke:var(--ink);stroke-width:1.2"/>`;
+  svg.innerHTML=h;
+  const r=rng(5);let dh=`<circle cx="120" cy="120" r="112" style="fill:var(--field);stroke:var(--muted);stroke-width:2"/><circle cx="120" cy="120" r="104" style="fill:none;stroke:var(--line);stroke-width:1"/><g class="dish">`;
+  for(let i=0;i<240;i++){const a=r()*6.283,rr=Math.sqrt(r())*96,x=120+rr*Math.cos(a),y=120+rr*Math.sin(a);dh+=`<ellipse class="off" cx="${f1(x)}" cy="${f1(y)}" rx="4.2" ry="2" transform="rotate(${Math.round(r()*180)} ${f1(x)} ${f1(y)})"/>`}
+  $('#gDish').innerHTML=dh+'</g>';
+  const cells=$$('#gDish ellipse.off, #gDish .dish ellipse');
+  const rangeEl=$('#gTime');let lastPh=-1;
+  function upd(t){
+    const l=gL(t);let m=gL(0);for(let x=0;x<=t;x+=.1)m=Math.max(m,gL(x));
+    let pd='';for(let x=0;x<=t+.0001;x+=.1)pd+=(x?'L':'M')+f1(X(x))+' '+f1(Y(gL(x)));
+    $('#gProg').setAttribute('d',pd||`M${X(0)} ${Y(gL(0))}`);
+    $('#gDot').setAttribute('cx',X(t));$('#gDot').setAttribute('cy',Y(l));$('#gV').setAttribute('x1',X(t));$('#gV').setAttribute('x2',X(t));
+    const alive=Math.min(240,Math.round(240*Math.pow(10,l-9))),total=Math.min(240,Math.round(240*Math.pow(10,m-9))),dead=Math.max(0,total-alive);
+    cells.forEach((c,i)=>c.setAttribute('class',i<dead?'dead':i<dead+alive?'alive':'off'));
+    const pi=PH.findIndex(p=>t<p.b)<0?3:PH.findIndex(p=>t<p.b);
+    $$('.gband',svg).forEach(b=>b.style.opacity=+b.dataset.i===pi?1:.4);
+    const e=Math.floor(l),man=Math.pow(10,l-e);
+    $('#gRead').innerHTML=`<span>time <b>${t.toFixed(1)} h</b></span><span>phase <b>${PH[pi].n}</b></span><span>living cells ≈ <b>${man.toFixed(1)} × 10${sup(e)}</b>/mL</span><span>dish: <b>${alive}</b> alive, <b>${dead}</b> dead</span>`;
+    if(pi!==lastPh){lastPh=pi;$('#gNote').innerHTML=`<div class="kicker">Now showing</div><h4>${PH[pi].full}</h4><p>${PH[pi].txt}</p>`}
+  }
+  let stopA=null;const playB=$('#gPlay');
+  function stop(){if(stopA)stopA();stopA=null;playB.textContent='Play'}
+  rangeEl.addEventListener('input',()=>{stop();upd(+rangeEl.value)});
+  playB.addEventListener('click',()=>{
+    if(stopA){stop();return}
+    let t0=+rangeEl.value;if(t0>=23.9)t0=0;const dur=(24-t0)/24*14000;playB.textContent='Pause';
+    stopA=animate(dur,p=>{const t=t0+(24-t0)*p;rangeEl.value=t;upd(t)},()=>{stopA=null;playB.textContent='Replay'});
+  });
+  onHide.growth=stop;
+  upd(+rangeEl.value);
+};
+
+/* =============== 1.5 oxygen =============== */
+const TUBES=[
+ {nm:['Obligate','aerobe'],t:'Obligate aerobe',n:70,dens:y=>y<.12?1:0,grows:'Only at the top, where the oxygen is.',why:'Must use oxygen for respiration. Has catalase and superoxide dismutase to handle oxygen\'s toxic by-products.',ex:'<i>Mycobacterium tuberculosis, Pseudomonas aeruginosa, Nocardia, Bacillus</i>',hook:'"Nagging Pests Must Breathe." TB loves the oxygen-rich top (apex) of the lung, which is where reactivation TB forms cavities.'},
+ {nm:['Obligate','anaerobe'],t:'Obligate anaerobe',n:70,dens:y=>y>.74?1:0,grows:'Only at the bottom, away from oxygen.',why:'Oxygen is toxic to them: they lack catalase and/or superoxide dismutase. They get energy by fermentation.',ex:'<i>Clostridium, Bacteroides, Actinomyces</i>',hook:'"Can\'t Breathe Air." Think foul-smelling abscesses, gas in tissue, and dead tissue with a poor blood supply. Aminoglycosides don\'t work on them, because the drug needs oxygen to get into the cell.'},
+ {nm:['Facultative','anaerobe'],t:'Facultative anaerobe',n:120,dens:y=>.18+.82*Math.exp(-y/.13),grows:'Everywhere, but most at the top.',why:'Uses oxygen when it is there (more energy, so more growth near the top) and switches to fermentation when it isn\'t.',ex:'<i>E. coli, Staphylococcus, Salmonella, Listeria</i> and most gut Gram-negatives',hook:'Most clinically important bacteria are facultative, which is why they thrive almost anywhere in the body.'},
+ {nm:['Micro-','aerophile'],t:'Microaerophile',n:60,dens:y=>Math.exp(-(((y-.2)/.045)**2)),grows:'In a band a little below the surface.',why:'Needs some oxygen, but normal air (21%) is too much. Prefers roughly 2–10%.',ex:'<i>Helicobacter pylori, Campylobacter jejuni, Treponema pallidum</i>',hook:'Labs grow them in special low-oxygen jars or incubators.'},
+ {nm:['Aerotolerant','anaerobe'],t:'Aerotolerant anaerobe',n:85,dens:()=>1,grows:'Evenly from top to bottom.',why:'Never uses oxygen (it always ferments), but has superoxide dismutase, so oxygen doesn\'t hurt it either.',ex:'<i>Lactobacillus</i> and other lactic-acid bacteria',hook:'Growth is the same at every depth: oxygen neither helps nor harms.'}
+];
+inits.oxygen=()=>{
+  const svg=$('#o2svg');svg.setAttribute('viewBox','0 0 700 330');
+  let h=`<defs><linearGradient id="o2g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--eosin);stop-opacity:.55"/><stop offset="1" style="stop-color:var(--eosin);stop-opacity:0"/></linearGradient></defs>`;
+  const r=rng(3);
+  TUBES.forEach((T,i)=>{
+    const cx=72+i*124;
+    h+=`<g class="tube" data-t="${i}" role="button" tabindex="0" aria-label="${T.t}">`;
+    h+=`<path d="M${cx-28} 48V238a28 28 0 0 0 56 0V48z" style="fill:var(--warn-soft)"/><rect x="${cx-28}" y="48" width="56" height="40" style="fill:url(#o2g)"/>`;
+    let k=0,g=0;while(k<T.n&&g++<20000){const f=r();const y=50+f*214;const x=cx-25+r()*50;
+      if(y>238&&Math.abs(x-cx)>Math.sqrt(Math.max(0,28*28-(y-238)**2))-4)continue;
+      if(r()>T.dens(f))continue;h+=`<circle cx="${f1(x)}" cy="${f1(y)}" r="2.5" style="fill:var(--hema)"/>`;k++}
+    h+=`<path class="glass" d="M${cx-32} 30V238a32 32 0 0 0 64 0V30" style="fill:none"/><rect x="${cx-36}" y="22" width="72" height="12" rx="3" style="fill:var(--muted)"/>`;
+    h+=`<text class="t-lbl t-mid nm" x="${cx}" y="300">${T.nm[0]}</text><text class="t-lbl t-mid nm" x="${cx}" y="316">${T.nm[1]}</text></g>`;
+  });
+  h+=`<path d="M650 56V256" style="stroke:var(--muted);stroke-width:1.5"/><path d="M645 248l5 9 5-9" style="fill:none;stroke:var(--muted);stroke-width:1.5"/><text x="660" y="62" class="t-sm">O₂</text><text x="660" y="76" class="t-sm">rich</text><text x="660" y="250" class="t-sm">no</text><text x="660" y="264" class="t-sm">O₂</text>`;
+  svg.innerHTML=h;
+  function sel(i){
+    $$('.tube',svg).forEach(t=>t.classList.toggle('sel',+t.dataset.t===i));
+    const T=TUBES[i];
+    $('#o2Note').innerHTML=`<div class="kicker">Tube ${i+1} of 5</div><h4>${T.t}</h4><dl class="kv"><div><dt>Where it grows</dt><dd><b>${T.grows}</b></dd></div><div><dt>Why</dt><dd>${T.why}</dd></div><div><dt>Examples</dt><dd>${T.ex}</dd></div></dl><div class="hook"><b>Exam hook</b>${T.hook}</div>`;
+  }
+  svg.addEventListener('click',e=>{const t=e.target.closest('.tube');if(t)sel(+t.dataset.t)});
+  svg.addEventListener('keydown',e=>{const t=e.target.closest('.tube');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();sel(+t.dataset.t)}});
+  sel(0);
+};
+
+/* =============== 1.6 virulence =============== */
+const VS=[
+ {t:'Adhere',k:'Step 1 · Stick',txt:'Mucus, urine flow, coughing and gut movement constantly wash bacteria away. Pathogens hold on with <b>pili</b> (fimbriae) and surface adhesins. Some build <b>biofilms</b>: slimy colonies glued to a surface and shielded from drugs.',ex:'P fimbriae of uropathogenic <i>E. coli</i>. <i>Pseudomonas</i> biofilm in cystic fibrosis lungs. <i>Staph epidermidis</i> biofilm on catheters and artificial joints.'},
+ {t:'Invade',k:'Step 2 · Get in and spread',txt:'Some bacteria secrete enzymes that dissolve the glue between cells and tissue fibers, so they can spread. Others get themselves swallowed by our cells and live inside.',ex:'Hyaluronidase and streptokinase of <i>Strep pyogenes</i> (fast-spreading cellulitis). Collagenase of <i>C. perfringens</i>. <i>Listeria</i> and <i>Salmonella</i> invade cells directly.'},
+ {t:'Evade',k:'Step 3 · Survive the defenses',txt:'Phagocytes and antibodies are waiting. Pathogens hide behind <b>capsules</b>, disarm antibodies, or survive inside the very macrophages that ate them.',ex:'Capsule of <i>S. pneumoniae</i>. Protein A of <i>S. aureus</i> grabs antibodies by the wrong end. M protein of <i>S. pyogenes</i>. IgA protease of <i>Neisseria</i> and <i>H. influenzae</i>. <i>M. tuberculosis</i> stops its phagosome from fusing with a lysosome.'},
+ {t:'Damage',k:'Step 4 · Do harm',txt:'Damage comes from toxins and from our own immune response. <b>Exotoxins</b> are secreted proteins with precise targets. <b>Endotoxin</b> (LPS) is released when Gram-negative bacteria die and triggers a body-wide cytokine storm.',ex:'Exotoxins: tetanus, botulinum, cholera, diphtheria toxins. Endotoxin: fever, low blood pressure and septic shock in Gram-negative sepsis.'}
+];
+const TOX=[
+ ['Tetanospasmin','<i>Clostridium tetani</i>','Blocks release of inhibitory neurotransmitters (GABA, glycine) in the spinal cord','Spastic paralysis: lockjaw, back arching'],
+ ['Botulinum toxin','<i>Clostridium botulinum</i>','Blocks acetylcholine release at the neuromuscular junction','Flaccid paralysis; "floppy baby" from honey'],
+ ['Cholera toxin','<i>Vibrio cholerae</i>','Locks G<sub>s</sub> on → cAMP rises in gut cells','Massive "rice-water" diarrhea'],
+ ['Diphtheria toxin','<i>Corynebacterium diphtheriae</i>','Inactivates elongation factor 2 (EF-2) → protein synthesis stops','Gray throat pseudomembrane, myocarditis'],
+ ['Shiga / Shiga-like toxin','<i>Shigella</i>, EHEC <i>E. coli</i> O157:H7','Inactivates the 60S ribosome','Bloody diarrhea; hemolytic uremic syndrome (HUS)'],
+ ['TSST-1 (superantigen)','<i>Staphylococcus aureus</i>','Cross-links MHC II and T-cell receptors → huge cytokine release','Toxic shock syndrome'],
+ ['α-toxin (lecithinase)','<i>Clostridium perfringens</i>','Splits membrane phospholipids → cells burst','Gas gangrene (myonecrosis)'],
+ ['Toxins A and B','<i>Clostridioides difficile</i>','Disrupt the actin cytoskeleton of colon cells','Pseudomembranous colitis'],
+ ['Exotoxin A','<i>Pseudomonas aeruginosa</i>','Inactivates EF-2 (like diphtheria toxin)','Tissue destruction in burns and lungs']
+];
+inits.virulence=()=>{
+  const svg=$('#vb');let e='';
+  for(let i=0;i<8;i++){const x=4+i*89,cls=i===3?'cellL':i===4?'cellR':'';const hurt=i>=2&&i<=5?'hurt':'';
+    e+=`<g class="${cls}"><rect class="${hurt}" x="${x}" y="198" width="86" height="46" rx="6"/><ellipse cx="${x+43}" cy="222" rx="10" ry="8"/></g>`}
+  $('#epi',svg).innerHTML=e;
+  let z='';[[330,206],[392,214],[340,246],[384,250],[360,190]].forEach(([x,y],i)=>z+=`<g transform="translate(${x} ${y})"><path class="tox" style="--dx:${(i%2?1:-1)*10}px;--dy:${(i%3-1)*8}px;animation-delay:${-i*.5}s;fill:var(--warn)" d="M0 0L7-4A8 8 0 1 0 7 4Z"/></g>`);
+  $('#enz',svg).innerHTML=z;
+  let t='';for(let i=0;i<9;i++){const dx=-140+i*36,dy=78+(i%3)*8;t+=`<g transform="translate(300 128)"><path class="tox" style="--dx:${dx}px;--dy:${dy}px;animation-delay:${-i*.27}s;fill:var(--eosin)" d="M0-5L5 4H-5Z"/></g>`}
+  $('#toxins',svg).innerHTML=t;
+  $('#toxRows').innerHTML=TOX.map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+  const steps=$('#vSteps');
+  steps.innerHTML=VS.map((v,i)=>`<button data-vs="${i}" aria-pressed="false"><b>STEP ${i+1}</b><span>${v.t}</span></button>`).join('');
+  let timer=null;
+  function set(i){
+    svg.setAttribute('class','wide vb st'+(i+1));
+    $$('[data-vs]',steps).forEach(b=>b.setAttribute('aria-pressed',+b.dataset.vs===i));
+    const v=VS[i];$('#vNote').innerHTML=`<div class="kicker">${v.k}</div><h4>${v.t}</h4><p>${v.txt}</p><div class="hook"><b>Examples</b>${v.ex}</div>`;
+  }
+  function stop(){clearInterval(timer);timer=null;$('#vPlay').textContent='Play all four'}
+  steps.addEventListener('click',e=>{const b=e.target.closest('[data-vs]');if(b){stop();set(+b.dataset.vs)}});
+  $('#vPlay').addEventListener('click',()=>{if(timer){stop();return}let i=0;set(0);$('#vPlay').textContent='Stop';timer=setInterval(()=>{i++;if(i>3){stop();return}set(i)},RM?400:3200)});
+  onHide.virulence=stop;
+  set(0);
+};
+
+/* =============== 1.7 gallery =============== */
+const BUGS=[
+ {n:'Staphylococcus aureus',c:'pos',s:'clusters',o:'Facultative',dz:'Skin abscesses and boils, cellulitis, osteomyelitis, endocarditis, food poisoning, toxic shock syndrome.',w:'Coagulase (walls itself off in fibrin), protein A, TSST-1 superantigen, enterotoxins.',h:'Catalase + and coagulase +. Golden colonies (<i>aureus</i> = gold). MRSA resists most β-lactams.',p:'Liquefactive necrosis → abscess full of pus',go:'patterns'},
+ {n:'Streptococcus pyogenes',sub:'Group A strep',c:'pos',s:'chains',o:'Facultative',dz:'Strep throat, impetigo, cellulitis, necrotizing fasciitis, scarlet fever.',w:'M protein, streptolysin O, streptokinase, hyaluronidase.',h:'β-hemolytic. Weeks later it can trigger rheumatic fever or post-strep glomerulonephritis, which are immune reactions, not infection.',p:'Necrotizing fasciitis destroys fascia and fat',go:'bridge'},
+ {n:'Streptococcus pneumoniae',c:'pos',s:'lancet',o:'Facultative',dz:'Lobar pneumonia, meningitis, otitis media, sinusitis.',w:'Polysaccharide capsule (main virulence factor), IgA protease, pneumolysin.',h:'Lancet-shaped diplococci, α-hemolytic. "Rusty" sputum. Most common cause of community-acquired pneumonia.',p:'Lung fills with neutrophils and fibrin (consolidation)',go:'bridge'},
+ {n:'Clostridium tetani',c:'pos',s:'drumstick',o:'Obligate anaerobe',dz:'Tetanus: lockjaw, risus sardonicus, back arching.',w:'Tetanospasmin blocks GABA and glycine release from inhibitory neurons.',h:'Terminal spore = drumstick. Spores in soil enter puncture wounds. Prevented by the toxoid vaccine.',p:'Little local damage: the toxin acts far away, in the spinal cord',go:'virulence'},
+ {n:'Clostridium perfringens',c:'pos',s:'sporerod',o:'Anaerobe',dz:'Gas gangrene (myonecrosis), food poisoning.',w:'α-toxin (lecithinase) dissolves cell membranes.',h:'Gas bubbles crackle under the skin (crepitus). Double zone of hemolysis on blood agar.',p:'Gas gangrene: rapid death of muscle',go:'patterns'},
+ {n:'Clostridioides difficile',c:'pos',s:'sporerod',o:'Obligate anaerobe',dz:'Antibiotic-associated diarrhea, pseudomembranous colitis.',w:'Toxins A and B disrupt colon cells\' cytoskeleton.',h:'Follows antibiotics (clindamycin, fluoroquinolones, cephalosporins) that wipe out normal gut flora. Spores survive alcohol gel: wash with soap and water.',p:'Pseudomembranes of fibrin, mucus and dead cells',go:'bridge'},
+ {n:'Listeria monocytogenes',c:'pos',s:'shortrods',o:'Facultative',dz:'Meningitis in newborns, older adults and the immunocompromised; infection in pregnancy.',w:'Listeriolysin O lets it escape the phagosome; actin "rockets" push it from cell to cell.',h:'Grows in the fridge. Deli meats, soft cheeses, unpasteurized milk. Tumbling motility.',p:'Hides inside cells, out of reach of antibodies',go:'virulence'},
+ {n:'Bacillus anthracis',c:'pos',s:'boxcar',o:'Facultative',dz:'Anthrax: skin (black eschar), inhaled (widened mediastinum), GI.',w:'Protein capsule (D-glutamate); anthrax toxin = protective antigen + edema factor + lethal factor.',h:'The only bacterium with a protein capsule. Painless black eschar on the skin.',p:'Eschar: a black scab of necrotic tissue',go:'patterns'},
+ {n:'Mycobacterium tuberculosis',c:'oth',s:'acidfast',o:'Obligate aerobe',dz:'Tuberculosis: primary (Ghon complex), reactivation (upper-lobe cavities), miliary spread.',w:'Waxy mycolic-acid wall, cord factor, survives inside macrophages.',h:'Acid-fast (Ziehl–Neelsen): red rods. Loves the oxygen-rich lung apex.',p:'Caseous necrosis inside granulomas',go:'patterns'},
+ {n:'Escherichia coli',c:'neg',s:'rods',o:'Facultative',dz:'UTIs (most common cause), traveler\'s diarrhea, bloody diarrhea + HUS (O157:H7), neonatal meningitis, sepsis.',w:'P fimbriae, Shiga-like toxin, K1 capsule, LPS endotoxin.',h:'O157:H7 from undercooked ground beef → hemolytic uremic syndrome (anemia, low platelets, kidney failure).',p:'Endotoxin → septic shock → hypoxic injury',go:'injury'},
+ {n:'Salmonella',c:'neg',s:'rods',o:'Facultative',dz:'Gastroenteritis (poultry, eggs, reptiles); typhoid fever (<i>S.</i> Typhi).',w:'Flagella, Vi capsule (Typhi), survives inside macrophages, endotoxin.',h:'Motile, makes H₂S. Typhoid: rose spots; carriers hide it in the gallbladder.',p:'Ulcers over Peyer\'s patches in typhoid',go:'bridge'},
+ {n:'Pseudomonas aeruginosa',c:'neg',s:'rods',o:'Obligate aerobe',dz:'Burn infections, cystic fibrosis lung infections, ventilator pneumonia, hot tub folliculitis, swimmer\'s ear.',w:'Biofilm, exotoxin A (blocks EF-2), endotoxin.',h:'Blue-green pigment, grape-like smell, oxidase +. Naturally resistant to many antibiotics.',p:'Necrotizing pneumonia; tissue destruction',go:'virulence'},
+ {n:'Neisseria meningitidis',c:'neg',s:'bean',o:'Aerobe',dz:'Meningitis, meningococcemia with a petechial rash.',w:'Polysaccharide capsule, very potent endotoxin (LOS), IgA protease, pili.',h:'Outbreaks in dorms and barracks. Vaccine available. Waterhouse–Friderichsen syndrome = adrenal hemorrhage.',p:'DIC; hemorrhagic necrosis of the adrenals',go:'bridge'},
+ {n:'Helicobacter pylori',c:'neg',s:'spiral',o:'Microaerophile',dz:'Chronic gastritis, peptic ulcers, gastric adenocarcinoma, MALT lymphoma.',w:'Urease (makes ammonia to neutralize acid), flagella, CagA.',h:'Urea breath test. Treated with antibiotics plus an acid blocker.',p:'Chronic gastritis → intestinal metaplasia → dysplasia',go:'adapt'},
+ {n:'Vibrio cholerae',c:'neg',s:'comma',o:'Facultative',dz:'Cholera: massive watery "rice-water" diarrhea and dehydration.',w:'Cholera toxin raises cAMP in gut cells.',h:'Spread by contaminated water. Treatment is oral rehydration.',p:'Cells survive: function is hijacked, structure is spared',go:'bridge'},
+ {n:'Treponema pallidum',c:'oth',s:'spirochete',o:'Microaerophile',dz:'Syphilis: painless chancre → rash on palms and soles → gummas, aortitis, neurosyphilis. Also congenital.',w:'Few surface proteins for antibodies to find; corkscrew motility.',h:'Too thin for Gram stain: darkfield microscopy. Screen with RPR/VDRL, confirm with FTA-ABS. Penicillin still works.',p:'Gummas (granulomas with necrosis); endarteritis',go:'patterns'}
+];
+inits.gallery=()=>{
+  const F=[['all','All 16'],['pos','Gram-positive'],['neg','Gram-negative'],['oth','Acid-fast & spirochete']];
+  $('#galFilter').innerHTML=F.map(([k,l],i)=>`<button class="btn" data-gf="${k}" aria-pressed="${i===0}">${l}</button>`).join('');
+  $('#galCards').innerHTML=BUGS.map(b=>`<article class="card" data-c="${b.c}"><div class="mini">${morph(b.s,b.c)}</div>
+    <div><h4><i>${b.n}</i></h4>${b.sub?`<p style="color:var(--muted)">${b.sub}</p>`:''}</div>
+    <div class="chips"><span class="tag ${GL[b.c][1]}">${b.c==='oth'?(b.s==='acidfast'?'Acid-fast':'Spirochete'):GL[b.c][0]}</span><span class="tag">${b.o}</span></div>
+    <p><span class="lbl">Signature disease</span>${b.dz}</p><p><span class="lbl">Weapons</span>${b.w}</p>
+    <div class="hook"><b>Exam hook</b>${b.h}</div>
+    <p><span class="lbl">What it does to cells</span><button class="btn ghost" style="padding:6px 10px;margin-top:4px;text-align:left" data-go="${b.go}">${b.p} →</button></p></article>`).join('');
+  $('#galFilter').addEventListener('click',e=>{const b=e.target.closest('[data-gf]');if(!b)return;
+    $$('[data-gf]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    $$('#galCards .card').forEach(c=>c.hidden=!(b.dataset.gf==='all'||c.dataset.c===b.dataset.gf))});
+};
+
+/* =============== 2.1 spectrum =============== */
+const NODES={
+ normal:{x:90,y:170,t:'Normal cell',tag:['good','Homeostasis'],txt:'The cell keeps its internal environment steady within a narrow range and handles everyday demands without changing its structure.',heart:'A normal heart muscle cell (myocyte), contracting with every beat.'},
+ adapt:{x:330,y:70,t:'Adaptation',tag:['good','Reversible'],txt:'Faced with more (or less) demand, the cell changes its size, number or type and reaches a new steady state. Remove the stress and it can go back to normal.',heart:'Long-term high blood pressure makes the heart work harder. Myocytes can\'t divide, so they grow bigger: <b>hypertrophy</b>. The heart wall thickens.',go:'adapt'},
+ rev:{x:330,y:232,t:'Reversible injury',tag:['warn','Can recover'],txt:'The stress is too much, or adaptation isn\'t possible. The cell is damaged (swelling, fatty change) but fully recovers if the stress stops in time.',heart:'A short drop in blood flow (ischemia): myocytes stop contracting within about a minute, but recover if blood flow returns quickly.',go:'injury'},
+ irr:{x:560,y:232,t:'Irreversible injury',tag:['bad','Point of no return'],txt:'Mitochondria can\'t make ATP even if oxygen comes back, and membranes are badly damaged. Death is now certain.',heart:'After about 20–30 minutes of severe ischemia, myocytes are irreversibly injured.',go:'injury'},
+ dead:{x:750,y:232,t:'Cell death',tag:['bad','Necrosis or apoptosis'],txt:'<b>Necrosis</b>: always abnormal; the cell swells, bursts and causes inflammation. <b>Apoptosis</b>: programmed and tidy, no inflammation, often a normal process.',heart:'A heart attack (myocardial infarction): a zone of dead myocytes with coagulative necrosis, later replaced by a scar.',go:'death'}
+};
+const CAUSES=[
+ ['Oxygen deprivation','The most common cause. Hypoxia = too little oxygen. <b>Ischemia</b> (lost blood supply) is worse, because nutrients stop arriving and waste isn\'t removed.'],
+ ['Physical agents','Trauma, extreme heat or cold, radiation, electric shock, sudden pressure changes.'],
+ ['Chemicals & drugs','Poisons, alcohol, drug overdoses (acetaminophen → liver necrosis), even too much glucose or salt.'],
+ ['Infectious agents','Bacteria, viruses, fungi, parasites. Bacteria hurt cells with toxins and by triggering inflammation. That is Unit 1.'],
+ ['Immune reactions','Autoimmune disease, allergies, and the collateral damage of fighting an infection.'],
+ ['Genetic defects','Missing enzymes (storage diseases), misfolded proteins, abnormal hemoglobin in sickle cell disease.'],
+ ['Nutritional imbalance','Too little (protein, vitamin deficiencies) and too much (obesity, fatty liver).'],
+ ['Aging','Cells pile up damage over time and lose some of their ability to repair it.']
+];
+inits.spectrum=()=>{
+  const svg=$('#specSvg');
+  const A=(d)=>`<path class="arrow" d="${d}" marker-end="url(#ah)"/>`;
+  let h=`<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--muted)"/></marker></defs>`;
+  h+=A('M126 150 Q190 80 286 72')+`<text x="160" y="86" class="t-sm">stress, more demand</text>`;
+  h+=A('M128 184 Q200 222 288 230')+`<text x="150" y="226" class="t-sm">injurious stimulus</text>`;
+  h+=A('M330 112 V188')+`<text x="340" y="146" class="t-sm">limits</text><text x="340" y="160" class="t-sm">exceeded</text>`;
+  h+=A('M300 268 Q190 300 104 212')+`<text x="190" y="306" class="t-sm t-mid">recovers if stress removed</text>`;
+  h+=A('M376 232 H512')+`<text x="444" y="222" class="t-sm t-mid">severe or</text><text x="444" y="208" class="t-sm t-mid" style="fill:var(--bad)">persistent</text>`;
+  h+=`<line x1="444" y1="244" x2="444" y2="284" style="stroke:var(--bad);stroke-width:2;stroke-dasharray:4 3"/>`;
+  h+=A('M606 232 H702');
+  const cell=(k,n)=>{const{x,y}=n;let s='';
+    if(k==='normal')s=`<circle cx="${x}" cy="${y}" r="30" style="fill:var(--cyto);stroke:var(--memb);stroke-width:2"/><circle cx="${x}" cy="${y}" r="10" style="fill:var(--nuc)"/>`;
+    if(k==='adapt')s=`<rect x="${x-34}" y="${y-28}" width="68" height="56" rx="16" style="fill:var(--cyto);stroke:var(--memb);stroke-width:2"/><circle cx="${x}" cy="${y}" r="12.5" style="fill:var(--nuc)"/>`;
+    if(k==='rev')s=`<path d="${blob(x,y,34,6,1.2,90)}" style="fill:var(--cyto);stroke:var(--memb);stroke-width:2"/><circle cx="${x+3}" cy="${y-2}" r="10" style="fill:var(--nuc)"/><circle cx="${x-15}" cy="${y+12}" r="5" style="fill:var(--fat);stroke:var(--warn)"/><circle cx="${x+16}" cy="${y+14}" r="4" style="fill:var(--fat);stroke:var(--warn)"/>`;
+    if(k==='irr')s=`<path d="${blob(x,y,36,7,1.2,90)}" pathLength="100" style="fill:var(--cyto);stroke:var(--memb);stroke-width:2;stroke-dasharray:9 3.5"/><circle cx="${x}" cy="${y}" r="7" style="fill:var(--nuc-deep)"/>`+[[44,-10],[40,18],[-44,6],[-38,-22],[10,44]].map(([a,b])=>`<circle cx="${x+a}" cy="${y+b}" r="2.4" style="fill:var(--memb)"/>`).join('');
+    if(k==='dead')s=`<circle cx="${x}" cy="${y}" r="32" style="fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:3 5"/>`+[[-8,-6,5],[6,-10,4],[10,6,4.5],[-6,10,3.5],[0,0,3]].map(([a,b,r])=>`<circle cx="${x+a}" cy="${y+b}" r="${r}" style="fill:var(--nuc-deep)"/>`).join('');
+    return s};
+  Object.entries(NODES).forEach(([k,n])=>{
+    const lbl=k==='normal'?`<text x="${n.x}" y="${n.y-50}" class="t-lbl t-mid">Normal cell</text>`:k==='adapt'?`<text x="${n.x+48}" y="${n.y-4}" class="t-lbl">Adaptation</text><text x="${n.x+48}" y="${n.y+12}" class="t-sm">new steady state</text>`:`<text x="${n.x}" y="${n.y+60}" class="t-lbl t-mid">${n.t}</text>`;
+    h+=`<g class="node" data-n="${k}" role="button" tabindex="0" aria-label="${n.t}"><circle class="ring" cx="${n.x}" cy="${n.y}" r="46"/>${cell(k,n)}${lbl}</g>`;
+  });
+  svg.innerHTML=h;
+  function sel(k){$$('.node',svg).forEach(n=>n.classList.toggle('sel',n.dataset.n===k));const n=NODES[k];
+    $('#specNote').innerHTML=`<div class="chips"><span class="tag ${n.tag[0]}">${n.tag[1]}</span></div><h4>${n.t}</h4><p>${n.txt}</p><dl class="kv"><div><dt>Heart muscle example</dt><dd>${n.heart}</dd></div></dl>`+(n.go?`<div><button class="btn" data-go="${n.go}">Explore this stage →</button></div>`:'')}
+  svg.addEventListener('click',e=>{const n=e.target.closest('.node');if(n)sel(n.dataset.n)});
+  svg.addEventListener('keydown',e=>{const n=e.target.closest('.node');if(n&&(e.key==='Enter'||e.key===' ')){e.preventDefault();sel(n.dataset.n)}});
+  sel('adapt');
+  $('#causeCards').innerHTML=CAUSES.map(([t,d])=>`<div class="card"><h4>${t}</h4><p>${d}</p></div>`).join('');
+};
+
+/* =============== 2.2 adaptation lab =============== */
+const AD={
+ normal:{l:'Normal',cap:'Normal epithelium · 8 cells',rev:'—',tag:['good','Baseline'],def:'Healthy tissue at its usual workload. Use this as your reference, then switch modes.',rows:[['Look for','Even rows of same-sized cells, nuclei lined up near the base.']]},
+ hyper:{l:'Hypertrophy',cap:'Same 8 cells, each bigger',tag:['good','Adaptation · reversible'],def:'An increase in the <b>size</b> of cells, which makes the organ bigger. No new cells are made.',rows:[['Happens in','Cells that can\'t divide much: heart and skeletal muscle.'],['Physiologic','Weightlifter\'s muscles. The pregnant uterus (hypertrophy plus hyperplasia).'],['Pathologic','Left ventricle thickening from high blood pressure or aortic valve stenosis.'],['How','Stretch and growth factors switch on protein synthesis: more myofilaments and organelles per cell.']],hook:'Hypertrophy has a limit. A heart pushed past it degenerates and fails (heart failure).'},
+ plasia:{l:'Hyperplasia',cap:'More cells, same size',tag:['good','Adaptation · reversible'],def:'An increase in the <b>number</b> of cells, by cell division.',rows:[['Happens in','Only tissues whose cells can divide: epithelium, liver, bone marrow. Often alongside hypertrophy.'],['Physiologic','Hormonal: breast at puberty and in pregnancy, endometrium each cycle. Compensatory: the liver regrows after part is removed.'],['Pathologic','Endometrial hyperplasia from too much estrogen; benign prostatic hyperplasia (BPH); warts (HPV).'],['How','Hormones and growth factors drive stem cells and mature cells to divide.']],hook:'Pathologic hyperplasia is fertile ground for cancer: endometrial hyperplasia raises the risk of endometrial cancer. BPH is the exception; it does not.'},
+ atrophy:{l:'Atrophy',cap:'Same 8 cells, each smaller',tag:['good','Adaptation · reversible'],def:'A decrease in cell <b>size</b> from losing cell substance. Enough shrunken cells make a smaller organ.',rows:[['Causes','Less workload (limb in a cast), lost nerve supply, reduced blood supply, poor nutrition, loss of hormones (menopause), pressure from a nearby mass, aging.'],['Physiologic','The uterus shrinking after childbirth; the thymus shrinking after puberty.'],['How','Less protein made, more broken down by the <b>ubiquitin–proteasome</b> system, plus <b>autophagy</b> (the cell digests its own parts). Leftover debris = brown <b>lipofuscin</b>.']],hook:'Atrophied cells are smaller and do less, but they are still alive. Atrophy is not death.'},
+ meta:{l:'Metaplasia',cap:'Columnar → stratified squamous',tag:['good','Adaptation · reversible'],def:'One adult cell type is <b>replaced</b> by another type that can better handle the stress.',rows:[['Smoker\'s bronchus','Ciliated columnar → stratified squamous. Tougher, but mucus and cilia no longer clear the airway.'],['Barrett esophagus','The reverse: squamous → intestinal-type columnar with goblet cells, from chronic acid reflux.'],['Other causes','Vitamin A deficiency (squamous metaplasia); <i>H. pylori</i> gastritis (intestinal metaplasia).'],['How','Stem cells are reprogrammed by cytokines and growth factors. Mature cells don\'t change type.']],hook:'Reversible, but if the stress continues it can progress to dysplasia and cancer: Barrett → adenocarcinoma; smoker\'s bronchus → squamous cell carcinoma.'},
+ dys:{l:'Dysplasia',cap:'Disordered growth · not an adaptation',tag:['warn','Precancerous'],def:'<b>Disordered</b> growth. Cells vary in size and shape, nuclei are large and dark, and the normal orderly layering is lost.',rows:[['Is it an adaptation?','No. It is often the next step after persistent metaplasia or hyperplasia.'],['Examples','Cervical dysplasia from HPV (found on a Pap smear). Barrett esophagus with dysplasia.'],['Reversible?','Mild dysplasia can regress if the cause is removed. Dysplasia through the full thickness of the epithelium = <b>carcinoma in situ</b>.']],hook:'Dysplasia is a warning sign, not cancer yet. Cancer begins when the cells invade through the basement membrane.'}
+};
+const ADS=['normal','hyper','plasia','atrophy','meta','dys'];
+function adLayout(mode){
+  const C=[];const B=250;
+  const row=(n,w,h,gap,yb,nrx,nry,nyOff)=>{const tot=n*w+(n-1)*gap,x0=(720-tot)/2;for(let i=0;i<n;i++){const x=x0+i*(w+gap);C.push({x,y:yb-h,w,h,rx:Math.min(8,h/3),nx:x+w/2,ny:nyOff==null?yb-h/2:yb-nyOff,nrx,nry,o:1})}};
+  if(mode==='normal')row(8,54,96,4,B,10,12,34);
+  if(mode==='hyper')row(8,72,150,4,B,14,17,52);
+  if(mode==='plasia')row(12,52,96,4,B,10,12,34);
+  if(mode==='atrophy')row(8,34,58,4,B,7,8,22);
+  if(mode==='meta'){row(10,40,34,3,B,7,8,null);row(8,50,30,3,B-37,8,7,null);row(6,68,16,3,B-70,9,4,null);row(5,82,9,3,B-89,8,2.5,null)}
+  if(mode==='dys'){const r=rng(21);const ws=[],hs=[];let tot=0;for(let i=0;i<11;i++){ws.push(30+r()*26);hs.push(70+r()*70);tot+=ws[i]+3}
+    let x=(720-tot)/2;for(let i=0;i<11;i++){const w=ws[i],h=hs[i];C.push({x,y:B-h,w,h,rx:4+r()*8,nx:x+w/2+(r()-.5)*8,ny:B-h*(.25+r()*.55),nrx:Math.min(w/2-3,11+r()*7),nry:13+r()*9,o:1});x+=w+3}}
+  return C;
+}
+inits.adapt=()=>{
+  const g=$('#adCells'),N=30;
+  g.innerHTML=Array.from({length:N},()=>`<g class="lc"><rect/><ellipse/></g>`).join('');
+  const els=$$('.lc',g).map(n=>({g:n,r:n.querySelector('rect'),e:n.querySelector('ellipse')}));
+  const fill=L=>{const out=[];for(let i=0;i<N;i++){if(i<L.length)out.push({...L[i]});else{const s=L[i%L.length];out.push({...s,x:s.x+s.w/2,w:0,h:0,y:250,nrx:0,nry:0,o:0})}}return out};
+  let curS=fill(adLayout('normal')),stopA=null,mode='normal';
+  const render=S=>S.forEach((c,i)=>{const E=els[i];E.r.setAttribute('x',f1(c.x));E.r.setAttribute('y',f1(c.y));E.r.setAttribute('width',f1(Math.max(0,c.w)));E.r.setAttribute('height',f1(Math.max(0,c.h)));E.r.setAttribute('rx',f1(Math.max(0,c.rx)));
+    E.e.setAttribute('cx',f1(c.nx));E.e.setAttribute('cy',f1(c.ny));E.e.setAttribute('rx',f1(Math.max(0,c.nrx)));E.e.setAttribute('ry',f1(Math.max(0,c.nry)));E.g.setAttribute('opacity',c.o.toFixed(2))});
+  render(curS);
+  $('#adMode').innerHTML=ADS.map(k=>`<button class="btn ${k==='dys'?'warnb':''}" data-ad="${k}" aria-pressed="${k==='normal'}">${AD[k].l}${k==='dys'?' (beyond adaptation)':''}</button>`).join('');
+  function set(k){
+    mode=k;const A=AD[k],L=adLayout(k),T=fill(L),F=curS.map(c=>({...c}));
+    $$('[data-ad]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.ad===k));
+    const svg=$('#adSvg');svg.classList.toggle('lab-sq',k==='meta');svg.classList.toggle('lab-dys',k==='dys');svg.classList.toggle('lab-atr',k==='atrophy');
+    $('#adCap').textContent=A.cap.toUpperCase();
+    const avg=L.reduce((s,c)=>s+c.w*c.h,0)/L.length/(54*96);
+    $('#adRead').innerHTML=`<span>cells <b>${L.length}</b></span><span>average cell area <b>×${avg.toFixed(1)}</b></span><span>tissue width <b>×${((L.reduce((m,c)=>Math.max(m,c.x+c.w),0)-L.reduce((m,c)=>Math.min(m,c.x),999))/460).toFixed(1)}</b></span>`;
+    $('#adNote').innerHTML=`<div class="chips"><span class="tag ${A.tag[0]}">${A.tag[1]}</span></div><h4>${A.l}</h4><p>${A.def}</p><dl class="kv">${A.rows.map(r=>`<div><dt>${r[0]}</dt><dd>${r[1]}</dd></div>`).join('')}</dl>`+(A.hook?`<div class="hook"><b>Exam hook</b>${A.hook}</div>`:'');
+    if(stopA)stopA();
+    stopA=animate(950,p=>{const q=ease(p);curS=F.map((a,i)=>{const b=T[i],o={};for(const key in b)o[key]=lerp(a[key],b[key],q);return o});render(curS)},()=>{stopA=null});
+  }
+  $('#adMode').addEventListener('click',e=>{const b=e.target.closest('[data-ad]');if(b)set(b.dataset.ad)});
+  set('normal');
+  const SC=[
+   ['A bodybuilder\'s biceps grow after months of training.','Hypertrophy (physiologic)','Skeletal muscle fibers can\'t divide, so each one gets bigger.'],
+   ['The left ventricle thickens after years of high blood pressure.','Hypertrophy (pathologic)','More workload on cells that can\'t divide.'],
+   ['Breast tissue expands during pregnancy.','Hyperplasia (physiologic, hormonal)','Glandular cells divide in response to hormones.'],
+   ['Part of a liver is donated, and the rest grows back.','Hyperplasia (compensatory)','Remaining liver cells divide to restore the mass.'],
+   ['An arm in a cast for 6 weeks has thinner muscles.','Atrophy (disuse)','Less workload → cells shrink. They regrow with exercise.'],
+   ['After menopause, the endometrium becomes thin.','Atrophy (loss of hormones)','No estrogen stimulation → cells shrink.'],
+   ['Biopsy of a lower esophagus with chronic reflux shows columnar cells with goblet cells.','Metaplasia (Barrett esophagus)','Squamous replaced by intestinal-type columnar epithelium.'],
+   ['A long-time smoker\'s bronchus is lined by stratified squamous cells.','Metaplasia (squamous)','Columnar replaced by tougher squamous epithelium.'],
+   ['An older man has trouble urinating; his prostate has more glands and stroma.','Hyperplasia (pathologic, BPH)','Driven by androgens. Does not raise cancer risk.'],
+   ['A Pap smear shows cells with big dark nuclei and lost layering.','Dysplasia','Disordered, precancerous growth (often HPV). Not an adaptation.']
+  ];
+  $('#scen').innerHTML=SC.map((s,i)=>`<div class="card"><p>${s[0]}</p><div class="ans" id="sa${i}" hidden><b>${s[1]}.</b> ${s[2]}</div><div><button class="btn" data-sa="${i}" aria-expanded="false">Reveal</button></div></div>`).join('');
+  $('#scen').addEventListener('click',e=>{const b=e.target.closest('[data-sa]');if(!b)return;const a=$('#sa'+b.dataset.sa);a.hidden=!a.hidden;b.textContent=a.hidden?'Reveal':'Hide';b.setAttribute('aria-expanded',!a.hidden)});
+};
+
+/* =============== 2.3 injury =============== */
+const FEAT=[
+ ['rev',12,'Cell swelling (hydropic change): the Na⁺/K⁺ pump fails'],
+ ['rev',20,'Mitochondria swell'],
+ ['rev',25,'ER dilates; ribosomes detach'],
+ ['rev',25,'Fatty change: lipid droplets (liver, heart)'],
+ ['rev',30,'Membrane blebs; microvilli lost'],
+ ['rev',35,'Chromatin clumps (pH falls from lactic acid)'],
+ ['rev',40,'Myelin figures: whorls of damaged membrane'],
+ ['irr',57,'Calcium floods in, switching on destructive enzymes'],
+ ['irr',60,'Mitochondria get dense deposits and can\'t make ATP'],
+ ['irr',60,'Pyknosis: nucleus shrinks and turns dark'],
+ ['irr',66,'Lysosomes burst; enzymes digest the cell'],
+ ['irr',70,'Plasma membrane ruptures; contents leak out'],
+ ['irr',75,'Karyorrhexis: nucleus breaks into pieces'],
+ ['irr',88,'Karyolysis: nuclear remnants fade away']
+];
+inits.injury=()=>{
+  const svg=$('#injSvg'),cx=280,cy=180,r=rng(9);
+  const pol=(a,d)=>[cx+d*Math.cos(a*Math.PI/180),cy+d*Math.sin(a*Math.PI/180)];
+  const leak=Array.from({length:26},()=>({a:r()*360,d:r(),s:2+r()*2.5}));
+  const ca=[12,168,196,348,180].map(a=>({a}));
+  const MITO=[[225,130,-30],[345,240,-35],[215,236,40],[352,126,35]];
+  const LIP=[pol(250,92),pol(300,96),pol(100,92),pol(0,96)];
+  const LYS=[pol(180,86),pol(78,88),pol(205,104)];
+  const ERA=[[255,300],[60,115],[150,175],[335,15]];
+  const frag=Array.from({length:7},()=>({a:r()*360,d:.4+r()*.6,rr:3.5+r()*3.5}));
+  let h=`<g id="iLeak"></g><g id="iCa"></g><path id="iMem" pathLength="1000" style="fill:var(--cyto);stroke:var(--memb);stroke-width:3"/><path id="iEos" style="fill:var(--eosin);opacity:0"/><g id="iIn">`;
+  ERA.forEach((a,i)=>{const p=(ang,d)=>pol(ang,d);const a0=a[0],a1=a[1]<a[0]?a[1]+360:a[1];const s=p(a0,66),e=p(a1,66);
+    h+=`<path class="iER" d="M${f1(s[0])} ${f1(s[1])} A66 66 0 0 1 ${f1(e[0])} ${f1(e[1])}" style="fill:none;stroke:var(--er);stroke-linecap:round;opacity:.85"/>`;
+    for(let k=0;k<6;k++){const ang=a0+(a1-a0)*(k+.5)/6;h+=`<circle class="iRib" data-a="${ang}" data-j="${r()}" r="2.4" style="fill:var(--hema)"/>`}});
+  MITO.forEach(([x,y,a])=>h+=`<g transform="translate(${x} ${y}) rotate(${a})"><ellipse class="iMi" rx="22" ry="10" style="fill:var(--mito);stroke:var(--warn);stroke-width:1"/><path class="iCr" d="M-14 -5v10M-7 -6v12M0 -6v12M7 -6v12M14 -5v10" style="stroke:var(--warn);stroke-width:1.4"/><g class="iFl" style="fill:var(--nuc-deep);opacity:0"><circle cx="-8" cy="1" r="3"/><circle cx="5" cy="-2" r="3.6"/><circle cx="12" cy="3" r="2.4"/></g></g>`);
+  LIP.forEach(([x,y])=>h+=`<circle class="iLip" cx="${f1(x)}" cy="${f1(y)}" r="0" style="fill:var(--fat);stroke:var(--warn);stroke-width:1"/>`);
+  LYS.forEach(([x,y],i)=>{h+=`<circle class="iLy" cx="${f1(x)}" cy="${f1(y)}" r="7" style="fill:var(--eosin)"/>`;for(let k=0;k<6;k++)h+=`<circle class="iEn" data-x="${x}" data-y="${y}" data-a="${k*60+i*20}" r="1.8" style="fill:var(--eosin);opacity:0"/>`});
+  const my=pol(160,100);h+=`<g id="iMy" style="fill:none;stroke:var(--memb);stroke-width:1.3;opacity:0"><circle cx="${f1(my[0])}" cy="${f1(my[1])}" r="4"/><circle cx="${f1(my[0])}" cy="${f1(my[1])}" r="8"/><circle cx="${f1(my[0])}" cy="${f1(my[1])}" r="12" stroke-dasharray="30 10"/></g>`;
+  h+=`<circle id="iGhost" cx="${cx}" cy="${cy}" r="32" style="fill:var(--nuc);opacity:0;stroke:var(--nuc);stroke-dasharray:3 4"/>`;
+  h+=`<g id="iNuc"><circle id="iN" cx="${cx}" cy="${cy}" r="38" style="fill:var(--nuc);stroke:var(--nuc-deep);stroke-width:1.5"/><circle id="iND" cx="${cx}" cy="${cy}" r="38" style="fill:var(--nuc-deep);opacity:0"/>`;
+  [[-14,-10],[12,-14],[16,10],[-10,14],[0,0],[-20,4]].forEach(([a,b])=>h+=`<circle class="iCh" cx="${cx+a}" cy="${cy+b}" r="5" style="fill:var(--nuc-deep);opacity:0"/>`);
+  h+=`<circle cx="${cx-12}" cy="${cy-12}" r="7" style="fill:var(--hema-soft);opacity:.5"/></g>`;
+  frag.forEach(f=>h+=`<circle class="iFr" r="${f1(f.rr)}" style="fill:var(--nuc-deep);opacity:0"/>`);
+  h+=`</g><g id="iLbl"></g>`;
+  svg.innerHTML=h;
+  const mem=$('#iMem'),eos=$('#iEos'),inn=$('#iIn');
+  const featUl=$('#injFeat');
+  featUl.innerHTML=`<li style="opacity:1"><h5>Reversible</h5></li>`+FEAT.map((f,i)=>(i===7?`<li style="opacity:1"><h5 style="color:var(--bad)">Irreversible</h5></li>`:'')+`<li class="${f[0]}" data-th="${f[1]}"><span class="dot"></span><span>${f[2]}</span></li>`).join('');
+  const lis=$$('li[data-th]',featUl);
+  function upd(s){
+    const sw=ramp(s,12,55),R=120*(1+.16*sw),amp=16*ramp(s,28,62),k=1+.12*sw;
+    const d=blob(cx,cy,R,amp,.4,160);mem.setAttribute('d',d);eos.setAttribute('d',d);eos.style.opacity=(.28*ramp(s,58,85)).toFixed(2);
+    const gap=26*ramp(s,70,95);mem.style.strokeDasharray=s>=70?`${(125-gap).toFixed(1)} ${gap.toFixed(1)}`:'none';
+    inn.setAttribute('transform',`translate(${cx} ${cy}) scale(${k.toFixed(3)}) translate(${-cx} ${-cy})`);
+    const dl=ramp(s,25,55);
+    $$('.iER',svg).forEach(p=>{p.style.strokeWidth=(3+7*dl).toFixed(1)});
+    $$('.iRib',svg).forEach(c=>{const a=+c.dataset.a,j=+c.dataset.j;const dd=66+7+(3.5*dl)+dl*(6+j*14);const[x,y]=pol(a+dl*j*8,dd);c.setAttribute('cx',f1(x));c.setAttribute('cy',f1(y))});
+    const mw=ramp(s,20,55);
+    $$('.iMi',svg).forEach(m=>{m.setAttribute('rx',f1(22*(1+.18*mw)));m.setAttribute('ry',f1(10*(1+.65*mw)))});
+    $$('.iCr',svg).forEach(c=>c.style.opacity=(1-.65*mw).toFixed(2));
+    $$('.iFl',svg).forEach(c=>c.style.opacity=ramp(s,60,68).toFixed(2));
+    $$('.iLip',svg).forEach((c,i)=>c.setAttribute('r',f1(11*ramp(s,25+i*4,52))));
+    const ly=ramp(s,66,74);
+    $$('.iLy',svg).forEach(c=>c.style.opacity=(1-ly).toFixed(2));
+    $$('.iEn',svg).forEach(c=>{const a=+c.dataset.a*Math.PI/180,dd=4+ly*22;c.setAttribute('cx',f1(+c.dataset.x+dd*Math.cos(a)));c.setAttribute('cy',f1(+c.dataset.y+dd*Math.sin(a)));c.style.opacity=(ly*(1-.5*ramp(s,85,100))).toFixed(2)});
+    $('#iMy').style.opacity=ramp(s,40,50).toFixed(2);
+    const py=ramp(s,60,72),rx=ramp(s,74,85),ly2=ramp(s,88,98);
+    $('#iN').setAttribute('r',f1(38-18*py));$('#iND').setAttribute('r',f1(38-18*py));$('#iND').style.opacity=(.85*py).toFixed(2);
+    $('#iNuc').style.opacity=(1-ramp(s,74,78)).toFixed(2);
+    $$('.iCh',svg).forEach(c=>c.style.opacity=(ramp(s,35,50)*(1-py)).toFixed(2));
+    $$('.iFr',svg).forEach((c,i)=>{const f=frag[i];const[x,y]=pol(f.a,f.d*(8+36*rx));c.setAttribute('cx',f1(x));c.setAttribute('cy',f1(y));c.style.opacity=(ramp(s,74,78)*(1-ly2)).toFixed(2)});
+    $('#iGhost').style.opacity=(.22*ramp(s,88,95)).toFixed(2);
+    const lk=ramp(s,70,90);
+    $('#iLeak').innerHTML=lk>0?leak.map(p=>{const[x,y]=pol(p.a,R*k+6+p.d*30*lk);return `<circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(p.s)}" style="fill:var(--memb);opacity:${(lk*.8).toFixed(2)}"/>`}).join(''):'';
+    const cav=ramp(s,56,62),cin=ramp(s,58,80);
+    $('#iCa').innerHTML=cav>0?ca.map(c=>{const[x,y]=pol(c.a,lerp(R+52,R-28,cin));return `<text x="${f1(x)}" y="${f1(y)}" class="t-sm t-mid" style="fill:var(--bad);font-weight:700;opacity:${cav.toFixed(2)}">Ca²⁺</text>`}).join(''):'';
+    lis.forEach(li=>li.classList.toggle('on',s>=+li.dataset.th));
+    const st=s<12?['good','Normal']:s<55?['warn','Reversible injury']:['bad','Irreversible injury → necrosis'];
+    const pill=$('#injStage');pill.className='stagepill tag '+st[0];pill.textContent=st[1];
+    $('#injPct').textContent=`severity ${Math.round(s)} / 100`;
+  }
+  const rg=$('#injS'),pb=$('#injPlay');let stopA=null;
+  function stop(){if(stopA)stopA();stopA=null;pb.textContent='Play'}
+  rg.addEventListener('input',()=>{stop();upd(+rg.value)});
+  pb.addEventListener('click',()=>{if(stopA){stop();return}let s0=+rg.value;if(s0>=99.5)s0=0;pb.textContent='Pause';
+    stopA=animate((100-s0)/100*11000,p=>{const s=s0+(100-s0)*p;rg.value=s;upd(s)},()=>{stopA=null;pb.textContent='Replay'})});
+  onHide.injury=stop;
+  rg.value=42;upd(42);
+};
+
+/* =============== 2.4 death =============== */
+inits.death=()=>{
+  const r=rng(31);
+  const nCells=[[90,128],[270,128],[180,128]];
+  const nLeak=nCells.map(()=>Array.from({length:14},()=>({a:r()*6.283,d:.2+r()*.8,s:1.8+r()*2})));
+  const neut=[[-40,250,62,212],[400,40,300,62],[180,310,180,226]];
+  function neutro(x,y,o){return `<g opacity="${o.toFixed(2)}"><circle cx="${f1(x)}" cy="${f1(y)}" r="15" style="fill:var(--macro);stroke:var(--hema);stroke-width:1.5"/><g style="fill:var(--nuc)"><circle cx="${f1(x-6)}" cy="${f1(y-3)}" r="4"/><circle cx="${f1(x+1)}" cy="${f1(y+4)}" r="4"/><circle cx="${f1(x+7)}" cy="${f1(y-3)}" r="4"/></g></g>`}
+  function cellN(x,y,rad){return `<circle cx="${x}" cy="${y}" r="${rad}" style="fill:var(--cyto);stroke:var(--memb);stroke-width:2"/><circle cx="${x}" cy="${y}" r="14" style="fill:var(--nuc)"/>`}
+  function draw(t){
+    // necrosis
+    let h='';const sw=ramp(t,0,.32),rup=ramp(t,.46,.62),py=ramp(t,.3,.45),kl=ramp(t,.55,.78),lk=ramp(t,.48,.85);
+    nCells.forEach(([x,y],i)=>{const R=40+9*sw;const d=blob(x,y,R,6*ramp(t,.28,.5),i*1.3,90);
+      h+=`<path d="${d}" pathLength="1000" style="fill:var(--cyto);stroke:var(--memb);stroke-width:2;${rup>0?`stroke-dasharray:${f1(125-30*rup)} ${f1(30*rup)}`:''}"/><path d="${d}" style="fill:var(--eosin);opacity:${(.3*ramp(t,.3,.6)).toFixed(2)}"/>`;
+      const nr=14-5*py;h+=`<g opacity="${(1-kl).toFixed(2)}"><circle cx="${x}" cy="${y}" r="${f1(nr)}" style="fill:var(--nuc)"/><circle cx="${x}" cy="${y}" r="${f1(nr)}" style="fill:var(--nuc-deep);opacity:${(.8*py).toFixed(2)}"/></g>`;
+      if(kl>0)h+=`<circle cx="${x}" cy="${y}" r="13" style="fill:none;stroke:var(--nuc);stroke-dasharray:2 4;opacity:${(.6*kl).toFixed(2)}"/>`;
+      if(lk>0)nLeak[i].forEach(p=>{const dd=R*.5+p.d*(R*.5+38*lk);h+=`<circle cx="${f1(x+dd*Math.cos(p.a))}" cy="${f1(y+dd*Math.sin(p.a))}" r="${f1(p.s)}" style="fill:var(--memb);opacity:${(.85*ramp(t,.48,.56)).toFixed(2)}"/>`});
+    });
+    const nm=ease(ramp(t,.6,.95));neut.forEach(([x0,y0,x1,y1])=>{h+=neutro(lerp(x0,x1,nm),lerp(y0,y1,nm),ramp(t,.58,.66))});
+    $('#necSvg').innerHTML=h;
+    $('#necCap').textContent=t<.3?'1 · Cells swell as water rushes in':t<.46?'2 · Nuclei shrink and darken (pyknosis); blebs form':t<.62?'3 · Membranes burst; contents leak into the tissue':'4 · Leaked contents call in neutrophils → inflammation';
+    // apoptosis
+    let a=cellN(90,128,40)+cellN(270,128,40);
+    const sh=ramp(t,0,.25),R=40-10*sh,cd=ramp(t,.15,.38),bl=ramp(t,.3,.5),fr=ramp(t,.5,.66),mm=ease(ramp(t,.62,.84)),en=ease(ramp(t,.8,1));
+    const mx=180,my=lerp(330,196,mm);
+    if(mm>0)a+=`<path d="${blob(mx,my,40,7,2.2,90)}" style="fill:var(--macro);stroke:var(--hema);stroke-width:2"/><path d="M${mx+8} ${my+10}c8-6 20-4 22 6s-8 16-18 12-10-12-4-18z" style="fill:var(--nuc)"/><text x="${mx}" y="${f1(my+58)}" class="t-sm t-mid">macrophage</text>`;
+    if(fr<1){a+=`<g opacity="${(1-fr).toFixed(2)}"><path d="${blob(180,128,R,5*bl,.9,90)}" style="fill:var(--cyto);stroke:var(--memb);stroke-width:2"/><path d="${blob(180,128,R,5*bl,.9,90)}" style="fill:var(--eosin);opacity:${(.45*sh).toFixed(2)}"/>`+
+      `<circle cx="180" cy="128" r="${f1(14-4*cd)}" style="fill:var(--nuc)"/><circle cx="180" cy="128" r="${f1(14-4*cd)}" style="fill:var(--nuc-deep);opacity:${(.9*cd).toFixed(2)}"/></g>`}
+    if(fr>0){[45,135,225,315].forEach((ang,i)=>{const rad=ang*Math.PI/180;let x=180+(8+16*fr)*Math.cos(rad),y=128+(8+16*fr)*Math.sin(rad);
+      const tx=mx-10+(i%2)*14,ty=my-14+Math.floor(i/2)*12;x=lerp(x,tx,en);y=lerp(y,ty,en);const rr=lerp(12,6,en);
+      a+=`<g opacity="${fr.toFixed(2)}"><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(rr)}" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1.5"/><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(rr)}" style="fill:var(--eosin);opacity:.45"/><circle cx="${f1(x+2)}" cy="${f1(y-1)}" r="${f1(rr*.35)}" style="fill:var(--nuc-deep)"/></g>`})}
+    $('#apoSvg').innerHTML=a;
+    $('#apoCap').textContent=t<.25?'1 · Cell shrinks; cytoplasm turns dense and pink':t<.5?'2 · Chromatin condenses; membrane blebs but stays intact':t<.66?'3 · Cell breaks into neat apoptotic bodies':'4 · A macrophage eats them: no leak, no inflammation';
+  }
+  const rg=$('#dT'),pb=$('#dPlay');let stopA=null;
+  function stop(){if(stopA)stopA();stopA=null;pb.textContent='Play both'}
+  rg.addEventListener('input',()=>{stop();draw(+rg.value)});
+  pb.addEventListener('click',()=>{if(stopA){stop();return}let t0=+rg.value;if(t0>=.99)t0=0;pb.textContent='Pause';
+    stopA=animate((1-t0)*10000,p=>{const t=t0+(1-t0)*p;rg.value=t;draw(t)},()=>{stopA=null;pb.textContent='Replay'})});
+  onHide.death=stop;
+  draw(+rg.value);
+};
+
+/* =============== 2.5 patterns =============== */
+function patSvg(k){
+  const r=rng(k.length*13);let s='';
+  if(k==='coag'){for(let row=0;row<4;row++)for(let c=0;c<8;c++){const x=8+c*29+(row%2)*12,y=8+row*25;s+=`<rect x="${x}" y="${y}" width="26" height="21" rx="4" style="fill:var(--eosin);opacity:.5;stroke:var(--eosin);stroke-width:1"/>`;if(r()<.12)s+=`<circle cx="${x+13}" cy="${y+10}" r="4" style="fill:var(--nuc);opacity:.2"/>`}}
+  if(k==='liq'){for(let i=0;i<34;i++){const x=6+r()*228,y=6+r()*98;if(Math.hypot((x-120)/1.6,y-55)<44)continue;s+=`<circle cx="${f1(x)}" cy="${f1(y)}" r="9" style="fill:var(--cyto);stroke:var(--memb)"/><circle cx="${f1(x)}" cy="${f1(y)}" r="3" style="fill:var(--nuc)"/>`}
+    s+=`<path d="${blob(120,55,40,10,1.7,80)}" transform="translate(120 55) scale(1.6 1) translate(-120 -55)" style="fill:var(--field);stroke:var(--memb);stroke-width:1.5"/>`;
+    for(let i=0;i<22;i++){const a=r()*6.283,d=Math.sqrt(r())*34,x=120+d*Math.cos(a)*1.6,y=55+d*Math.sin(a);s+=`<g style="fill:var(--nuc)"><circle cx="${f1(x-3)}" cy="${f1(y)}" r="1.8"/><circle cx="${f1(x)}" cy="${f1(y+2)}" r="1.8"/><circle cx="${f1(x+3)}" cy="${f1(y)}" r="1.8"/></g>`}}
+  if(k==='cas'){s+=`<circle cx="120" cy="55" r="32" style="fill:var(--eosin);opacity:.35"/>`;for(let i=0;i<60;i++){const a=r()*6.283,d=Math.sqrt(r())*30;s+=`<circle cx="${f1(120+d*Math.cos(a))}" cy="${f1(55+d*Math.sin(a))}" r="1.2" style="fill:var(--eosin)"/>`}
+    for(let i=0;i<18;i++){const a=i/18*360;s+=`<ellipse cx="${f1(120+42*Math.cos(a*Math.PI/180))}" cy="${f1(55+42*Math.sin(a*Math.PI/180))}" rx="9" ry="4" transform="rotate(${a+90} ${f1(120+42*Math.cos(a*Math.PI/180))} ${f1(55+42*Math.sin(a*Math.PI/180))})" style="fill:var(--cyto);stroke:var(--memb);stroke-width:.8"/>`}
+    s+=`<ellipse cx="196" cy="58" rx="22" ry="17" style="fill:var(--cyto);stroke:var(--memb)"/>`;for(let i=0;i<9;i++){const a=(200+i*17)*Math.PI/180;s+=`<circle cx="${f1(196+14*Math.cos(a))}" cy="${f1(58+11*Math.sin(a))}" r="2.6" style="fill:var(--nuc)"/>`}
+    for(let i=0;i<40;i++){const a=r()*6.283,d=58+r()*20;const x=120+d*Math.cos(a),y=55+d*Math.sin(a)*.8;if(Math.hypot(x-196,y-58)<26)continue;s+=`<circle cx="${f1(x)}" cy="${f1(y)}" r="2.6" style="fill:var(--nuc)"/>`}}
+  if(k==='fat'){for(let row=0;row<3;row++)for(let c=0;c<6;c++){const x=10+c*38+(row%2)*16,y=6+row*34;s+=`<rect x="${x}" y="${y}" width="34" height="30" rx="12" style="fill:var(--field);stroke:var(--muted);stroke-width:1"/>`;
+    if((c+row)%3===1){for(let i=0;i<10;i++)s+=`<circle cx="${f1(x+6+r()*22)}" cy="${f1(y+6+r()*18)}" r="${f1(1.5+r()*2.5)}" style="fill:var(--hema);opacity:.6"/>`}}}
+  if(k==='fib'){s+=`<circle cx="120" cy="55" r="48" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1.5"/><circle cx="120" cy="55" r="28" style="fill:var(--field);stroke:var(--memb)"/>`;
+    s+=`<path d="M86 30 A42 42 0 0 1 150 22 L146 34 A30 30 0 0 0 96 40Z" style="fill:var(--saf);opacity:.85"/><path d="M160 64 A42 42 0 0 1 126 96 L124 84 A30 30 0 0 0 150 62Z" style="fill:var(--saf);opacity:.7"/>`;
+    for(let i=0;i<14;i++){const a=r()*6.283,d=34+r()*10;s+=`<ellipse cx="${f1(120+d*Math.cos(a))}" cy="${f1(55+d*Math.sin(a))}" rx="4" ry="2" style="fill:var(--nuc)"/>`}
+    [[112,50],[126,58],[118,64],[130,46]].forEach(([x,y])=>s+=`<circle cx="${x}" cy="${y}" r="5" style="fill:var(--bad);opacity:.7"/>`)}
+  if(k==='gang'){s+=`<path d="M30 100 Q30 60 70 52 L196 46 Q216 46 216 66 L216 100Z" style="fill:var(--cyto);stroke:var(--memb);stroke-width:1.5"/>`;
+    [[78,30,15,.92],[112,24,12,.85],[140,24,11,.7],[166,28,10,.45],[190,34,9,.2]].forEach(([x,y,rr,o])=>s+=`<ellipse cx="${x}" cy="${y+10}" rx="${rr}" ry="${rr*1.25}" style="fill:var(--cyto);stroke:var(--memb)"/><ellipse cx="${x}" cy="${y+10}" rx="${rr}" ry="${rr*1.25}" style="fill:var(--ink);opacity:${o}"/>`);
+    s+=`<path d="M64 52 Q110 42 150 46 L148 60 Q110 58 66 66Z" style="fill:var(--ink);opacity:.35"/>`}
+  return `<svg viewBox="0 0 240 110" aria-hidden="true">${s}</svg>`;
+}
+const PAT=[
+ {k:'coag',n:'Coagulative',look:'The tissue outline survives for days: you can still see "ghost" cell shapes, but the nuclei are gone and the cytoplasm is deep pink.',where:'Infarcts (death from lost blood supply) in solid organs: heart, kidney, spleen. Every organ <b>except the brain</b>.',why:'The injury denatures the cell\'s own enzymes along with its structural proteins, so the cell can\'t digest itself right away.'},
+ {k:'liq',n:'Liquefactive',look:'Dead tissue is digested into a creamy liquid. Full of neutrophils and debris, that liquid is <b>pus</b>. A walled-off pocket of it is an <b>abscess</b>.',where:'Bacterial (and some fungal) infections. Ischemic death in the <b>brain</b>.',why:'Enzymes from neutrophils, or from brain cells themselves, digest the tissue faster than proteins can denature.',bug:'<i>Staphylococcus aureus</i> abscess'},
+ {k:'cas',n:'Caseous',look:'To the eye: soft, crumbly, white, cheese-like. Under the microscope: a pink, granular, structureless center ringed by a <b>granuloma</b> (epithelioid macrophages, a multinucleated giant cell, lymphocytes).',where:'Tuberculosis is the classic. Some fungal infections.',why:'A granuloma is the immune system walling off a germ it can\'t kill. The center dies in this distinctive pattern.',bug:'<i>Mycobacterium tuberculosis</i>'},
+ {k:'fat',n:'Fat necrosis',look:'Chalky white spots in fat tissue. Under the microscope: shadowy dead fat cells with blue-purple calcium deposits.',where:'Acute pancreatitis is the classic. Also injury to fatty tissue such as the breast.',why:'Leaked pancreatic lipases split fat into fatty acids, which bind calcium and form soaps. This is called <b>saponification</b>.'},
+ {k:'fib',n:'Fibrinoid',look:'Bright pink, smudgy, shapeless material in the walls of blood vessels.',where:'Immune-mediated vasculitis; malignant hypertension.',why:'Immune complexes and leaked fibrin deposit in damaged vessel walls.'},
+ {k:'gang',n:'Gangrenous',look:'Not its own microscopic pattern. A clinical term, usually for a limb (often the lower leg or toes) that lost its blood supply.',where:'<b>Dry</b> gangrene = coagulative necrosis, shriveled and black. <b>Wet</b> gangrene = bacterial infection on top, so liquefactive. <b>Gas</b> gangrene = <i>Clostridium perfringens</i>.',why:'Ischemia (diabetes, peripheral artery disease), with or without infection.',bug:'<i>Clostridium perfringens</i> (gas gangrene)'}
+];
+inits.patterns=()=>{
+  $('#patCards').innerHTML=PAT.map(p=>`<article class="card"><div class="mini">${patSvg(p.k)}</div><h4>${p.n} necrosis</h4>
+    <p><span class="lbl">What it looks like</span>${p.look}</p><p><span class="lbl">Where you see it</span>${p.where}</p><p><span class="lbl">Why</span>${p.why}</p>${p.bug?`<div class="hook"><b>Bacterial link</b>${p.bug}</div>`:''}</article>`).join('').replace('Gangrenous necrosis','Gangrenous necrosis').replace('Fat necrosis necrosis','Fat necrosis');
+};
+
+/* =============== bridge =============== */
+const CH=[
+ ['<i>Staphylococcus aureus</i>','Neutrophils pour in. Their enzymes plus staph toxins digest the tissue, while coagulase walls the area off with fibrin.',[['bad','Liquefactive necrosis'],['','Abscess (pus)']]],
+ ['<i>Mycobacterium tuberculosis</i>','Survives inside macrophages. T cells (type IV hypersensitivity) organize a granuloma to wall it off.',[['bad','Caseous necrosis'],['','Granuloma, Ghon complex']]],
+ ['<i>Clostridium perfringens</i>','α-toxin (lecithinase) dissolves cell membranes in muscle with a poor blood supply.',[['bad','Gas gangrene'],['','Myonecrosis']]],
+ ['<i>Helicobacter pylori</i>','Years of chronic gastritis keep the stomach lining under stress.',[['warn','Intestinal metaplasia'],['bad','→ dysplasia → adenocarcinoma'],['','Also MALT lymphoma']]],
+ ['Gram-negative sepsis','Endotoxin (LPS) triggers TNF and IL-1 → blood pressure crashes → organs are starved of oxygen.',[['warn','Hypoxic cell injury'],['bad','Necrosis in kidney, gut, heart']]],
+ ['<i>Corynebacterium diphtheriae</i>','Exotoxin shuts down protein synthesis (EF-2). Throat lining cells die.',[['bad','Necrosis'],['','Gray pseudomembrane of dead cells, fibrin and bacteria']]],
+ ['<i>Clostridioides difficile</i>','Toxins A and B wreck the cytoskeleton of colon lining cells.',[['bad','Cell death + inflammation'],['','Pseudomembranous colitis']]],
+ ['<i>Streptococcus pyogenes</i>','Spreading enzymes and toxins race along the fascia under the skin.',[['bad','Necrotizing fasciitis'],['','"Flesh-eating" infection']]],
+ ['<i>Vibrio cholerae</i>','Cholera toxin raises cAMP in gut cells, so they pump out salt and water.',[['good','Cells stay alive'],['','Function hijacked, structure spared: the lining looks almost normal']]]
+];
+inits.bridge=()=>{
+  $('#bridgeList').innerHTML=`<div class="callout prose"><p>Infection is one of the main causes of cell injury. Bacteria hurt cells in two ways: <b>directly</b> (toxins, enzymes) and <b>indirectly</b>, through the inflammation our own body mounts against them.</p></div>`+
+   CH.map(c=>`<div class="chain"><div class="bug">${c[0]}</div><div class="arr" aria-hidden="true">→</div><div class="mid">${c[1]}</div><div class="arr" aria-hidden="true">→</div><div class="out">${c[2].map(o=>o[0]?`<span class="tag ${o[0]}">${o[1]}</span>`:`<span style="font-size:14px;color:var(--muted)">${o[1]}</span>`).join('')}</div></div>`).join('');
+};
+
+/* =============== review: flashcards =============== */
+const FC=[
+ [1,'What color are Gram-positive bacteria after a Gram stain, and why?','Purple. Their thick peptidoglycan wall traps the crystal violet–iodine complex when alcohol is applied.'],
+ [1,'What makes Gram-negatives lose the purple dye?','Alcohol dissolves the outer membrane and the thin peptidoglycan can\'t hold the dye. Safranin then stains them pink.'],
+ [1,'What is endotoxin?','Lipid A of lipopolysaccharide (LPS) in the Gram-negative outer membrane. Released when the bacteria die; causes fever and septic shock.'],
+ [1,'Exotoxin or endotoxin: which can be made into a toxoid vaccine?','Exotoxins (tetanus and diphtheria toxoids). Endotoxin cannot.'],
+ [1,'The four phases of the bacterial growth curve','Lag (adjusting) → Log (exponential doubling) → Stationary (births = deaths) → Death (decline).'],
+ [1,'Which growth phase is most sensitive to penicillin?','Log phase, when cells are actively building new cell wall.'],
+ [1,'Why does oxygen kill obligate anaerobes?','They lack catalase and/or superoxide dismutase, so toxic oxygen by-products build up.'],
+ [1,'Name the obligate aerobes.','"Nagging Pests Must Breathe": Nocardia, Pseudomonas, Mycobacterium tuberculosis, Bacillus.'],
+ [1,'What does a capsule do?','Blocks phagocytosis. Key virulence factor of S. pneumoniae, H. influenzae type b, N. meningitidis, Klebsiella and others.'],
+ [1,'What are plasmids, and why do they matter?','Small extra DNA rings that often carry antibiotic resistance and toxin genes, and can be shared between bacteria.'],
+ [1,'Bacterial vs human ribosomes','70S (30S + 50S) vs 80S. The difference lets antibiotics target bacteria selectively.'],
+ [1,'Which two genera make endospores?','Bacillus and Clostridium, both Gram-positive rods.'],
+ [1,'Tetanus toxin vs botulinum toxin','Tetanus blocks inhibitory neurotransmitters (GABA, glycine) → spastic paralysis. Botulinum blocks acetylcholine release → flaccid paralysis.'],
+ [1,'How does cholera toxin cause diarrhea?','It locks Gs on → cAMP rises in gut cells → they pump out salt and water: "rice-water" stools.'],
+ [1,'Gram-positive cocci in clusters, coagulase positive','Staphylococcus aureus.'],
+ [1,'Urease-positive spiral bacterium living in the stomach','Helicobacter pylori: gastritis, ulcers, gastric cancer, MALT lymphoma.'],
+ [1,'Why doesn\'t Mycobacterium Gram stain well?','Its waxy, mycolic-acid-rich wall. Use the acid-fast (Ziehl–Neelsen) stain instead.'],
+ [2,'Hypertrophy vs hyperplasia','Hypertrophy = bigger cells. Hyperplasia = more cells. Both can enlarge an organ.'],
+ [2,'Why does the heart respond to high blood pressure with hypertrophy, not hyperplasia?','Adult heart muscle cells can barely divide, so they can only grow larger.'],
+ [2,'Define metaplasia.','The reversible replacement of one adult cell type by another that better withstands the stress.'],
+ [2,'Barrett esophagus','Squamous → intestinal-type columnar metaplasia from chronic acid reflux. Raises the risk of adenocarcinoma.'],
+ [2,'Smoker\'s bronchus','Ciliated columnar → stratified squamous metaplasia. Tougher, but loses mucus and cilia clearance.'],
+ [2,'How do cells atrophy?','Less protein synthesis, more breakdown by the ubiquitin–proteasome system, plus autophagy (which leaves lipofuscin).'],
+ [2,'Is dysplasia an adaptation?','No. It is disordered, atypical growth and a precursor to cancer. Mild dysplasia can regress.'],
+ [2,'The two hallmarks of reversible injury','Cell swelling (hydropic change) and fatty change. Also blebs, swollen mitochondria, dilated ER, clumped chromatin.'],
+ [2,'Why does an injured cell swell?','Low ATP → the Na⁺/K⁺ pump fails → sodium and water flow in.'],
+ [2,'Nuclear changes of necrosis, in order','Pyknosis (shrinks, darkens) → karyorrhexis (fragments) → karyolysis (fades).'],
+ [2,'Where do you see coagulative necrosis?','Infarcts of solid organs (heart, kidney, spleen). Everywhere except the brain.'],
+ [2,'Where do you see liquefactive necrosis?','Bacterial abscesses and brain infarcts.'],
+ [2,'Caseous necrosis','Cheese-like necrosis inside granulomas. Classic for tuberculosis.'],
+ [2,'Fat necrosis','Acute pancreatitis: lipases release fatty acids that bind calcium (saponification), leaving chalky white spots.'],
+ [2,'Three key features of apoptosis','The cell shrinks, the membrane stays intact, and there is no inflammation. Run by caspases.'],
+ [2,'Dystrophic vs metastatic calcification','Dystrophic: damaged tissue, normal blood calcium. Metastatic: normal tissue, high blood calcium.']
+];
+const MN=[
+ ['Purple = Positive','Gram-positive stays purple. Both start with P.'],
+ ['SHiNE SKiS','Encapsulated bacteria: <i>S. pneumoniae, H. influenzae</i> type b, <i>N. meningitidis, E. coli, Salmonella, Klebsiella</i>, group B <i>Strep</i>.'],
+ ['Nagging Pests Must Breathe','Obligate aerobes: <i>Nocardia, Pseudomonas, M. tuberculosis, Bacillus</i>.'],
+ ['Can\'t Breathe Air','Obligate anaerobes: <i>Clostridium, Bacteroides, Actinomyces</i>.'],
+ ['Lag, Log, Stay, Die','The four growth phases, in order.'],
+ ['Trophy vs plasia','Hyper<b>trophy</b>: each player wins a bigger trophy (size). Hyper<b>plasia</b>: more players on the team (number).'],
+ ['Shrink, shatter, fade','Pyknosis → karyorrhexis → karyolysis.'],
+ ['The brain goes liquid','Ischemia causes coagulative necrosis everywhere except the brain, which liquefies.'],
+ ['Caseous = cheese = TB','From the Latin <i>caseus</i>, cheese.'],
+ ['Explosion vs implosion','Necrosis bursts and inflames. Apoptosis shrinks quietly and gets eaten.']
+];
+inits.review=()=>{
+  let filt='all',deck=[],i=0;
+  const F=[['all','All cards'],['1','Unit 1'],['2','Unit 2']];
+  $('#fcFilter').innerHTML=F.map(([k,l])=>`<button class="btn" data-ff="${k}" aria-pressed="${k==='all'}">${l}</button>`).join('');
+  const fc=$('#fc');
+  function build(shuf){deck=FC.filter(c=>filt==='all'||String(c[0])===filt);if(shuf){const r=rng(Date.now()%1e6);for(let k=deck.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[deck[k],deck[j]]=[deck[j],deck[k]]}}i=0;render()}
+  function render(){const c=deck[i];fc.classList.remove('flip');
+    const tag=c[0]===1?'Unit 1 · Bacteria':'Unit 2 · Cells';$('#fcTagF').textContent=tag+' · question';$('#fcTagB').textContent=tag+' · answer';
+    $('#fcFront').textContent=c[1];$('#fcBack').textContent=c[2];$('#fcCount').textContent=`${i+1} / ${deck.length}`}
+  const flip=()=>fc.classList.toggle('flip');
+  fc.addEventListener('click',flip);$('#fcFlip').onclick=flip;
+  $('#fcNext').onclick=()=>{i=(i+1)%deck.length;render()};$('#fcPrev').onclick=()=>{i=(i-1+deck.length)%deck.length;render()};
+  $('#fcShuf').onclick=()=>build(true);
+  $('#fcFilter').addEventListener('click',e=>{const b=e.target.closest('[data-ff]');if(!b)return;filt=b.dataset.ff;$$('[data-ff]').forEach(x=>x.setAttribute('aria-pressed',x===b));build(false)});
+  document.addEventListener('keydown',e=>{if(cur!=='review')return;if(e.target.closest('button,input')&&e.target!==fc)return;
+    if(e.key===' '||e.key==='Enter'){e.preventDefault();flip()}else if(e.key==='ArrowRight'){i=(i+1)%deck.length;render()}else if(e.key==='ArrowLeft'){i=(i-1+deck.length)%deck.length;render()}});
+  build(false);
+  $('#mnList').innerHTML=MN.map(m=>`<div class="card"><b class="big">${m[0]}</b><p>${m[1]}</p></div>`).join('');
+};
+
+/* =============== quiz =============== */
+const QZ=[
+ [1,'Why do Gram-positive bacteria stay purple after the alcohol wash?',['Their outer membrane holds the dye','Their thick peptidoglycan traps the crystal violet–iodine complex','Safranin turns them purple','They have no cell wall'],1,'Alcohol dehydrates the thick peptidoglycan and shrinks its pores, trapping the CV–I complex. Gram-positives have no outer membrane.'],
+ [1,'Which Gram stain step decides whether a cell ends up purple or pink?',['Crystal violet','Iodine','Alcohol decolorizer','Safranin'],2,'The decolorizer washes dye out of Gram-negatives only. Before it, every cell is purple.'],
+ [1,'Endotoxin is:',['A protein secreted by Gram-positives','Lipid A of LPS in the Gram-negative outer membrane','The capsule of S. pneumoniae','An enzyme that breaks down penicillin'],1,'Endotoxin = lipid A of lipopolysaccharide. It is part of the Gram-negative outer membrane and is released mainly when bacteria die.'],
+ [1,'Which statement about exotoxins is true?',['They are part of the cell wall','Only Gram-negatives make them','They can be turned into toxoid vaccines','They are heat-stable lipids'],2,'Exotoxins are proteins, so they can be inactivated into toxoids (tetanus, diphtheria) that still trigger immunity.'],
+ [1,'Tetanus causes spastic paralysis because its toxin:',['Blocks acetylcholine release','Blocks release of GABA and glycine','Raises cAMP in neurons','Destroys muscle fibers'],1,'Without inhibitory signals (GABA, glycine), motor neurons fire nonstop. Botulinum is the one that blocks acetylcholine (flaccid paralysis).'],
+ [1,'Penicillin works best on bacteria in which growth phase?',['Lag','Log','Stationary','Death'],1,'β-lactams block cell wall building, which happens most when cells are actively dividing in log phase.'],
+ [1,'A bacterium grows only at the very bottom of a thioglycolate tube. What is it, and why?',['Obligate aerobe; needs oxygen','Microaerophile; needs a little oxygen','Obligate anaerobe; lacks catalase and/or superoxide dismutase','Facultative; prefers fermentation'],2,'Without enzymes to neutralize toxic oxygen by-products, oxygen poisons it, so it grows only where there is none.'],
+ [1,'Which bacterium is a urease-positive microaerophile that survives stomach acid?',['Vibrio cholerae','Helicobacter pylori','Salmonella','Listeria'],1,'H. pylori makes urease, which produces ammonia to neutralize acid around it.'],
+ [1,'Which of these is an encapsulated bacterium (dangerous after splenectomy)?',['Streptococcus pneumoniae','Clostridium tetani','Treponema pallidum','Mycoplasma'],0,'S. pneumoniae is the first S in SHiNE SKiS. Without a spleen, the body struggles to clear encapsulated bacteria.'],
+ [1,'Penicillin targets which bacterial structure?',['70S ribosome','DNA gyrase','Peptidoglycan cell wall','Cell membrane'],2,'β-lactams block the enzymes that cross-link peptidoglycan. Humans have no peptidoglycan.'],
+ [1,'Antibiotic resistance genes often spread between bacteria on:',['Plasmids','Ribosomes','Capsules','Endospores'],0,'Plasmids are mobile DNA rings that can be passed from cell to cell, even between species.'],
+ [1,'"Rice-water" diarrhea is caused by a toxin that:',['Inactivates EF-2','Raises cAMP in gut cells','Splits membrane lipids','Blocks acetylcholine'],1,'Cholera toxin keeps Gs switched on, cAMP rises, and gut cells pump out chloride and water.'],
+ [2,'The heart wall thickens in long-standing hypertension mainly because of:',['Hyperplasia','Hypertrophy','Metaplasia','Atrophy'],1,'Adult cardiac myocytes can barely divide, so they adapt by getting bigger.'],
+ [2,'Replacement of one adult cell type by another is called:',['Dysplasia','Hyperplasia','Metaplasia','Neoplasia'],2,'Metaplasia: e.g., columnar → squamous in a smoker\'s bronchus.'],
+ [2,'In Barrett esophagus, the lining changes from:',['Columnar to squamous','Squamous to intestinal-type columnar','Squamous to cuboidal','Columnar to transitional'],1,'Chronic acid reflux replaces the normal squamous lining with acid-resistant intestinal-type columnar cells.'],
+ [2,'Which is NOT a feature of reversible injury?',['Cell swelling','Fatty change','Membrane blebs','Karyorrhexis'],3,'Karyorrhexis (nuclear fragmentation) only happens after the point of no return.'],
+ [2,'Early cell swelling in hypoxic injury happens because:',['Lysosomes burst','The ATP-dependent Na⁺/K⁺ pump fails','DNA fragments','Caspases are activated'],1,'Less ATP → the pump slows → sodium and water enter the cell.'],
+ [2,'Necrosis in an infarct of the brain is typically:',['Coagulative','Liquefactive','Caseous','Fibrinoid'],1,'The brain is the exception: ischemic death there is liquefactive, not coagulative.'],
+ [2,'Caseous necrosis is classic for:',['Acute pancreatitis','Myocardial infarction','Tuberculosis','Malignant hypertension'],2,'Caseous ("cheese-like") necrosis forms in the center of TB granulomas.'],
+ [2,'Which is true of apoptosis?',['Cells swell and burst','It always causes inflammation','The membrane stays intact and there is no inflammation','It only happens in disease'],2,'Apoptotic cells shrink and are packaged into bodies that macrophages eat quietly. It is often a normal process.'],
+ [2,'A myocardial infarct shows which pattern of necrosis?',['Coagulative','Liquefactive','Fat','Caseous'],0,'Ischemic death in solid organs (except the brain) is coagulative: ghost outlines with no nuclei.'],
+ [2,'Chalky white spots in the fat around an inflamed pancreas are:',['Caseous necrosis','Fat necrosis (saponification)','Fibrinoid necrosis','Dystrophic calcification of a tumor'],1,'Leaked lipases release fatty acids that bind calcium to form soaps.'],
+ [2,'A nucleus that shrinks and turns dark is showing:',['Karyolysis','Karyorrhexis','Pyknosis','Mitosis'],2,'Pyknosis comes first, then karyorrhexis (fragmenting), then karyolysis (fading).'],
+ [2,'Unopposed estrogen thickens the endometrium with crowded glands. This is:',['Physiologic hypertrophy','Pathologic hyperplasia','Metaplasia','Atrophy'],1,'Too much hormone stimulation → more cells. Endometrial hyperplasia raises cancer risk.'],
+ [2,'Disordered growth with large, dark nuclei that can precede cancer is:',['Metaplasia','Dysplasia','Hypertrophy','Apoptosis'],1,'Dysplasia is not an adaptation. Full-thickness dysplasia = carcinoma in situ.'],
+ [2,'Atrophy happens mainly through:',['Cell swelling','More protein breakdown (ubiquitin–proteasome) and autophagy','Stem cell reprogramming','Increased mitosis'],1,'The cell makes less protein and breaks down more, shrinking in size.']
+];
+inits.quiz=()=>{
+  const F=[['mix','Mixed (15)'],['1','Unit 1'],['2','Unit 2']];
+  $('#qFilter').innerHTML=F.map(([k,l])=>`<button class="btn" data-qf="${k}" aria-pressed="${k==='mix'}">${l}</button>`).join('');
+  let list=[],i=0,score=0,missed=[],answered=false;
+  function start(k){const r=rng(Date.now()%1e6);let L=QZ.filter(q=>k==='mix'||String(q[0])===k).slice();for(let a=L.length-1;a>0;a--){const j=Math.floor(r()*(a+1));[L[a],L[j]]=[L[j],L[a]]}
+    list=k==='mix'?L.slice(0,15):L;i=0;score=0;missed=[];q()}
+  function q(){answered=false;$('#qBar').style.width=(i/list.length*100)+'%';
+    if(i>=list.length){const pct=Math.round(score/list.length*100);
+      $('#qCard').innerHTML=`<div class="kicker">Finished</div><div class="q">You scored ${score} / ${list.length} (${pct}%)</div><p>${pct>=85?'Excellent. You\'re ready.':pct>=65?'Solid. Review the ones you missed below.':'Worth another pass through the modules, then try again.'}</p>`+
+       (missed.length?`<dl class="kv">${missed.map(m=>`<div><dt>${m[1]}</dt><dd><b>${m[2][m[3]]}.</b> ${m[4]}</dd></div>`).join('')}</dl>`:'')+`<div class="ctrls"><button class="btn primary" id="qAgain">Try again</button><button class="btn" data-go="review">Go to flashcards</button></div>`;
+      $('#qAgain').onclick=()=>start($('[data-qf][aria-pressed="true"]').dataset.qf);return}
+    const Q=list[i];
+    $('#qCard').innerHTML=`<div class="readout"><span>question <b>${i+1} / ${list.length}</b></span><span>score <b>${score}</b></span><span>${Q[0]===1?'Unit 1 · Bacteria':'Unit 2 · Cells'}</span></div><div class="q">${Q[1]}</div><div class="opts">${Q[2].map((o,j)=>`<button class="opt" data-o="${j}"><span class="l">${'ABCD'[j]}</span><span>${o}</span></button>`).join('')}</div><div id="qFb"></div>`;
+  }
+  $('#qCard').addEventListener('click',e=>{const b=e.target.closest('.opt');if(b&&!answered){answered=true;const Q=list[i],j=+b.dataset.o,ok=j===Q[3];if(ok)score++;else missed.push(Q);
+      $$('.opt',$('#qCard')).forEach((o,k)=>{o.disabled=true;if(k===Q[3])o.classList.add('right');else if(k===j)o.classList.add('wrong')});
+      $('#qFb').innerHTML=`<div class="expl"><b style="color:var(${ok?'--good':'--bad'})">${ok?'Correct.':'Not quite.'}</b> ${Q[4]}</div><div class="ctrls" style="margin-top:12px"><button class="btn primary" id="qNext">${i+1<list.length?'Next question →':'See results'}</button></div>`;
+      $('#qNext').onclick=()=>{i++;q()};$('#qNext').focus({preventScroll:true})}});
+  $('#qFilter').addEventListener('click',e=>{const b=e.target.closest('[data-qf]');if(!b)return;$$('[data-qf]').forEach(x=>x.setAttribute('aria-pressed',x===b));start(b.dataset.qf)});
+  start('mix');
+};
+
+/* =============== boot =============== */
+const h0=location.hash.slice(1);
+show(MODS.some(m=>m.id===h0)?h0:store.get('last','home'));
+})();
+</script>
+
+</body>
+</html>
