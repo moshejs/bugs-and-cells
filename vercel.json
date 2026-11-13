@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "trailingSlash": true,
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "bugs-and-cells.vercel.app" }],
+      "destination": "https://bugs-and-cells.quentin.software/:path*",
+      "permanent": true
+    }
+  ]
+}
