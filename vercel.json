@@ -3,9 +3,9 @@
   "trailingSlash": true,
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "has": [{ "type": "host", "value": "bugs-and-cells.vercel.app" }],
-      "destination": "https://bugs-and-cells.quentin.software/:path*",
+      "destination": "https://bugs-and-cells.quentin.software/$1",
       "permanent": true
     }
   ]
