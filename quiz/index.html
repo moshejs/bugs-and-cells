@@ -794,9 +794,10 @@ tbody th{font-weight:700}
   <div class="mhead">
     <p class="eyebrow">Review</p>
     <h1 class="mh1">Quiz</h1>
-    <p class="lede">Every answer comes with the reason. Pick a unit or mix both.</p>
+    <p class="lede">Every answer comes with the reason. Pick a unit, mix them, or try the clinical vignettes.</p>
   </div>
   <div class="ctrls" id="qFilter"></div>
+  <div class="vnote" id="qNote" role="note" hidden><b>About the clinical vignettes</b>AI-written practice cases, not reviewed by a clinician or an educator. Each one is put together from the facts on this site's bacteria cards, and the people in them are invented. A study aid for learners preparing for board-style exams: not medical advice, and not for diagnosing anyone.</div>
   <div class="bar"><i id="qBar"></i></div>
   <div class="qcard" id="qCard" aria-live="polite"></div>
 </section>
@@ -846,6 +847,19 @@ tbody th{font-weight:700}
 .timebar button{font:700 12px var(--mono);padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);cursor:pointer}
 .timebar button[aria-pressed="true"]{background:var(--eosin-soft);border-color:var(--eosin);color:var(--eosin)}
 .u1 .timebar button[aria-pressed="true"]{background:var(--hema-soft);border-color:var(--hema);color:var(--hema)}
+/* cross-links and clinical vignettes */
+.xlink{font-size:13.5px;line-height:1.45;color:var(--muted);margin:0}
+.xlink a{color:var(--hema);text-decoration:underline;text-underline-offset:2px}
+.card.flash{outline:2px solid var(--hema);outline-offset:3px}
+@media (max-width:900px){.card[id]{scroll-margin-top:76px}}
+.vnote{border:1px solid var(--warn);background:var(--warn-soft);color:var(--ink);border-radius:10px;padding:10px 14px;font-size:14.5px;line-height:1.5;margin-bottom:12px}
+.vnote b{display:block;font:700 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+.vig{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;font-size:16px}
+.vig dt{font:700 10.5px/2 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.vig dd{margin:0}
+.expl ul.vq{margin:6px 0;padding-left:20px}
+.expl p{margin:0 0 6px}
+@media (max-width:560px){.vig{grid-template-columns:minmax(0,1fr);gap:0}.vig dd{margin-bottom:8px}}
 </style>
 
 <!-- ================= 1.6 FLORA ================= -->
@@ -917,6 +931,7 @@ tbody th{font-weight:700}
     <div class="stage"><div class="scroll"><svg class="wide" id="sepSvg" viewBox="0 0 820 400" role="group" aria-label="Sepsis cascade"></svg></div><p class="stage-cap">Tap any box. Gram-positive bacteria trigger the same cascade through lipoteichoic acid and superantigens.</p></div>
     <aside class="note" id="sepNote" aria-live="polite"></aside>
   </div>
+  <p class="xlink">Another project by the same author: the <a href="https://www.medcompanions.org/sepsis-and-shock/" rel="noopener">Sepsis Companion</a>, an educational guide to sepsis on Medical Companions. Not medical advice.</p>
 </section>
 
 <!-- ================= 1.10 ANTIBIOTICS ================= -->
@@ -1902,6 +1917,22 @@ inits.virulence=()=>{
 };
 
 /* =============== 1.7 gallery =============== */
+/* =============== cross-links: Medical Companions =============== */
+/* A separate project by the same author. A card links to a condition guide only when the card's own text names that
+   condition (MC[slug].t); tests/check.mjs checks that, and that every target page exists. No tracking parameters. */
+const MC_HOST='https://www.medcompanions.org';
+const MC={
+ 'tuberculosis':{n:'TB Companion',c:'tuberculosis',t:'Tuberculosis'},
+ 'sepsis-and-shock':{n:'Sepsis Companion',c:'sepsis',t:'sepsis'},
+ 'guillain-barre-syndrome':{n:'GBS Companion',c:'Guillain-Barré syndrome',t:'Guillain–Barré'},
+ 'colorectal-cancer':{n:'Colorectal Cancer Companion',c:'colorectal cancer',t:'colon cancer'},
+ 'cystic-fibrosis':{n:'CF Companion',c:'cystic fibrosis',t:'cystic fibrosis'},
+ 'cirrhosis':{n:'Cirrhosis Companion',c:'cirrhosis',t:'cirrhosis'}
+};
+const MC_LINKS={'Mycobacterium tuberculosis':'tuberculosis','Campylobacter jejuni':'guillain-barre-syndrome','Streptococcus gallolyticus (bovis)':'colorectal-cancer','Pseudomonas aeruginosa':'cystic-fibrosis','Escherichia coli':'sepsis-and-shock','Streptococcus agalactiae':'sepsis-and-shock','Klebsiella pneumoniae':'sepsis-and-shock','Haemophilus influenzae':'sepsis-and-shock','Hepatitis B':'cirrhosis','Hepatitis C':'cirrhosis','Zika · yellow fever · West Nile':'guillain-barre-syndrome'};
+const mcLink=s=>`<p class="xlink">Another project by the same author: the <a href="${MC_HOST}/${s}/" rel="noopener">${MC[s].n}</a>, an educational guide to ${MC[s].c} on Medical Companions. Not medical advice.</p>`;
+const slugOf=s=>s.toLowerCase().replace(/<[^>]+>/g,'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const bugId=n=>'bug-'+slugOf(n), virId=n=>'vir-'+slugOf(n);
 const BUGS=[
  {n:'Staphylococcus aureus',c:'pos',s:'clusters',o:'Facultative',dz:'Skin abscesses and boils, cellulitis, osteomyelitis, endocarditis, food poisoning, toxic shock syndrome.',w:'Coagulase (walls itself off in fibrin), protein A, TSST-1 superantigen, enterotoxins.',h:'Catalase + and coagulase +. Golden colonies (<i>aureus</i> = gold). MRSA resists most β-lactams.',p:'Liquefactive necrosis → abscess full of pus',go:'patterns'},
  {n:'Streptococcus pyogenes',sub:'Group A strep',c:'pos',s:'chains',o:'Facultative',dz:'Strep throat, impetigo, cellulitis, necrotizing fasciitis, scarlet fever.',w:'M protein, streptolysin O, streptokinase, hyaluronidase.',h:'β-hemolytic. Weeks later it can trigger rheumatic fever or post-strep glomerulonephritis, which are immune reactions, not infection.',p:'Necrotizing fasciitis destroys fascia and fat',go:'bridge'},
@@ -1957,12 +1988,12 @@ inits.gallery=()=>{
     $$('#galCards .card').forEach(c=>{const ok=(gf==='all'||c.dataset.c===gf)&&(!q||c.textContent.toLowerCase().includes(q));c.hidden=!ok;if(ok)n++});
     let e=$('#galEmpty');if(!e){e=document.createElement('p');e.id='galEmpty';e.className='lede';e.style.fontSize='16px';$('#galCards').after(e)}e.textContent=n?'':'No match. Try another word.'}
   $('#galQ').addEventListener('input',applyFilter);
-  $('#galCards').innerHTML=BUGS.map(b=>`<article class="card" data-c="${b.c}"><div class="mini">${morph(b.s,b.c)}</div>
+  $('#galCards').innerHTML=BUGS.map(b=>`<article class="card" id="${bugId(b.n)}" tabindex="-1" data-c="${b.c}"><div class="mini">${morph(b.s,b.c)}</div>
     <div><h4><i>${b.n}</i></h4>${b.sub?`<p style="color:var(--muted)">${b.sub}</p>`:''}</div>
     <div class="chips"><span class="tag ${GL[b.c][1]}">${b.c==='oth'?(b.s==='acidfast'?'Acid-fast':'Spirochete'):GL[b.c][0]}</span><span class="tag">${b.o}</span></div>
     <p><span class="lbl">Signature disease</span>${b.dz}</p><p><span class="lbl">Weapons</span>${b.w}</p>
     <div class="hook"><b>Exam hook</b>${b.h}</div>
-    <p><span class="lbl">What it does to cells</span><button class="btn ghost" style="padding:6px 10px;margin-top:4px;text-align:left" data-go="${b.go}">${b.p} →</button></p></article>`).join('');
+    <p><span class="lbl">What it does to cells</span><button class="btn ghost" style="padding:6px 10px;margin-top:4px;text-align:left" data-go="${b.go}">${b.p} →</button></p>${MC_LINKS[b.n]?mcLink(MC_LINKS[b.n]):''}</article>`).join('');
   $('#galFilter').addEventListener('click',e=>{const b=e.target.closest('[data-gf]');if(!b)return;
     $$('[data-gf]').forEach(x=>x.setAttribute('aria-pressed',x===b));applyFilter()});
 };
@@ -2553,24 +2584,89 @@ const QZ=[
  [2,'A normal fibroblast stops dividing after about 50 divisions because:',['It runs out of ATP','Its telomeres become critically short','It accumulates lipofuscin','Telomerase is activated'],1,'The Hayflick limit: short telomeres are read as DNA damage, p53 and p16 enforce senescence.'],
  [2,'Caloric restriction extends lifespan in experimental animals partly through:',['Increased IGF-1 signaling','Activation of sirtuins and reduced mTOR','Telomere shortening','Increased free radical production'],1,'Less nutrient signaling (insulin/IGF-1, mTOR) and more sirtuin activity shift cells toward maintenance and repair.']
 ];
+/* =============== review: clinical vignettes =============== */
+/* AI-written practice vignettes, not reviewed by a clinician or educator. Each one is composed only from the
+   gallery card (BUGS) of its answer: every row is a quote [kind, field, quote, decisive, key]. kind = who | set |
+   find | vf | lab | path; field = dz | w | h | p | o; decisive = 1 when that clue alone rules out every other
+   option; key = the words that decide (defaults to the quote). tests/check.mjs proves each quote is on the card,
+   each key is on the answer's card and on none of the distractors' cards. */
+const VIG=[
+ {a:'Staphylococcus aureus',c:[['find','dz','Skin abscesses and boils',0],['lab','h','Catalase + and coagulase +',1,'coagulase +'],['lab','h','Golden colonies',1]],x:['Staphylococcus epidermidis','Staphylococcus saprophyticus','Streptococcus pyogenes']},
+ {a:'Streptococcus pyogenes',c:[['find','dz','scarlet fever',1],['vf','w','M protein',1],['lab','h','β-hemolytic',0]],x:['Streptococcus agalactiae','Enterococcus faecalis / faecium','Staphylococcus aureus']},
+ {a:'Streptococcus pneumoniae',c:[['find','dz','Lobar pneumonia',0],['find','h','"Rusty" sputum',1,'rusty'],['lab','h','Lancet-shaped diplococci, α-hemolytic',1,'lancet-shaped']],x:['Klebsiella pneumoniae','Legionella pneumophila','Mycoplasma pneumoniae']},
+ {a:'Clostridium tetani',c:[['set','h','Spores in soil enter puncture wounds',1,'puncture wounds'],['find','dz','lockjaw, risus sardonicus, back arching',1,'lockjaw'],['lab','h','Terminal spore = drumstick',1,'drumstick']],x:['Clostridium botulinum','Clostridium perfringens','Bacillus anthracis']},
+ {a:'Clostridium perfringens',c:[['find','dz','Gas gangrene (myonecrosis)',1,'gas gangrene'],['find','h','Gas bubbles crackle under the skin (crepitus)',1,'crepitus'],['lab','h','Double zone of hemolysis on blood agar',1,'double zone']],x:['Clostridium tetani','Streptococcus pyogenes','Bacillus anthracis']},
+ {a:'Clostridioides difficile',c:[['set','h','Follows antibiotics',1],['find','dz','pseudomembranous colitis',1,'pseudomembranous'],['lab','o','Obligate anaerobe',0]],x:['Shigella','Campylobacter jejuni','Salmonella']},
+ {a:'Listeria monocytogenes',c:[['who','dz','newborns, older adults and the immunocompromised',0],['find','dz','Meningitis',0],['set','h','Deli meats, soft cheeses, unpasteurized milk',1,'soft cheeses'],['lab','h','Grows in the fridge',1,'fridge'],['lab','h','Tumbling motility',1]],x:['Streptococcus agalactiae','Neisseria meningitidis','Escherichia coli']},
+ {a:'Bacillus anthracis',c:[['find','h','Painless black eschar on the skin',1,'black eschar'],['lab','h','The only bacterium with a protein capsule',1,'protein capsule']],x:['Clostridium perfringens','Corynebacterium diphtheriae','Staphylococcus aureus']},
+ {a:'Mycobacterium tuberculosis',c:[['find','dz','reactivation (upper-lobe cavities)',0],['lab','h','Acid-fast (Ziehl–Neelsen): red rods',1,'acid-fast'],['path','p','Caseous necrosis inside granulomas',1,'caseous']],x:['Klebsiella pneumoniae','Legionella pneumophila','Streptococcus pneumoniae']},
+ {a:'Escherichia coli',c:[['set','h','undercooked ground beef',1,'ground beef'],['find','h','hemolytic uremic syndrome (anemia, low platelets, kidney failure)',0]],x:['Shigella','Salmonella','Campylobacter jejuni']},
+ {a:'Salmonella',c:[['find','h','Typhoid: rose spots',1,'rose spots'],['find','h','carriers hide it in the gallbladder',1,'gallbladder'],['lab','h','Motile, makes H₂S',0]],x:['Shigella','Escherichia coli','Campylobacter jejuni']},
+ {a:'Pseudomonas aeruginosa',c:[['find','dz','Burn infections',1,'burn'],['lab','h','Blue-green pigment, grape-like smell, oxidase +',1,'blue-green pigment'],['lab','o','Obligate aerobe',0]],x:['Klebsiella pneumoniae','Proteus mirabilis','Escherichia coli']},
+ {a:'Neisseria meningitidis',c:[['set','h','Outbreaks in dorms and barracks',1,'barracks'],['find','dz','Meningitis',0],['find','dz','petechial rash',0],['find','h','Waterhouse–Friderichsen syndrome = adrenal hemorrhage',1,'adrenal hemorrhage']],x:['Haemophilus influenzae','Streptococcus pneumoniae','Listeria monocytogenes']},
+ {a:'Helicobacter pylori',c:[['find','dz','peptic ulcers',1,'peptic ulcers'],['lab','h','Urea breath test',1,'urea breath test'],['lab','o','Microaerophile',0]],x:['Campylobacter jejuni','Vibrio cholerae','Proteus mirabilis']},
+ {a:'Vibrio cholerae',c:[['find','dz','massive watery "rice-water" diarrhea and dehydration',1,'rice-water'],['set','h','Spread by contaminated water',0]],x:['Escherichia coli','Shigella','Campylobacter jejuni']},
+ {a:'Treponema pallidum',c:[['find','dz','painless chancre',1,'chancre'],['find','dz','rash on palms and soles',0],['lab','h','Too thin for Gram stain: darkfield microscopy',0]],x:['Gardnerella vaginalis','Neisseria gonorrhoeae','Borrelia burgdorferi']},
+ {a:'Staphylococcus epidermidis',c:[['find','dz','Infections of catheters, prosthetic joints, heart valves and shunts',0],['lab','h','Coagulase −, novobiocin sensitive',1,'novobiocin sensitive'],['lab','h','The most common blood-culture contaminant',1,'blood-culture contaminant']],x:['Staphylococcus aureus','Staphylococcus saprophyticus','Enterococcus faecalis / faecium']},
+ {a:'Staphylococcus saprophyticus',c:[['who','dz','young, sexually active women',0],['find','dz','Cystitis',0],['lab','h','Coagulase −, novobiocin resistant',1,'novobiocin resistant']],x:['Escherichia coli','Staphylococcus epidermidis','Proteus mirabilis']},
+ {a:'Streptococcus agalactiae',c:[['find','dz','Neonatal sepsis, pneumonia and meningitis',0],['lab','h','β-hemolytic, bacitracin resistant, CAMP test +, hippurate +',1,'CAMP test']],x:['Listeria monocytogenes','Escherichia coli','Streptococcus pyogenes']},
+ {a:'Viridans streptococci',c:[['set','h','enters blood after dental work',0],['find','dz','subacute endocarditis on damaged valves',0],['lab','h','α-hemolytic, optochin resistant, bile insoluble',1,'α-hemolytic, optochin resistant']],x:['Streptococcus pneumoniae','Enterococcus faecalis / faecium','Staphylococcus aureus']},
+ {a:'Enterococcus faecalis / faecium',c:[['find','dz','UTI, endocarditis, biliary and abdominal infections',0],['lab','h','γ-hemolytic, grows in bile and 6.5% NaCl',1,'grows in bile and 6.5% NaCl']],x:['Streptococcus gallolyticus (bovis)','Viridans streptococci','Streptococcus agalactiae']},
+ {a:'Streptococcus gallolyticus (bovis)',c:[['find','dz','Bacteremia and endocarditis',0],['lab','h','Group D, bile esculin +, no growth in 6.5% NaCl',1,'no growth in 6.5% NaCl'],['path','p','Marker of colon cancer',1,'colon cancer']],x:['Enterococcus faecalis / faecium','Viridans streptococci','Staphylococcus aureus']},
+ {a:'Corynebacterium diphtheriae',c:[['find','dz','gray pseudomembrane in the throat, bull neck',1,'bull neck'],['lab','h','metachromatic granules; tellurite agar',1,'tellurite']],x:['Streptococcus pyogenes','Listeria monocytogenes','Bordetella pertussis']},
+ {a:'Clostridium botulinum',c:[['who','h','infants eat spores (honey)',1,'honey'],['find','dz','descending flaccid paralysis, dilated pupils, dry mouth',1,'descending flaccid paralysis']],x:['Clostridium tetani','Bordetella pertussis','Listeria monocytogenes']},
+ {a:'Nocardia',c:[['find','dz','Pneumonia and brain abscess in the immunosuppressed',0],['lab','h','Branching Gram-positive filaments, weakly acid-fast, aerobic',1,'weakly acid-fast']],x:['Actinomyces israelii','Legionella pneumophila','Klebsiella pneumoniae']},
+ {a:'Actinomyces israelii',c:[['find','dz','Slowly growing jaw abscess with draining sinus tracts after dental work',1,'sinus tracts'],['lab','h','yellow "sulfur granules" in the pus',1,'sulfur granules'],['lab','h','Branching filaments, anaerobic, not acid-fast',0]],x:['Nocardia','Staphylococcus aureus','Viridans streptococci']},
+ {a:'Mycobacterium leprae',c:[['find','dz','skin patches with lost sensation, thickened nerves',1,'lost sensation'],['set','h','armadillos carry it',1,'armadillos'],['lab','h','Cannot be cultured',1]],x:['Mycobacterium tuberculosis','Treponema pallidum','Borrelia burgdorferi']},
+ {a:'Klebsiella pneumoniae',c:[['who','dz','Aspiration pneumonia in alcoholics and diabetics',0],['find','dz','"currant-jelly" sputum',1,'currant-jelly'],['lab','h','very mucoid colonies',0]],x:['Streptococcus pneumoniae','Pseudomonas aeruginosa','Legionella pneumophila']},
+ {a:'Proteus mirabilis',c:[['set','dz','UTI, especially with catheters',0],['find','w','struvite (staghorn) stones',0],['lab','h','Swarms across the agar plate',1,'swarms']],x:['Escherichia coli','Klebsiella pneumoniae','Staphylococcus saprophyticus']},
+ {a:'Shigella',c:[['who','dz','mostly in children and daycare',0],['find','dz','bloody mucoid diarrhea with fever and cramps',0],['lab','h','Tiny infectious dose (~10 cells), person-to-person',0],['lab','h','Non-motile, no H₂S, no lactose',1,'non-motile, no H₂S, no lactose']],x:['Salmonella','Campylobacter jejuni','Escherichia coli']},
+ {a:'Yersinia',c:[['set','h','fleas on rodents',1,'fleas'],['find','p','Hemorrhagic buboes',1,'buboes'],['lab','h','Bipolar "safety-pin" staining',1,'safety-pin']],x:['Francisella tularensis','Brucella','Rickettsia rickettsii']},
+ {a:'Campylobacter jejuni',c:[['find','dz','bloody, with fever and cramps',0],['set','h','Undercooked poultry, unpasteurized milk, puppies',0],['lab','h','Curved "seagull" rods, oxidase +',1,'seagull']],x:['Salmonella','Shigella','Vibrio cholerae']},
+ {a:'Haemophilus influenzae',c:[['find','dz','epiglottitis',0],['lab','h','Needs factors X and V: chocolate agar',1,'factors X and V']],x:['Streptococcus pneumoniae','Neisseria meningitidis','Bordetella pertussis']},
+ {a:'Bordetella pertussis',c:[['who','dz','Deadly in infants',0],['find','dz','catarrhal → paroxysmal (whoops, vomiting) → convalescent',1,'whoops'],['lab','h','Marked lymphocytosis',1,'lymphocytosis']],x:['Haemophilus influenzae','Mycoplasma pneumoniae','Corynebacterium diphtheriae']},
+ {a:'Legionella pneumophila',c:[['set','h','Cooling towers, hot tubs, hospital water',1,'cooling towers'],['find','dz','severe pneumonia with diarrhea, confusion and low sodium',1,'low sodium'],['lab','h','needs charcoal yeast agar with iron and cysteine',1,'charcoal yeast agar']],x:['Mycoplasma pneumoniae','Streptococcus pneumoniae','Klebsiella pneumoniae']},
+ {a:'Neisseria gonorrhoeae',c:[['find','dz','Urethritis, cervicitis',0],['lab','h','Gram-negative diplococci inside neutrophils',1,'diplococci inside neutrophils'],['lab','h','Maltose −',1,'maltose']],x:['Chlamydia trachomatis','Treponema pallidum','Gardnerella vaginalis']},
+ {a:'Bacteroides fragilis',c:[['set','dz','Abdominal and pelvic abscesses after perforation or surgery',0],['lab','h','The dominant gut anaerobe',1,'dominant gut anaerobe'],['find','h','Foul-smelling pus',0]],x:['Escherichia coli','Enterococcus faecalis / faecium','Klebsiella pneumoniae']},
+ {a:'Borrelia burgdorferi',c:[['set','h','Ixodes tick',1,'Ixodes'],['find','dz','erythema migrans (bull\'s-eye rash)',1,'erythema migrans']],x:['Rickettsia rickettsii','Treponema pallidum','Leptospira interrogans']},
+ {a:'Leptospira interrogans',c:[['set','h','Animal urine in water: surfers, triathletes, sewer workers',1,'animal urine'],['find','dz','fever, muscle pain, red eyes without pus',1,'red eyes without pus'],['lab','h','Question-mark-shaped ends',1]],x:['Borrelia burgdorferi','Treponema pallidum','Legionella pneumophila']},
+ {a:'Rickettsia rickettsii',c:[['set','h','Dermacentor tick',1,'Dermacentor'],['find','dz','fever, headache, rash starting on wrists and ankles (palms and soles) then moving inward',1,'wrists and ankles']],x:['Borrelia burgdorferi','Treponema pallidum','Neisseria meningitidis']},
+ {a:'Chlamydia trachomatis',c:[['find','dz','urethritis, cervicitis, PID',0],['vf','w','infectious elementary body → replicating reticulate body',1,'elementary body']],x:['Neisseria gonorrhoeae','Treponema pallidum','Gardnerella vaginalis']},
+ {a:'Mycoplasma pneumoniae',c:[['who','dz','teens and young adults, military recruits, dorms',0],['find','dz','dry cough, chest X-ray looks worse than the patient',1,'looks worse than the patient'],['lab','h','Cold agglutinins (IgM)',1,'cold agglutinins']],x:['Streptococcus pneumoniae','Legionella pneumophila','Klebsiella pneumoniae']},
+ {a:'Brucella',c:[['set','h','Unpasteurized dairy, farmers and vets, slaughterhouses',1,'slaughterhouses'],['find','dz','undulating fever, night sweats, joint pain, enlarged liver and spleen',1,'undulating fever']],x:['Francisella tularensis','Listeria monocytogenes','Leptospira interrogans']},
+ {a:'Francisella tularensis',c:[['set','h','Rabbits, ticks, deer flies; hunters',1,'rabbits'],['find','dz','skin ulcer plus swollen lymph nodes',1,'skin ulcer']],x:['Brucella','Pasteurella multocida','Borrelia burgdorferi']},
+ {a:'Pasteurella multocida',c:[['set','dz','within 24 h of a cat or dog bite',1,'cat or dog bite'],['find','dz','Rapidly spreading cellulitis',0]],x:['Staphylococcus aureus','Streptococcus pyogenes','Francisella tularensis']},
+ {a:'Gardnerella vaginalis',c:[['find','dz','thin gray discharge with a fishy smell, no inflammation',1,'thin gray discharge'],['lab','h','Clue cells',1],['lab','h','positive whiff test with KOH',1,'whiff test']],x:['Chlamydia trachomatis','Neisseria gonorrhoeae','Treponema pallidum']}
+];
+const VFIELD={dz:'Signature disease',w:'Weapons',h:'Exam hook',p:'What it does to cells',o:'Oxygen'};
+const VKIND=[['who','Who'],['set','Exposure or setting'],['find','Findings'],['vf','Virulence factor'],['lab','Lab clue'],['path','Pathology']];
+const cap1=s=>/^[a-z]/.test(s)?s[0].toUpperCase()+s.slice(1):s;
+function vigStem(v){return `<dl class="vig">${VKIND.map(([k,l])=>{const r=v.c.filter(c=>c[0]===k);return r.length?`<dt>${l}</dt><dd>${r.map(c=>cap1(c[2])).join('; ')}</dd>`:''}).join('')}</dl>`}
+function vigExpl(v,opts){const keys=v.c.filter(c=>c[3]).map(c=>`“${c[4]||c[2]}”`);const others=opts.filter(o=>o!==v.a).map(o=>`<i>${o}</i>`);
+  const card=BASE?`<a href="${hrefOf('gallery')}#${bugId(v.a)}">Open the card</a>`:`<a href="#gallery" data-go="gallery">Open the gallery</a>`;
+  return `<p>From the gallery card for <i>${v.a}</i>:</p><ul class="vq">${v.c.map(c=>`<li>${VFIELD[c[1]]}: “${c[2]}”${c[3]?' <b>(decisive)</b>':''}</li>`).join('')}</ul><p>None of the other options' cards (${others.join(', ')}) mention ${keys.length>1?'any of '+keys.join(', '):keys[0]}. ${card}.</p>`}
+function vigQ(v,r){const o=[v.a,...v.x];for(let a=o.length-1;a>0;a--){const j=Math.floor(r()*(a+1));[o[a],o[j]]=[o[j],o[a]]}
+  return Object.assign(['vig',vigStem(v),o.map(n=>`<i>${n}</i>`),o.indexOf(v.a),vigExpl(v,o)],{v:1,s:`Vignette: <i>${v.a}</i>`})}
 inits.quiz=()=>{
-  const F=[['mix','Mixed (20)'],...Object.keys(UNITN).map(k=>[k,'Unit '+k])];
+  const F=[['mix','Mixed (20)'],...Object.keys(UNITN).map(k=>[k,'Unit '+k]),['vig','Clinical vignettes']];
   $('#qFilter').innerHTML=F.map(([k,l])=>`<button class="btn" data-qf="${k}" aria-pressed="${k==='mix'}">${l}</button>`).join('');
   let list=[],i=0,score=0,missed=[],answered=false;
   function start(k){const r=rng(Date.now()%1e6);let L=QZ.filter(q=>k==='mix'||String(q[0])===k).slice();for(let a=L.length-1;a>0;a--){const j=Math.floor(r()*(a+1));[L[a],L[j]]=[L[j],L[a]]}
-    list=k==='mix'?L.slice(0,20):L;i=0;score=0;missed=[];q()}
+    list=k==='mix'?L.slice(0,20):L;
+    if(k==='vig'){const V=VIG.slice();for(let a=V.length-1;a>0;a--){const j=Math.floor(r()*(a+1));[V[a],V[j]]=[V[j],V[a]]}list=V.slice(0,10).map(v=>vigQ(v,r))}
+    $('#qNote').hidden=k!=='vig';i=0;score=0;missed=[];q()}
   function q(){answered=false;$('#qBar').style.width=(i/list.length*100)+'%';
     if(i>=list.length){const pct=Math.round(score/list.length*100);
       $('#qCard').innerHTML=`<div class="kicker">Finished</div><div class="q">You scored ${score} / ${list.length} (${pct}%)</div><p>${pct>=85?'Excellent. You\'re ready.':pct>=65?'Solid. Review the ones you missed below.':'Worth another pass through the modules, then try again.'}</p>`+
-       (missed.length?`<dl class="kv">${missed.map(m=>`<div><dt>${m[1]}</dt><dd><b>${m[2][m[3]]}.</b> ${m[4]}</dd></div>`).join('')}</dl>`:'')+`<div class="ctrls"><button class="btn primary" id="qAgain">Try again</button><button class="btn" data-go="review">Go to flashcards</button></div>`;
+       (missed.length?`<dl class="kv">${missed.map(m=>`<div><dt>${m.v?m.s:m[1]}</dt><dd><b>${m[2][m[3]]}.</b> ${m[4]}</dd></div>`).join('')}</dl>`:'')+`<div class="ctrls"><button class="btn primary" id="qAgain">Try again</button><button class="btn" data-go="review">Go to flashcards</button></div>`;
       $('#qAgain').onclick=()=>start($('[data-qf][aria-pressed="true"]').dataset.qf);return}
     const Q=list[i];
-    $('#qCard').innerHTML=`<div class="readout"><span>question <b>${i+1} / ${list.length}</b></span><span>score <b>${score}</b></span><span>${UNITN[Q[0]]}</span></div><div class="q">${Q[1]}</div><div class="opts">${Q[2].map((o,j)=>`<button class="opt" data-o="${j}"><span class="l">${'ABCD'[j]}</span><span>${o}</span></button>`).join('')}</div><div id="qFb"></div>`;
+    $('#qCard').innerHTML=`<div class="readout"><span>question <b>${i+1} / ${list.length}</b></span><span>score <b>${score}</b></span><span>${Q.v?'AI-written vignette · unreviewed':UNITN[Q[0]]}</span></div>${Q.v?`${Q[1]}<div class="q" tabindex="-1">Which organism is most likely?</div>`:`<div class="q">${Q[1]}</div>`}<div class="opts">${Q[2].map((o,j)=>`<button class="opt" data-o="${j}"><span class="l">${'ABCD'[j]}</span><span>${o}</span></button>`).join('')}</div><div id="qFb"></div>`;
   }
   $('#qCard').addEventListener('click',e=>{const b=e.target.closest('.opt');if(b&&!answered){answered=true;const Q=list[i],j=+b.dataset.o,ok=j===Q[3];if(ok)score++;else missed.push(Q);
       $$('.opt',$('#qCard')).forEach((o,k)=>{o.disabled=true;if(k===Q[3])o.classList.add('right');else if(k===j)o.classList.add('wrong')});
       $('#qFb').innerHTML=`<div class="expl"><b style="color:var(${ok?'--good':'--bad'})">${ok?'Correct.':'Not quite.'}</b> ${Q[4]}</div><div class="ctrls" style="margin-top:12px"><button class="btn primary" id="qNext">${i+1<list.length?'Next question →':'See results'}</button></div>`;
-      $('#qNext').onclick=()=>{i++;q()};$('#qNext').focus({preventScroll:true})}});
+      $('#qNext').onclick=()=>{i++;q();const t=$('#qCard .q[tabindex]');if(t)t.focus()};$('#qNext').focus({preventScroll:true})}});
   $('#qFilter').addEventListener('click',e=>{const b=e.target.closest('[data-qf]');if(!b)return;$$('[data-qf]').forEach(x=>x.setAttribute('aria-pressed',x===b));start(b.dataset.qf)});
   start('mix');
 };
@@ -4225,7 +4321,7 @@ inits.virus=()=>{
   $('#fluReset').onclick=()=>{fstate.ha=fstate.ha.map(()=>'a');fstate.title='Last season\'s strain';fstate.txt='Antibodies fit every HA spike. You are immune to this exact strain.';drawFlu()};
   drawFlu();
   const F=[['all','All'],['dna','DNA viruses'],['rna','RNA viruses']];$('#vFilter').innerHTML=F.map((f,i)=>`<button class="btn" data-vf="${f[0]}" aria-pressed="${i===0}">${f[1]}</button>`).join('');
-  $('#vCards').innerHTML=VIRL.map(v=>`<div class="card" data-k="${v[0]}"><div class="chips"><span class="tag ${v[0]==='dna'?'pos':'neg'}">${v[0].toUpperCase()}</span></div><h4>${v[1]}</h4><p>${v[2]}</p></div>`).join('');
+  $('#vCards').innerHTML=VIRL.map(v=>`<div class="card" id="${virId(v[1])}" tabindex="-1" data-k="${v[0]}"><div class="chips"><span class="tag ${v[0]==='dna'?'pos':'neg'}">${v[0].toUpperCase()}</span></div><h4>${v[1]}</h4><p>${v[2]}</p>${MC_LINKS[v[1]]?mcLink(MC_LINKS[v[1]]):''}</div>`).join('');
   $('#vFilter').addEventListener('click',e=>{const b=e.target.closest('[data-vf]');if(!b)return;$$('[data-vf]').forEach(x=>x.setAttribute('aria-pressed',x===b));$$('#vCards .card').forEach(c=>c.hidden=!(b.dataset.vf==='all'||c.dataset.k===b.dataset.vf))});
 };
 
@@ -4494,6 +4590,7 @@ MN.push(
 const h0=location.hash.slice(1);
 if(BASE)show(MODS.some(m=>m.id===h0)?h0:(idFromPath()||'home'),'replace');
 else show(MODS.some(m=>m.id===h0)?h0:store.get('last','home'));
+if(h0&&!MODS.some(m=>m.id===h0)){const el=document.getElementById(decodeURIComponent(h0)),sec=el&&el.closest('[data-mod]');if(sec&&!sec.hidden){el.classList.add('flash');el.scrollIntoView({block:'start'});el.focus({preventScroll:true})}}
 })();
 </script>
 
